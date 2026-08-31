@@ -40,8 +40,8 @@ function initSellerRegister() {
     // Cloudinary logo upload
     if (logoBtn && window.cloudinary) {
         const widget = cloudinary.createUploadWidget({
-            cloudName:    window.CLOUDINARY_CLOUD_NAME || 'technexus',
-            uploadPreset: window.CLOUDINARY_UPLOAD_PRESET || 'tn_products',
+            cloudName:    window.CLOUDINARY_CLOUD_NAME || 'stez7ars',
+            uploadPreset: window.CLOUDINARY_UPLOAD_PRESET || 'technexus_uploads',
             sources:      ['local', 'url', 'camera'],
             cropping:     true,
             croppingAspectRatio: 1,
@@ -411,8 +411,8 @@ function initAddProductForm(token) {
     // Cloudinary product image upload
     if (imgBtn && window.cloudinary) {
         const widget = cloudinary.createUploadWidget({
-            cloudName:    window.CLOUDINARY_CLOUD_NAME || 'technexus',
-            uploadPreset: window.CLOUDINARY_UPLOAD_PRESET || 'tn_products',
+            cloudName:    window.CLOUDINARY_CLOUD_NAME || 'stez7ars',
+            uploadPreset: window.CLOUDINARY_UPLOAD_PRESET || 'technexus_uploads',
             sources:      ['local', 'url', 'camera'],
             folder:       'products',
             multiple:     false
