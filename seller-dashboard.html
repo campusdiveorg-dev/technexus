@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Seller Dashboard — TechNexus Merchant Hub</title>
+    <meta name="robots" content="noindex, nofollow"/>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Master Design System Stylesheet -->
+    <link rel="stylesheet" href="css/style.css"/>
+    <style>
+        /* ── Login Gate ── */
+        .merchant-login-wrapper {
+            min-height: calc(100vh - var(--nav-height) - 100px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 16px;
+        }
+        .merchant-login-card {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+        .login-badge-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        .merchant-login-title {
+            font-family: var(--font-heading);
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--midnight-navy);
+            margin-bottom: 6px;
+        }
+        .merchant-login-sub {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin-bottom: 24px;
+        }
+
+        /* ── Dashboard Grid ── */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 24px;
+            padding: 30px 0 60px;
+        }
+
+        /* Sidebar */
+        .dash-sidebar {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            height: fit-content;
+            position: sticky;
+            top: calc(var(--nav-height) + 20px);
+        }
+        .store-profile-header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--surface-border);
+            margin-bottom: 16px;
+        }
+        .store-avatar {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--electric-blue), var(--primary-blue));
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin: 0 auto 10px;
+            box-shadow: 0 4px 12px rgba(0, 88, 188, 0.2);
+        }
+        .store-name-text {
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--midnight-navy);
+        }
+        .store-email-text {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+        .store-tier-pill {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 3px 10px;
+            background: var(--primary-light);
+            border: 1px solid rgba(0, 88, 188, 0.2);
+            border-radius: var(--radius-full);
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .dash-nav-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .dash-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .dash-nav-link:hover {
+            background: var(--surface-muted);
+            color: var(--primary-blue);
+        }
+        .dash-nav-link.active {
+            background: var(--primary-blue);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 88, 188, 0.25);
+        }
+
+        /* Stats Cards */
+        .stats-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--primary-light);
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .stat-card-label {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+        .stat-card-val {
+            font-family: var(--font-heading);
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: var(--midnight-navy);
+            margin: 4px 0 2px;
+        }
+        .stat-card.highlight {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+        .stat-card.highlight .stat-card-val {
+            color: #15803d;
+        }
+
+        /* Content Card */
+        .dash-content-card {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 24px;
+        }
+        .dash-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .dash-card-title {
+            font-family: var(--font-heading);
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--midnight-navy);
+        }
+
+        /* Tables */
+        .merchant-table-wrapper {
+            overflow-x: auto;
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-sm);
+        }
+        .merchant-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .merchant-table thead {
+            background: var(--surface-muted);
+        }
+        .merchant-table th {
+            padding: 10px 14px;
+            text-align: left;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--surface-border);
+        }
+        .merchant-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--surface-frost);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+        .merchant-table tr:hover td {
+            background: var(--surface-frost);
+        }
+
+        .badge-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: var(--radius-full);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .badge-chip.green { background: #dcfce7; color: #15803d; }
+        .badge-chip.red   { background: #fee2e2; color: #b91c1c; }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 900px) {
+            .dashboard-container { grid-template-columns: 1fr; }
+            .dash-sidebar { position: static; }
+            .stats-cards-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="navbar-container">
+            <a class="brand-logo" href="index.html">
+                <span class="material-symbols-outlined brand-icon">bolt</span>
+                <span>TechNexus <span style="font-size: 0.7rem; font-family: var(--font-mono); background: var(--primary-light); color: var(--primary-blue); border: 1px solid rgba(0,88,188,0.2); border-radius: 4px; padding: 2px 6px; margin-left: 6px;">MERCHANT</span></span>
+            </a>
+
+            <div class="nav-actions">
+                <button id="download-statement-btn" class="btn-secondary" style="padding: 8px 16px; font-size: 0.8rem;">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">picture_as_pdf</span>
+                    <span>Commission PDF</span>
+                </button>
+                <button id="seller-logout-btn" class="btn-dark" style="padding: 8px 14px; font-size: 0.8rem; background: var(--midnight-navy);">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">logout</span>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- ── LOGIN GATE ─────────────────────────────── -->
+        <div id="seller-login-gate" class="merchant-login-wrapper">
+            <div class="merchant-login-card">
+                <div class="login-badge-icon">
+                    <span class="material-symbols-outlined" style="font-size: 28px;">storefront</span>
+                </div>
+                <h1 class="merchant-login-title">Partner Login</h1>
+                <p class="merchant-login-sub">Access your store earnings, live order stream, and catalog distribution.</p>
+
+                <form id="seller-login-form" novalidate>
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; text-align: left;">
+                        <div>
+                            <label style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Partner Email</label>
+                            <input id="login-email" class="form-input" type="email" placeholder="partner@yourstore.co.ke" required style="width: 100%; margin-top: 4px;"/>
+                        </div>
+                        <div>
+                            <label style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Password</label>
+                            <input id="login-password" class="form-input" type="password" placeholder="••••••••" required style="width: 100%; margin-top: 4px;"/>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="width: 100%; padding: 12px;">
+                        <span>Unlock Partner Dashboard</span>
+                        <span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
+                    </button>
+                </form>
+
+                <div style="margin-top: 20px; font-size: 0.82rem; color: var(--text-muted);">
+                    New hardware vendor? 
+                    <a href="seller-register.html" style="color: var(--primary-blue); font-weight: 700; text-decoration: underline;">Apply for Storefront →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── DASHBOARD ──────────────────────────────── -->
+        <div id="seller-dashboard-content" class="hidden">
+            <div class="dashboard-container">
+
+                <!-- Sidebar -->
+                <aside class="dash-sidebar">
+                    <div class="store-profile-header">
+                        <div class="store-avatar" id="seller-avatar-initials">S</div>
+                        <div class="store-name-text" id="seller-store-name">TechCore Store</div>
+                        <div class="store-email-text" id="seller-email-display">partner@techcore.co.ke</div>
+                        <div class="store-tier-pill" id="seller-commission-rate">12% Fee</div>
+                    </div>
+
+                    <ul class="dash-nav-menu">
+                        <li>
+                            <a class="dash-nav-link active" onclick="showSection('overview')">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">dashboard</span>
+                                <span>Overview</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dash-nav-link" onclick="showSection('orders')">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">receipt_long</span>
+                                <span>Order Stream</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dash-nav-link" onclick="showSection('products')">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">inventory_2</span>
+                                <span>My Catalog</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dash-nav-link" onclick="showSection('add-product')">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">add_circle</span>
+                                <span>List Hardware</span>
+                            </a>
+                        </li>
+                    </ul>
+                </aside>
+
+                <!-- Main Work Area -->
+                <section class="dash-main-area">
+
+                    <!-- Section 1: Overview -->
+                    <div id="section-overview" class="dash-section active">
+                        <div class="stats-cards-grid">
+                            <div class="stat-card">
+                                <div class="stat-card-icon">
+                                    <span class="material-symbols-outlined" style="font-size: 20px;">shopping_bag</span>
+                                </div>
+                                <div class="stat-card-label">Total Orders</div>
+                                <div class="stat-card-val" id="dash-total-orders">—</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-icon">
+                                    <span class="material-symbols-outlined" style="font-size: 20px;">trending_up</span>
+                                </div>
+                                <div class="stat-card-label">Gross Sales</div>
+                                <div class="stat-card-val" id="dash-gross-sales">—</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-icon">
+                                    <span class="material-symbols-outlined" style="font-size: 20px;">percent</span>
+                                </div>
+                                <div class="stat-card-label">Platform Fees</div>
+                                <div class="stat-card-val" id="dash-commission-paid">—</div>
+                            </div>
+                            <div class="stat-card highlight">
+                                <div class="stat-card-icon" style="background: #bbf7d0; color: #15803d;">
+                                    <span class="material-symbols-outlined" style="font-size: 20px;">account_balance_wallet</span>
+                                </div>
+                                <div class="stat-card-label" style="color: #166534;">Net Earnings</div>
+                                <div class="stat-card-val" id="dash-net-earnings">—</div>
+                            </div>
+                        </div>
+
+                        <div class="dash-content-card">
+                            <div class="dash-card-header">
+                                <h3 class="dash-card-title">Earnings Performance vs Platform Fees</h3>
+                            </div>
+                            <canvas id="seller-earnings-chart" height="90"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Orders -->
+                    <div id="section-orders" class="dash-section">
+                        <div class="dash-content-card">
+                            <div class="dash-card-header">
+                                <h3 class="dash-card-title">Live Merchant Order History</h3>
+                            </div>
+                            <div class="merchant-table-wrapper">
+                                <table class="merchant-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Order ID</th>
+                                            <th>Hardware Item</th>
+                                            <th>Qty</th>
+                                            <th>Gross Sale</th>
+                                            <th>Platform Fee</th>
+                                            <th>Net Earned</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="seller-orders-tbody">
+                                        <tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading orders...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Products -->
+                    <div id="section-products" class="dash-section">
+                        <div class="dash-content-card">
+                            <div class="dash-card-header">
+                                <h3 class="dash-card-title">Active Listed Hardware</h3>
+                            </div>
+                            <div class="merchant-table-wrapper">
+                                <table class="merchant-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Preview</th>
+                                            <th>Product Name</th>
+                                            <th>Category</th>
+                                            <th>Price</th>
+                                            <th>Listing Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="seller-products-tbody">
+                                        <tr><td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading catalog...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Add Product -->
+                    <div id="section-add-product" class="dash-section">
+                        <div class="dash-content-card">
+                            <div class="dash-card-header">
+                                <h3 class="dash-card-title">List New Hardware Item</h3>
+                            </div>
+                            <form id="add-product-form" novalidate>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                                    <div style="grid-column: 1 / -1;">
+                                        <label style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Product Name</label>
+                                        <input id="prod-name" class="form-input" type="text" placeholder="e.g. Nexus Titanium X1 Display 165Hz" required style="width: 100%; margin-top: 4px;"/>
+                                    </div>
+                                    <div>
+                                        <label style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Category</label>
+                                        <select id="prod-category" class="form-select" style="width: 100%; margin-top: 4px;">
+                                            <option value="Laptops">Laptops</option>
+                                            <option value="Audio">Audio &amp; Acoustics</option>
+                                            <option value="Gaming">Gaming Rigs</option>
+                                            <option value="Phones">Smartphones</option>
+                                            <option value="Monitors">Displays &amp; Monitors</option>
+                                            <option value="Accessories">Accessories</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Retail Price (KSh)</label>
+                                        <input id="prod-price" class="form-input" type="number" min="100" step="1" placeholder="45000" required style="width: 100%; margin-top: 4px;"/>
+                                    </div>
+                                    <div style="grid-column: 1 / -1;">
+                                        <label style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Description</label>
+                                        <textarea id="prod-desc" class="form-input" rows="3" placeholder="Engineering specifications and performance details..." style="width: 100%; margin-top: 4px;"></textarea>
+                                    </div>
+                                    <div>
+                                        <label style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Hardware Specs Badge</label>
+                                        <input id="prod-specs" class="form-input" type="text" placeholder="e.g. 144Hz • 4K OLED • Thunderbolt 4" style="width: 100%; margin-top: 4px;"/>
+                                    </div>
+                                    <div>
+                                        <label style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Tag Label</label>
+                                        <input id="prod-tag" class="form-input" type="text" placeholder="e.g. FLAGSHIP, PRO, NEW" style="width: 100%; margin-top: 4px;"/>
+                                    </div>
+                                    <div style="grid-column: 1 / -1;">
+                                        <label style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Product Photography (Cloudinary)</label>
+                                        <div class="logo-upload-box" id="product-image-upload-btn" style="border: 2px dashed var(--surface-border); border-radius: var(--radius-md); padding: 20px; text-align: center; cursor: pointer; background: var(--surface-frost); margin-top: 4px;">
+                                            <span class="material-symbols-outlined" style="font-size: 32px; color: var(--primary-blue);">image</span>
+                                            <p style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin: 4px 0 2px;">Click to upload high-res photo via Cloudinary Widget</p>
+                                            <p style="font-size: 0.72rem; color: var(--text-light);">Direct CDN asset hosting &amp; optimization</p>
+                                            <img id="product-img-preview" style="width: 80px; height: 80px; border-radius: var(--radius-sm); object-fit: cover; border: 2px solid var(--electric-blue); display: none; margin: 10px auto 0;" alt="Preview"/>
+                                        </div>
+                                        <input type="hidden" id="product-image-url"/>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn-primary" style="padding: 12px 24px;">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">publish</span>
+                                    <span>Publish to TechNexus Catalog</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Component -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border-top: none; padding: 20px 0;">
+                <span>© 2026 TechNexus Hardware Corp. All rights reserved.</span>
+                <span>Merchant Hub &amp; Commission Payouts</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Chart.js + Cloudinary + jsPDF -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        window.CLOUDINARY_CLOUD_NAME    = 'technexus';
+        window.CLOUDINARY_UPLOAD_PRESET = 'tn_products';
+
+        function showSection(name) {
+            document.querySelectorAll('.dash-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.dash-nav-link').forEach(a => a.classList.remove('active'));
+            document.getElementById(`section-${name}`)?.classList.add('active');
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
+        }
+    </script>
+    <script src="js/app.js"></script>
+    <script src="js/seller.js"></script>
+    <script>
+        initSellerDashboard();
+    </script>
+</body>
+</html>

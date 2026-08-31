@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin Control Center — TechNexus</title>
+    <meta name="robots" content="noindex, nofollow"/>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Master Design System Stylesheet -->
+    <link rel="stylesheet" href="css/style.css"/>
+    <style>
+        /* ── PIN GATE ── */
+        .admin-pin-wrapper {
+            min-height: calc(100vh - var(--nav-height) - 100px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 16px;
+        }
+        .admin-pin-card {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+        .admin-pin-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #fee2e2;
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        .admin-pin-title {
+            font-family: var(--font-heading);
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--midnight-navy);
+            margin-bottom: 6px;
+        }
+        .admin-pin-sub {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 24px;
+        }
+        .admin-pin-input-field {
+            width: 100%;
+            padding: 14px;
+            text-align: center;
+            letter-spacing: 8px;
+            font-family: var(--font-mono);
+            font-size: 1.3rem;
+            font-weight: 800;
+            background: var(--surface-frost);
+            border: 2px solid var(--surface-border);
+            border-radius: var(--radius-md);
+            color: var(--midnight-navy);
+            outline: none;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+        .admin-pin-input-field:focus {
+            border-color: #ef4444;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+        }
+
+        /* ── DASHBOARD GRID ── */
+        .admin-dashboard-container {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 24px;
+            padding: 30px 0 60px;
+        }
+
+        /* Sidebar */
+        .admin-sidebar {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-lg);
+            padding: 24px 16px;
+            box-shadow: var(--shadow-sm);
+            height: fit-content;
+            position: sticky;
+            top: calc(var(--nav-height) + 20px);
+        }
+        .admin-badge-box {
+            text-align: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--surface-border);
+            margin-bottom: 16px;
+        }
+        .admin-badge-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #fee2e2;
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+        }
+        .admin-badge-title {
+            font-family: var(--font-heading);
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--midnight-navy);
+        }
+        .admin-badge-sub {
+            font-size: 0.72rem;
+            color: var(--text-light);
+            font-family: var(--font-mono);
+        }
+
+        .admin-nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .admin-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .admin-nav-item:hover {
+            background: var(--surface-muted);
+            color: var(--midnight-navy);
+        }
+        .admin-nav-item.active {
+            background: var(--midnight-navy);
+            color: #fff;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Stats Grid */
+        .admin-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .admin-stat-box {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+        .admin-stat-box.highlight-blue {
+            background: var(--primary-light);
+            border-color: rgba(0, 88, 188, 0.2);
+        }
+        .admin-stat-box.highlight-green {
+            background: #f0fdf4;
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+        .admin-stat-label {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+        .admin-stat-val {
+            font-family: var(--font-heading);
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: var(--midnight-navy);
+            margin: 4px 0 0;
+        }
+
+        /* Content Cards */
+        .admin-card {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 24px;
+        }
+        .admin-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .admin-card-title {
+            font-family: var(--font-heading);
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--midnight-navy);
+        }
+
+        /* Tables */
+        .admin-table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-sm);
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .admin-table thead {
+            background: var(--surface-muted);
+        }
+        .admin-table th {
+            padding: 10px 14px;
+            text-align: left;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--surface-border);
+        }
+        .admin-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--surface-frost);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+        .admin-table tr:hover td {
+            background: var(--surface-frost);
+        }
+
+        .rate-input-box {
+            width: 70px;
+            padding: 6px 8px;
+            background: var(--surface-frost);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-align: center;
+            color: var(--midnight-navy);
+            outline: none;
+        }
+        .rate-input-box:focus {
+            border-color: var(--primary-blue);
+            background: #fff;
+        }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 990px) {
+            .admin-dashboard-container { grid-template-columns: 1fr; }
+            .admin-sidebar { position: static; }
+            .admin-stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="navbar-container">
+            <a class="brand-logo" href="index.html">
+                <span class="material-symbols-outlined brand-icon">bolt</span>
+                <span>TechNexus <span style="font-size: 0.7rem; font-family: var(--font-mono); background: #fee2e2; color: #b91c1c; border: 1px solid rgba(185,28,28,0.2); border-radius: 4px; padding: 2px 6px; margin-left: 6px;">ADMIN</span></span>
+            </a>
+
+            <div class="nav-actions" id="admin-nav-actions" style="display: none;">
+                <button id="export-csv-btn" class="btn-secondary" style="padding: 8px 16px; font-size: 0.8rem;">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">download</span>
+                    <span>Export CSV</span>
+                </button>
+                <button id="admin-logout-btn" class="btn-dark" style="padding: 8px 14px; font-size: 0.8rem; background: var(--midnight-navy);">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">logout</span>
+                    <span>Lock Panel</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- ── PIN GATE ── -->
+        <div id="admin-pin-gate" class="admin-pin-wrapper">
+            <div class="admin-pin-card">
+                <div class="admin-pin-icon">
+                    <span class="material-symbols-outlined" style="font-size: 32px;">shield</span>
+                </div>
+                <h1 class="admin-pin-title">Platform Admin</h1>
+                <p class="admin-pin-sub">Enter your authorized master PIN to access the commission controls and financials.</p>
+
+                <form id="admin-pin-form" novalidate>
+                    <input id="admin-pin-input" class="admin-pin-input-field" type="password" maxlength="10" placeholder="••••••" required autocomplete="off"/>
+                    <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #ef4444, #b91c1c);">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">lock_open</span>
+                        <span>Unlock Admin Control Center</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ── ADMIN PANEL CONTENT ── -->
+        <div id="admin-panel-content" class="hidden">
+            <div class="admin-dashboard-container">
+
+                <!-- Sidebar -->
+                <aside class="admin-sidebar">
+                    <div class="admin-badge-box">
+                        <div class="admin-badge-icon">
+                            <span class="material-symbols-outlined" style="font-size: 24px;">admin_panel_settings</span>
+                        </div>
+                        <div class="admin-badge-title">Platform Control</div>
+                        <div class="admin-badge-sub">TechNexus Master</div>
+                    </div>
+
+                    <ul class="admin-nav-list">
+                        <li>
+                            <a class="admin-nav-item active" onclick="showAdminSection('overview')">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">dashboard</span>
+                                <span>Overview</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="admin-nav-item" onclick="showAdminSection('sellers')">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">groups</span>
+                                <span>Partner Stores</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="admin-nav-item" onclick="showAdminSection('commissions')">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">percent</span>
+                                <span>Commission Rates</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="admin-nav-item" onclick="showAdminSection('orders')">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">receipt_long</span>
+                                <span>All Transactions</span>
+                            </a>
+                        </li>
+                    </ul>
+                </aside>
+
+                <!-- Main Work Area -->
+                <section class="admin-main-area">
+
+                    <!-- Section 1: Overview -->
+                    <div id="admin-section-overview" class="admin-section active">
+                        <div class="admin-stats-grid">
+                            <div class="admin-stat-box">
+                                <div class="admin-stat-label">Total Orders</div>
+                                <div class="admin-stat-val" id="admin-total-orders">—</div>
+                            </div>
+                            <div class="admin-stat-box">
+                                <div class="admin-stat-label">Active Sellers</div>
+                                <div class="admin-stat-val" id="admin-active-sellers">—</div>
+                            </div>
+                            <div class="admin-stat-box">
+                                <div class="admin-stat-label">Total GMV</div>
+                                <div class="admin-stat-val" id="admin-total-gmv">—</div>
+                            </div>
+                            <div class="admin-stat-box highlight-blue">
+                                <div class="admin-stat-label" style="color: var(--primary-blue);">Platform Revenue</div>
+                                <div class="admin-stat-val" style="color: var(--primary-blue);" id="admin-platform-rev">—</div>
+                            </div>
+                            <div class="admin-stat-box highlight-green">
+                                <div class="admin-stat-label" style="color: #15803d;">Seller Payouts</div>
+                                <div class="admin-stat-val" style="color: #15803d;" id="admin-seller-payout">—</div>
+                            </div>
+                        </div>
+
+                        <div class="admin-card">
+                            <div class="admin-card-header">
+                                <h3 class="admin-card-title">Monthly Platform Revenue vs GMV</h3>
+                            </div>
+                            <canvas id="admin-revenue-chart" height="90"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Sellers Table -->
+                    <div id="admin-section-sellers" class="admin-section">
+                        <div class="admin-card">
+                            <div class="admin-card-header">
+                                <h3 class="admin-card-title">Registered Partner Sellers</h3>
+                            </div>
+                            <div class="admin-table-wrap">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Store Name</th>
+                                            <th>Contact Email</th>
+                                            <th>Category</th>
+                                            <th>Orders</th>
+                                            <th>Gross GMV</th>
+                                            <th>Platform Fee Earned</th>
+                                            <th>Net Payout Due</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-sellers-tbody">
+                                        <tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading partners...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Commission Rates -->
+                    <div id="admin-section-commissions" class="admin-section">
+                        <div class="admin-card" style="max-width: 600px;">
+                            <div class="admin-card-header">
+                                <div>
+                                    <h3 class="admin-card-title">Variable Commission Matrix</h3>
+                                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Updates take effect automatically on all subsequent customer purchases.</p>
+                                </div>
+                            </div>
+                            <div class="admin-table-wrap">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Hardware Category</th>
+                                            <th>Active Rate</th>
+                                            <th>Adjust (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="commission-rates-tbody">
+                                        <tr><td colspan="3" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading rates...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: All Orders -->
+                    <div id="admin-section-orders" class="admin-section">
+                        <div class="admin-card">
+                            <div class="admin-card-header">
+                                <h3 class="admin-card-title">Master Order Log</h3>
+                                <button class="btn-secondary" onclick="document.getElementById('export-csv-btn').click()" style="padding: 6px 14px; font-size: 0.8rem;">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">file_download</span>
+                                    <span>Download CSV</span>
+                                </button>
+                            </div>
+                            <div class="admin-table-wrap">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Order ID</th>
+                                            <th>Customer</th>
+                                            <th>Total</th>
+                                            <th>Payment Method</th>
+                                            <th>Status</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-all-orders-tbody">
+                                        <tr><td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading transactions...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Component -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border-top: none; padding: 20px 0;">
+                <span>© 2026 TechNexus Hardware Corp. All rights reserved.</span>
+                <span>Platform Governance &amp; Administration</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Chart.js + jsPDF + Admin Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        function showAdminSection(name) {
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.admin-nav-item').forEach(a => a.classList.remove('active'));
+            document.getElementById(`admin-section-${name}`)?.classList.add('active');
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
+        }
+    </script>
+    <script src="js/app.js"></script>
+    <script src="js/seller.js"></script>
+    <script>
+        initAdminPanel();
+    </script>
+</body>
+</html>

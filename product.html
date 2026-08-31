@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Pro-X1 Carbon Flagship - TechNexus</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Master Design System Stylesheet -->
+    <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="navbar-container">
+            <!-- Brand Logo -->
+            <a class="brand-logo" href="index.html">
+                <span class="material-symbols-outlined brand-icon">bolt</span>
+                <span>TechNexus</span>
+            </a>
+
+            <!-- Desktop Navigation Links -->
+            <nav class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="catalog.html">Catalog</a>
+                <a class="active" href="product.html">Flagship</a>
+                <a href="catalog.html?category=Laptops">Laptops</a>
+                <a href="catalog.html?category=Audio">Audio</a>
+                <a href="catalog.html?category=Gaming">Gaming</a>
+            </nav>
+
+            <!-- Navigation Actions -->
+            <div class="nav-actions">
+                <!-- Search Box -->
+                <div class="search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input class="nav-search-input" placeholder="Search hardware..." type="text"/>
+                </div>
+
+                <!-- Cart Button with Dynamic Badge -->
+                <a href="cart.html" class="nav-icon-btn" aria-label="Shopping Cart">
+                    <span class="material-symbols-outlined">shopping_cart</span>
+                    <span class="cart-count-badge">0</span>
+                </a>
+
+                <!-- Mobile Menu Toggle Button -->
+                <button class="nav-icon-btn menu-toggle-btn" data-menu-toggle aria-label="Toggle Menu">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div id="mobile-menu" class="mobile-nav">
+            <div class="search-box" style="width: 100%;">
+                <span class="material-symbols-outlined">search</span>
+                <input class="nav-search-input" style="width: 100%;" placeholder="Search hardware..." type="text"/>
+            </div>
+            <a href="index.html">Home</a>
+            <a href="catalog.html">Product Catalog</a>
+            <a href="product.html" style="color: var(--primary-blue); font-weight: 800;">Pro-X1 Flagship</a>
+            <a href="catalog.html?category=Laptops">Laptops</a>
+            <a href="catalog.html?category=Audio">Audio</a>
+            <a href="catalog.html?category=Gaming">Gaming</a>
+            <a href="cart.html" style="color: var(--primary-blue); font-weight: 800;">View Cart</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container" style="padding-top: 24px;">
+            
+            <!-- Breadcrumbs -->
+            <nav class="breadcrumbs">
+                <a href="index.html">Home</a>
+                <span class="material-symbols-outlined" style="font-size: 14px;">chevron_right</span>
+                <a href="catalog.html" id="breadcrumb-category-link">Catalog</a>
+                <span class="material-symbols-outlined" style="font-size: 14px;">chevron_right</span>
+                <span style="color: var(--midnight-navy); font-weight: 800;" id="breadcrumb-title">Pro-X1 Carbon</span>
+            </nav>
+
+            <!-- Product Detail Layout -->
+            <div class="product-detail-layout">
+                
+                <!-- Left Image Gallery -->
+                <div class="gallery-container">
+                    <div class="gallery-main">
+                        <img id="main-product-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyXKtzLAgZmERYv3tkP4IXzbmYpuIV6ph16noF_zOGVJrRgmtVZOARZosjo5zljLlwqE9FGFUa5kCY5GmpFG0w7uemjiosf4KhyxjmCP9W25JdJHPUhHnpu-SCGUzb9tiwv9oIM2XQ72fT2XDbnAfY7NXJsIgIIVYLXAOr5H7XWHB2TrvGl34p54yu03lMK2cnmvOzjN81LQKXzbSeQkCosOvT65k8gGOg8ehukdm5SgMHBUm530RC_Q" alt="Pro-X1 Carbon Flagship"/>
+                    </div>
+                    <div class="gallery-thumbnails">
+                        <button class="thumb-item active" data-img="https://lh3.googleusercontent.com/aida-public/AB6AXuDyXKtzLAgZmERYv3tkP4IXzbmYpuIV6ph16noF_zOGVJrRgmtVZOARZosjo5zljLlwqE9FGFUa5kCY5GmpFG0w7uemjiosf4KhyxjmCP9W25JdJHPUhHnpu-SCGUzb9tiwv9oIM2XQ72fT2XDbnAfY7NXJsIgIIVYLXAOr5H7XWHB2TrvGl34p54yu03lMK2cnmvOzjN81LQKXzbSeQkCosOvT65k8gGOg8ehukdm5SgMHBUm530RC_Q">
+                            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyXKtzLAgZmERYv3tkP4IXzbmYpuIV6ph16noF_zOGVJrRgmtVZOARZosjo5zljLlwqE9FGFUa5kCY5GmpFG0w7uemjiosf4KhyxjmCP9W25JdJHPUhHnpu-SCGUzb9tiwv9oIM2XQ72fT2XDbnAfY7NXJsIgIIVYLXAOr5H7XWHB2TrvGl34p54yu03lMK2cnmvOzjN81LQKXzbSeQkCosOvT65k8gGOg8ehukdm5SgMHBUm530RC_Q" alt="Front View"/>
+                        </button>
+                        <button class="thumb-item" data-img="https://lh3.googleusercontent.com/aida-public/AB6AXuDxmTCF2dKSmH7ebPAeHlSj3r7lUwunDyiftxbcF6gYu0I2l9JKQw-F0u3T67DQN0h7AglDKx5Z2kT7DDM5uE_lLHuhu-iv0wlJ1-zjikn1LRH6ifXAbZt1hehfZsKZu1G0k3PsnWMotfakFaWtXO58nv90jC-R69MrCy_D7oc0m_c40nAC_MdsNz7lQZRCbMbw74NYdu63OoKR1RWX4p3vChDFZeTCIICQMi_WY1qRXeazeBzwhar5wQ">
+                            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxmTCF2dKSmH7ebPAeHlSj3r7lUwunDyiftxbcF6gYu0I2l9JKQw-F0u3T67DQN0h7AglDKx5Z2kT7DDM5uE_lLHuhu-iv0wlJ1-zjikn1LRH6ifXAbZt1hehfZsKZu1G0k3PsnWMotfakFaWtXO58nv90jC-R69MrCy_D7oc0m_c40nAC_MdsNz7lQZRCbMbw74NYdu63OoKR1RWX4p3vChDFZeTCIICQMi_WY1qRXeazeBzwhar5wQ" alt="Keyboard View"/>
+                        </button>
+                        <button class="thumb-item" data-img="https://lh3.googleusercontent.com/aida-public/AB6AXuDVYTJeJCtVOmuu0sQ8HF8Flbq281lU3HQsggWRZTnbATviJD_k4ZUIRzq8DjuuyFsvEJSSS0kdDh67nLCiTvHpJSKk59umUk_kTk7JwKGIzn4snHvGKStmlxebRz6fK5XnTEMJ2goQKrPDod6aon_tjjo41fefR3EafVf0I34hrl1BioPIWUNSPhll0yL4LKMUemCrp_ge5dt9juQxq85YEuxREXMOQRzwvxapGIseYNtg4gMwOOlniQ">
+                            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVYTJeJCtVOmuu0sQ8HF8Flbq281lU3HQsggWRZTnbATviJD_k4ZUIRzq8DjuuyFsvEJSSS0kdDh67nLCiTvHpJSKk59umUk_kTk7JwKGIzn4snHvGKStmlxebRz6fK5XnTEMJ2goQKrPDod6aon_tjjo41fefR3EafVf0I34hrl1BioPIWUNSPhll0yL4LKMUemCrp_ge5dt9juQxq85YEuxREXMOQRzwvxapGIseYNtg4gMwOOlniQ" alt="Side Profile"/>
+                        </button>
+                        <button class="thumb-item" data-img="https://lh3.googleusercontent.com/aida-public/AB6AXuDvy5BGeU-WvHxT9WXC_lqdlr573JMmcSj1r6ZPND18Qp1ThMDzBsclzvAUpt8GRO8ZwxoIRqdLhScMV-zwfhleOhPTViwMVQxfAchSMWlaWikdqrFQ-HjqVuTToE55cknLPolngMX4caulwiSAvn-Om0VioaEaSTy1DLN0f1nVjq0xQDxO0s-CFPifGDaJevIaKGhranRahx2zxaC_fSQmB_19OcxOMHwdpN4I2aidTTlBmJwX_9umOA">
+                            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvy5BGeU-WvHxT9WXC_lqdlr573JMmcSj1r6ZPND18Qp1ThMDzBsclzvAUpt8GRO8ZwxoIRqdLhScMV-zwfhleOhPTViwMVQxfAchSMWlaWikdqrFQ-HjqVuTToE55cknLPolngMX4caulwiSAvn-Om0VioaEaSTy1DLN0f1nVjq0xQDxO0s-CFPifGDaJevIaKGhranRahx2zxaC_fSQmB_19OcxOMHwdpN4I2aidTTlBmJwX_9umOA" alt="Desk Setup"/>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Configuration Console -->
+                <div class="product-console">
+                    <div>
+                        <span id="product-category-tag" style="font-family: var(--font-mono); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--primary-blue); letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Laptops / Pro Series</span>
+                        <h1 id="product-title" style="font-family: var(--font-heading); font-size: 2rem; font-weight: 800; color: var(--midnight-navy); line-height: 1.2; margin-bottom: 10px;">Pro-X1 Carbon Flagship</h1>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="display: flex; color: var(--accent-amber);">
+                                <span class="material-symbols-outlined" style="font-size: 18px; font-variation-settings: 'FILL' 1;">star</span>
+                                <span class="material-symbols-outlined" style="font-size: 18px; font-variation-settings: 'FILL' 1;">star</span>
+                                <span class="material-symbols-outlined" style="font-size: 18px; font-variation-settings: 'FILL' 1;">star</span>
+                                <span class="material-symbols-outlined" style="font-size: 18px; font-variation-settings: 'FILL' 1;">star</span>
+                                <span class="material-symbols-outlined" style="font-size: 18px; font-variation-settings: 'FILL' 1;">star</span>
+                            </div>
+                            <span id="rating-text" style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">4.9/5 (128 Reviews)</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px;">
+                            <span id="product-price" style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 800; color: var(--midnight-navy);">KSh 285,000.00</span>
+                            <span style="font-size: 0.8rem; color: var(--accent-success); font-weight: 700;">In Stock • Free Priority Courier Across Kenya</span>
+                        </div>
+                        <p id="product-description" style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6;">
+                            Engineered for absolute performance. The Pro-X1 features an aerospace-grade carbon chassis, an immersive OLED display, and thermal architecture designed to remain silent under extreme load.
+                        </p>
+                    </div>
+
+                    <!-- Config Options -->
+                    <div class="config-group">
+                        <span class="config-title">Memory Allocation</span>
+                        <div class="config-options">
+                            <button type="button" class="config-btn opt-btn-ram selected" data-ram="32GB" data-extra="0">32GB Unified RAM</button>
+                            <button type="button" class="config-btn opt-btn-ram" data-ram="64GB" data-extra="35000">64GB Unified RAM (+KSh 35,000)</button>
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <span class="config-title">Solid State Storage</span>
+                        <div class="config-options">
+                            <button type="button" class="config-btn opt-btn-ssd selected" data-ssd="1TB" data-extra="0">1TB PCIe 5.0 SSD</button>
+                            <button type="button" class="config-btn opt-btn-ssd" data-ssd="2TB" data-extra="30000">2TB PCIe 5.0 SSD (+KSh 30,000)</button>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px;">
+                        <button id="add-to-cart-btn" class="btn-primary" style="width: 100%; padding: 16px;">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">shopping_cart</span>
+                            <span>Add to Cart</span>
+                        </button>
+                        <button id="buy-now-btn" class="btn-dark" style="width: 100%; padding: 15px;">
+                            Buy Now with 1-Click
+                        </button>
+                    </div>
+
+                    <!-- Trust Signals -->
+                    <div style="background: var(--surface-muted); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--surface-border); display: flex; flex-direction: column; gap: 10px; font-size: 0.8rem;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="material-symbols-outlined" style="color: var(--electric-blue); font-size: 18px;">local_shipping</span>
+                            <span style="font-weight: 700;">Free Worldwide Priority Dispatch</span>
+                            <span style="margin-left: auto; color: var(--text-muted);">Est. Tomorrow</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="material-symbols-outlined" style="color: var(--electric-blue); font-size: 18px;">verified_user</span>
+                            <span style="font-weight: 700;">3-Year Global Hardware Guarantee</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bento Specs Grid -->
+            <section style="margin-bottom: 60px;">
+                <div style="margin-bottom: 24px;">
+                    <span class="section-pretitle">Engineering Details</span>
+                    <h2 class="section-title">Architected for Creators</h2>
+                </div>
+
+                <div class="bento-grid">
+                    <div class="bento-card light">
+                        <div class="bento-icon">
+                            <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' 1;">speed</span>
+                        </div>
+                        <div>
+                            <h3 class="bento-title">M4 Neural Architecture</h3>
+                            <p class="bento-desc">16-core CPU and 40-core GPU deliver unprecedented computational density and ultra-responsive execution.</p>
+                        </div>
+                    </div>
+
+                    <div class="bento-card dark">
+                        <div class="bento-icon">
+                            <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' 1;">visibility</span>
+                        </div>
+                        <div>
+                            <h3 class="bento-title" style="color: #fff;">Liquid Retina XDR Display</h3>
+                            <p class="bento-desc">120Hz ProMotion display with 1600 nits peak brightness for studio color grading and sub-millisecond response.</p>
+                        </div>
+                    </div>
+
+                    <div class="bento-card light">
+                        <div class="bento-icon">
+                            <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' 1;">battery_charging_full</span>
+                        </div>
+                        <div>
+                            <h3 class="bento-title">24-Hour Battery Life</h3>
+                            <p class="bento-desc">Advanced power gating and 3nm silicon efficiency means you can power through a full day's workload untethered.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer Component -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                        <span class="material-symbols-outlined" style="color: var(--electric-blue); font-size: 28px;">bolt</span>
+                        <h3 style="margin-bottom: 0;">TechNexus</h3>
+                    </div>
+                    <p>High-performance industrial grade hardware, displays, and mobile computing crafted with obsessive attention to detail.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Navigation</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="catalog.html">Product Catalog</a></li>
+                        <li><a href="product.html">Flagship Laptop</a></li>
+                        <li><a href="cart.html">Shopping Cart</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Guarantees</h4>
+                    <ul class="footer-links">
+                        <li style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--electric-blue);">local_shipping</span> Free Worldwide Express</li>
+                        <li style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--electric-blue);">verified</span> 2-Year Full Hardware Warranty</li>
+                        <li style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--electric-blue);">lock</span> 256-Bit Encrypted Checkout</li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Newsletter</h4>
+                    <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; margin-bottom: 12px;">Get notified about exclusive drops & firmware updates.</p>
+                    <div style="display: flex;">
+                        <input placeholder="Enter your email" type="email" style="flex-grow: 1; padding: 10px 14px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--radius-sm) 0 0 var(--radius-sm); color: #fff; font-size: 0.85rem; outline: none;"/>
+                        <button class="btn-primary" style="border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 10px 18px; box-shadow: none;">Join</button>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 TechNexus Hardware Corp. All rights reserved.</span>
+                <span>Engineered for Peak Performance</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- App Engine Script -->
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id') || 'pro-x1-carbon';
+            const currentProduct = PRODUCTS.find(p => p.id === productId) || PRODUCTS[0];
+
+            document.title = `${currentProduct.name} - TechNexus`;
+            document.getElementById('breadcrumb-title').textContent = currentProduct.name;
+            document.getElementById('breadcrumb-category-link').href = `catalog.html?category=${encodeURIComponent(currentProduct.category)}`;
+            document.getElementById('product-category-tag').textContent = `${currentProduct.category} / Pro Series`;
+            document.getElementById('product-title').textContent = currentProduct.name;
+            document.getElementById('product-description').textContent = currentProduct.description;
+            document.getElementById('rating-text').textContent = `${currentProduct.rating}/5 (${currentProduct.reviewsCount} Reviews)`;
+
+            const mainImg = document.getElementById('main-product-img');
+            mainImg.src = currentProduct.image;
+            mainImg.alt = currentProduct.name;
+
+            let basePrice = currentProduct.price;
+            let ramExtra = 0;
+            let ssdExtra = 0;
+            let selectedRam = '32GB';
+            let selectedSsd = '1TB';
+
+            const priceEl = document.getElementById('product-price');
+
+            function updatePriceDisplay() {
+                const total = basePrice + ramExtra + ssdExtra;
+                priceEl.textContent = formatKES(total);
+            }
+
+            updatePriceDisplay();
+
+            document.querySelectorAll('.opt-btn-ram').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.opt-btn-ram').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    ramExtra = parseFloat(btn.getAttribute('data-extra') || '0');
+                    selectedRam = btn.getAttribute('data-ram');
+                    updatePriceDisplay();
+                });
+            });
+
+            document.querySelectorAll('.opt-btn-ssd').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.opt-btn-ssd').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    ssdExtra = parseFloat(btn.getAttribute('data-extra') || '0');
+                    selectedSsd = btn.getAttribute('data-ssd');
+                    updatePriceDisplay();
+                });
+            });
+
+            const thumbButtons = document.querySelectorAll('.thumb-item');
+            thumbButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    thumbButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const newSrc = btn.getAttribute('data-img');
+                    if (newSrc) mainImg.src = newSrc;
+                });
+            });
+
+            document.getElementById('add-to-cart-btn').addEventListener('click', () => {
+                const configuredProduct = {
+                    id: `${currentProduct.id}-${selectedRam}-${selectedSsd}`,
+                    name: `${currentProduct.name}`,
+                    price: basePrice + ramExtra + ssdExtra,
+                    image: currentProduct.image,
+                    specs: `${selectedRam} RAM • ${selectedSsd} SSD`
+                };
+                CartManager.addItem(configuredProduct, 1);
+            });
+
+            document.getElementById('buy-now-btn').addEventListener('click', () => {
+                const configuredProduct = {
+                    id: `${currentProduct.id}-${selectedRam}-${selectedSsd}`,
+                    name: `${currentProduct.name}`,
+                    price: basePrice + ramExtra + ssdExtra,
+                    image: currentProduct.image,
+                    specs: `${selectedRam} RAM • ${selectedSsd} SSD`
+                };
+                CartManager.addItem(configuredProduct, 1);
+                window.location.href = 'cart.html';
+            });
+        });
+    </script>
+</body>
+</html>

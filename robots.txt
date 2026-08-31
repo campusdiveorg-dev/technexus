@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /seller-register.html
+Disallow: /seller-dashboard.html
+Disallow: /admin.html
+
+# TechNexus public pages
+Allow: /index.html
+Allow: /catalog.html
+Allow: /product.html
+Allow: /receipt.html

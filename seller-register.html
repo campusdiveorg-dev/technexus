@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Seller Registration — TechNexus Partner Program</title>
+    <meta name="robots" content="noindex, nofollow"/>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Master Design System Stylesheet -->
+    <link rel="stylesheet" href="css/style.css"/>
+    <style>
+        .register-hero {
+            padding: 40px 0 20px;
+            text-align: center;
+        }
+        .register-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 209, 255, 0.1);
+            border: 1px solid rgba(0, 209, 255, 0.3);
+            color: var(--primary-blue);
+            padding: 6px 16px;
+            border-radius: var(--radius-full);
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+        .register-title {
+            font-family: var(--font-heading);
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: var(--midnight-navy);
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+        .register-sub {
+            color: var(--text-muted);
+            font-size: 1rem;
+            max-width: 580px;
+            margin: 0 auto 30px;
+        }
+
+        .benefit-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            max-width: 800px;
+            margin: 0 auto 36px;
+        }
+        .benefit-card {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-md);
+            padding: 20px 16px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+        .benefit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--electric-blue);
+        }
+        .benefit-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+        }
+        .benefit-title {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--midnight-navy);
+            margin-bottom: 4px;
+        }
+        .benefit-desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .register-card-container {
+            max-width: 680px;
+            margin: 0 auto 60px;
+        }
+        .register-form-card {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-xl);
+            padding: 36px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .form-grid-2 .col-span-2 {
+            grid-column: 1 / -1;
+        }
+        .form-field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+        .form-field-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+        .form-field-input {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--surface-frost);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .form-field-input:focus {
+            border-color: var(--electric-blue);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(0, 209, 255, 0.15);
+        }
+
+        .commission-callout {
+            background: var(--primary-light);
+            border: 1px solid rgba(0, 88, 188, 0.2);
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            font-size: 0.8rem;
+            color: var(--primary-blue);
+            line-height: 1.5;
+        }
+        .commission-callout strong {
+            color: var(--midnight-navy);
+        }
+
+        .logo-upload-box {
+            border: 2px dashed var(--surface-border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            background: var(--surface-frost);
+            transition: all 0.2s;
+        }
+        .logo-upload-box:hover {
+            border-color: var(--electric-blue);
+            background: #fff;
+        }
+        #logo-preview {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--electric-blue);
+            display: none;
+            margin: 10px auto 0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        @media (max-width: 680px) {
+            .form-grid-2 { grid-template-columns: 1fr; }
+            .benefit-grid { grid-template-columns: 1fr; }
+            .register-form-card { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="navbar-container">
+            <a class="brand-logo" href="index.html">
+                <span class="material-symbols-outlined brand-icon">bolt</span>
+                <span>TechNexus</span>
+            </a>
+
+            <nav class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="catalog.html">Catalog</a>
+                <a href="product.html">Flagship</a>
+            </nav>
+
+            <div class="nav-actions">
+                <a href="cart.html" class="nav-icon-btn" aria-label="Shopping Cart">
+                    <span class="material-symbols-outlined">shopping_cart</span>
+                    <span class="cart-count-badge">0</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="register-hero">
+            <div class="register-badge">
+                <span class="material-symbols-outlined" style="font-size: 16px;">verified_user</span>
+                Verified Partner Network
+            </div>
+            <h1 class="register-title">Partner Seller Program</h1>
+            <p class="register-sub">Join verified hardware vendors across East Africa and scale your tech catalog on the TechNexus marketplace.</p>
+
+            <div class="benefit-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <span class="material-symbols-outlined">payments</span>
+                    </div>
+                    <div class="benefit-title">Instant M-Pesa Payouts</div>
+                    <div class="benefit-desc">Automated settlements directly to your Safaricom M-Pesa or bank account.</div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <span class="material-symbols-outlined">analytics</span>
+                    </div>
+                    <div class="benefit-title">Live Earnings Analytics</div>
+                    <div class="benefit-desc">Real-time GMV metrics, fee transparency, and PDF commission statements.</div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <span class="material-symbols-outlined">cloud_upload</span>
+                    </div>
+                    <div class="benefit-title">Cloudinary Fast Sync</div>
+                    <div class="benefit-desc">High-res hardware gallery uploads with global CDN media distribution.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="register-card-container">
+            <div class="register-form-card">
+                <form id="seller-register-form" novalidate>
+                    <div class="form-grid-2">
+                        <div class="form-field-group col-span-2">
+                            <label class="form-field-label" for="reg-store-name">Store / Brand Name</label>
+                            <input id="reg-store-name" class="form-field-input" type="text" placeholder="e.g. Apex Hardware Nairobi" required/>
+                        </div>
+
+                        <div class="form-field-group">
+                            <label class="form-field-label" for="reg-full-name">Full Representative Name</label>
+                            <input id="reg-full-name" class="form-field-input" type="text" placeholder="e.g. David Mwangi" required/>
+                        </div>
+                        <div class="form-field-group">
+                            <label class="form-field-label" for="reg-phone">M-Pesa Business Phone</label>
+                            <input id="reg-phone" class="form-field-input" type="tel" placeholder="+254 7XX XXX XXX"/>
+                        </div>
+
+                        <div class="form-field-group col-span-2">
+                            <label class="form-field-label" for="reg-email">Business Email Address</label>
+                            <input id="reg-email" class="form-field-input" type="email" placeholder="partner@yourbrand.co.ke" required/>
+                        </div>
+
+                        <div class="form-field-group">
+                            <label class="form-field-label" for="reg-category">Primary Category</label>
+                            <select id="reg-category" class="form-field-input">
+                                <option value="Laptops">Laptops (12% Fee)</option>
+                                <option value="Audio">Audio &amp; Acoustics (8% Fee)</option>
+                                <option value="Gaming">Gaming Rigs &amp; Displays (15% Fee)</option>
+                                <option value="Phones">Smartphones (10% Fee)</option>
+                                <option value="Monitors">Monitors (10% Fee)</option>
+                                <option value="Accessories">Accessories &amp; Peripherals (8% Fee)</option>
+                            </select>
+                        </div>
+                        <div class="form-field-group">
+                            <label class="form-field-label">&nbsp;</label>
+                            <div class="commission-callout">
+                                Tier rates: <strong>8%–15%</strong> variable. You keep <strong>85%–92%</strong> net revenue.
+                            </div>
+                        </div>
+
+                        <!-- Store Logo -->
+                        <div class="form-field-group col-span-2">
+                            <label class="form-field-label">Store Brand Logo</label>
+                            <div class="logo-upload-box" id="logo-upload-btn">
+                                <span class="material-symbols-outlined" style="font-size: 28px; color: var(--primary-blue);">add_photo_alternate</span>
+                                <p style="font-size: 0.85rem; color: var(--text-main); font-weight: 600; margin: 4px 0 2px;">Click to upload store badge via Cloudinary</p>
+                                <p style="font-size: 0.72rem; color: var(--text-light);">PNG, WebP or JPG (Square format recommended)</p>
+                                <img id="logo-preview" alt="Logo preview"/>
+                            </div>
+                            <input type="hidden" id="logo-url-input"/>
+                        </div>
+
+                        <div class="form-field-group">
+                            <label class="form-field-label" for="reg-password">Password</label>
+                            <input id="reg-password" class="form-field-input" type="password" placeholder="Min. 8 characters" required minlength="8"/>
+                        </div>
+                        <div class="form-field-group">
+                            <label class="form-field-label" for="reg-confirm-password">Confirm Password</label>
+                            <input id="reg-confirm-password" class="form-field-input" type="password" placeholder="Re-type password" required/>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="width: 100%; padding: 14px; font-size: 0.95rem; margin-top: 16px;">
+                        <span>Register Partner Storefront</span>
+                        <span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
+                    </button>
+                </form>
+
+                <div style="text-align: center; margin-top: 20px; font-size: 0.85rem; color: var(--text-muted);">
+                    Already a registered partner? 
+                    <a href="seller-dashboard.html" style="color: var(--primary-blue); font-weight: 700; text-decoration: underline;">Login to Dashboard →</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Component -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                        <span class="material-symbols-outlined" style="color: var(--electric-blue); font-size: 28px;">bolt</span>
+                        <h3 style="margin-bottom: 0;">TechNexus</h3>
+                    </div>
+                    <p>High-performance industrial grade hardware, displays, and mobile computing crafted with obsessive attention to detail.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Navigation</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="catalog.html">Product Catalog</a></li>
+                        <li><a href="product.html">Flagship Laptop</a></li>
+                        <li><a href="cart.html">Shopping Cart</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Partner Services</h4>
+                    <ul class="footer-links">
+                        <li><a href="seller-register.html">Seller Portal</a></li>
+                        <li><a href="seller-dashboard.html">Seller Dashboard</a></li>
+                        <li><a href="admin.html">Admin Access</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 TechNexus Hardware Corp. All rights reserved.</span>
+                <span>Partner Portal &amp; Merchant Distribution</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Cloudinary Widget + App Scripts -->
+    <script>
+        window.CLOUDINARY_CLOUD_NAME    = 'technexus';
+        window.CLOUDINARY_UPLOAD_PRESET = 'tn_products';
+    </script>
+    <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/seller.js"></script>
+    <script>
+        initSellerRegister();
+    </script>
+</body>
+</html>

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Product Catalog - TechNexus</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Master Design System Stylesheet -->
+    <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="navbar-container">
+            <!-- Brand Logo -->
+            <a class="brand-logo" href="index.html">
+                <span class="material-symbols-outlined brand-icon">bolt</span>
+                <span>TechNexus</span>
+            </a>
+
+            <!-- Desktop Navigation Links -->
+            <nav class="nav-links">
+                <a href="index.html">Home</a>
+                <a class="active" href="catalog.html">Catalog</a>
+                <a href="product.html">Flagship</a>
+                <a href="catalog.html?category=Laptops">Laptops</a>
+                <a href="catalog.html?category=Audio">Audio</a>
+                <a href="catalog.html?category=Gaming">Gaming</a>
+            </nav>
+
+            <!-- Navigation Actions -->
+            <div class="nav-actions">
+                <!-- Search Box -->
+                <div class="search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input id="catalog-search-input" class="nav-search-input" placeholder="Search catalog..." type="text"/>
+                </div>
+
+                <!-- Cart Button with Dynamic Badge -->
+                <a href="cart.html" class="nav-icon-btn" aria-label="Shopping Cart">
+                    <span class="material-symbols-outlined">shopping_cart</span>
+                    <span class="cart-count-badge">0</span>
+                </a>
+
+                <!-- Mobile Menu Toggle Button -->
+                <button class="nav-icon-btn menu-toggle-btn" data-menu-toggle aria-label="Toggle Menu">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div id="mobile-menu" class="mobile-nav">
+            <div class="search-box" style="width: 100%;">
+                <span class="material-symbols-outlined">search</span>
+                <input class="nav-search-input" style="width: 100%;" placeholder="Search catalog..." type="text"/>
+            </div>
+            <a href="index.html">Home</a>
+            <a href="catalog.html" style="color: var(--primary-blue); font-weight: 800;">Product Catalog</a>
+            <a href="product.html">Pro-X1 Flagship</a>
+            <a href="catalog.html?category=Laptops">Laptops</a>
+            <a href="catalog.html?category=Audio">Audio</a>
+            <a href="catalog.html?category=Gaming">Gaming</a>
+            <a href="cart.html" style="color: var(--primary-blue); font-weight: 800;">View Cart</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="catalog-layout">
+                
+                <!-- Filter Sidebar -->
+                <aside class="filter-sidebar">
+                    <div>
+                        <h3 class="filter-group-title">Hardware Categories</h3>
+                        <ul class="filter-list">
+                            <li>
+                                <label class="filter-label">
+                                    <input type="checkbox" value="All" class="category-checkbox" checked/>
+                                    <span style="font-weight: 700;">All Categories</span>
+                                </label>
+                            </li>
+                            <li>
+                                <label class="filter-label">
+                                    <input type="checkbox" value="Laptops" class="category-checkbox"/>
+                                    <span>Laptops &amp; Workstations</span>
+                                </label>
+                            </li>
+                            <li>
+                                <label class="filter-label">
+                                    <input type="checkbox" value="Audio" class="category-checkbox"/>
+                                    <span>Lossless Audio &amp; ANC</span>
+                                </label>
+                            </li>
+                            <li>
+                                <label class="filter-label">
+                                    <input type="checkbox" value="Gaming" class="category-checkbox"/>
+                                    <span>Displays &amp; Gaming</span>
+                                </label>
+                            </li>
+                            <li>
+                                <label class="filter-label">
+                                    <input type="checkbox" value="Accessories" class="category-checkbox"/>
+                                    <span>Precision Accessories</span>
+                                </label>
+                            </li>
+                            <li>
+                                <label class="filter-label">
+                                    <input type="checkbox" value="Wearables" class="category-checkbox"/>
+                                    <span>Smart Wearables</span>
+                                </label>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="filter-group-title">Maximum Price</h3>
+                        <input id="price-range" class="range-slider" max="350000" min="5000" step="5000" type="range" value="350000"/>
+                        <div class="range-values">
+                            <span>KSh 5,000</span>
+                            <span id="price-display" style="color: var(--primary-blue); font-weight: 800;">Up to KSh 350,000</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="filter-group-title">Minimum Rating</h3>
+                        <ul class="filter-list">
+                            <li>
+                                <label class="filter-label">
+                                    <input class="rating-radio" name="rating" type="radio" value="0" checked/>
+                                    <span>All Ratings</span>
+                                </label>
+                            </li>
+                            <li>
+                                <label class="filter-label">
+                                    <input class="rating-radio" name="rating" type="radio" value="4.8"/>
+                                    <span style="display: flex; align-items: center; gap: 4px;">
+                                        <span class="material-symbols-outlined" style="font-size: 16px; color: var(--accent-amber); font-variation-settings: 'FILL' 1;">star</span>
+                                        4.8 &amp; Up
+                                    </span>
+                                </label>
+                            </li>
+                            <li>
+                                <label class="filter-label">
+                                    <input class="rating-radio" name="rating" type="radio" value="4.5"/>
+                                    <span style="display: flex; align-items: center; gap: 4px;">
+                                        <span class="material-symbols-outlined" style="font-size: 16px; color: var(--accent-amber); font-variation-settings: 'FILL' 1;">star</span>
+                                        4.5 &amp; Up
+                                    </span>
+                                </label>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div style="background: var(--surface-muted); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--surface-border);">
+                        <span style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 800; color: var(--primary-blue); text-transform: uppercase;">SPECIAL OFFER</span>
+                        <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 4px 0;">10% Promo Code</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Use voucher <strong style="color: var(--midnight-navy); background: rgba(0, 209, 255, 0.2); padding: 2px 6px; border-radius: 4px;">TECH2026</strong> in cart.</p>
+                    </div>
+                </aside>
+
+                <!-- Product Catalog Main Area -->
+                <section>
+                    <!-- Controls Toolbar -->
+                    <div class="catalog-toolbar">
+                        <p id="results-count" class="results-count">Showing <strong id="total-count">0</strong> products</p>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label for="sort-select" style="font-family: var(--font-mono); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted);">Sort By:</label>
+                            <select id="sort-select" class="sort-select">
+                                <option value="featured">Featured Releases</option>
+                                <option value="price-low">Price: Low to High</option>
+                                <option value="price-high">Price: High to Low</option>
+                                <option value="rating">Highest Rated</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Product Grid -->
+                    <div id="product-grid" class="product-grid">
+                        <!-- Injected via JavaScript -->
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="empty-state" style="display: none; text-align: center; padding: 64px 20px; background: #fff; border-radius: var(--radius-lg); border: 1px solid var(--surface-border);">
+                        <span class="material-symbols-outlined" style="font-size: 48px; color: var(--text-light); margin-bottom: 12px;">search_off</span>
+                        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: var(--midnight-navy); margin-bottom: 8px;">No matching products</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Try adjusting your filters or search keywords.</p>
+                        <button id="reset-filters-btn" class="btn-primary">Reset Filters</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Component -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                        <span class="material-symbols-outlined" style="color: var(--electric-blue); font-size: 28px;">bolt</span>
+                        <h3 style="margin-bottom: 0;">TechNexus</h3>
+                    </div>
+                    <p>High-performance industrial grade hardware, displays, and mobile computing crafted with obsessive attention to detail.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Navigation</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="catalog.html">Product Catalog</a></li>
+                        <li><a href="product.html">Flagship Laptop</a></li>
+                        <li><a href="cart.html">Shopping Cart</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Guarantees</h4>
+                    <ul class="footer-links">
+                        <li style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--electric-blue);">local_shipping</span> Free Worldwide Express</li>
+                        <li style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--electric-blue);">verified</span> 2-Year Full Hardware Warranty</li>
+                        <li style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--electric-blue);">lock</span> 256-Bit Encrypted Checkout</li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Newsletter</h4>
+                    <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; margin-bottom: 12px;">Get notified about exclusive drops & firmware updates.</p>
+                    <div style="display: flex;">
+                        <input placeholder="Enter your email" type="email" style="flex-grow: 1; padding: 10px 14px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--radius-sm) 0 0 var(--radius-sm); color: #fff; font-size: 0.85rem; outline: none;"/>
+                        <button class="btn-primary" style="border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 10px 18px; box-shadow: none;">Join</button>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 TechNexus Hardware Corp. All rights reserved.</span>
+                <span>Engineered for Peak Performance</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- App Engine Script -->
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('product-grid');
+            const emptyState = document.getElementById('empty-state');
+            const totalCountEl = document.getElementById('total-count');
+            const priceRange = document.getElementById('price-range');
+            const priceDisplay = document.getElementById('price-display');
+            const sortSelect = document.getElementById('sort-select');
+            const searchInput = document.getElementById('catalog-search-input');
+            const resetBtn = document.getElementById('reset-filters-btn');
+            const categoryBoxes = document.querySelectorAll('.category-checkbox');
+            const ratingRadios = document.querySelectorAll('.rating-radio');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const categoryParam = urlParams.get('category');
+            const searchParam = urlParams.get('search');
+
+            if (categoryParam) {
+                categoryBoxes.forEach(box => {
+                    box.checked = (box.value === categoryParam);
+                });
+            }
+
+            if (searchParam && searchInput) {
+                searchInput.value = searchParam;
+            }
+
+            function renderCatalog() {
+                const allBox = Array.from(categoryBoxes).find(b => b.value === 'All');
+                let selectedCategories = Array.from(categoryBoxes)
+                    .filter(b => b.checked && b.value !== 'All')
+                    .map(b => b.value);
+
+                if (allBox && allBox.checked && selectedCategories.length === 0) {
+                    selectedCategories = [];
+                }
+
+                const maxPrice = parseFloat(priceRange.value);
+                priceDisplay.textContent = `Up to ${formatKES(maxPrice)}`;
+
+                const selectedRating = parseFloat(Array.from(ratingRadios).find(r => r.checked)?.value || '0');
+                const searchQuery = (searchInput?.value || searchParam || '').toLowerCase().trim();
+                const sortMode = sortSelect.value;
+
+                let filtered = PRODUCTS.filter(product => {
+                    if (selectedCategories.length > 0 && !selectedCategories.includes(product.category)) return false;
+                    if (product.price > maxPrice) return false;
+                    if (product.rating < selectedRating) return false;
+                    if (searchQuery) {
+                        const inName = product.name.toLowerCase().includes(searchQuery);
+                        const inDesc = product.description.toLowerCase().includes(searchQuery);
+                        const inCat = product.category.toLowerCase().includes(searchQuery);
+                        if (!inName && !inDesc && !inCat) return false;
+                    }
+                    return true;
+                });
+
+                if (sortMode === 'price-low') filtered.sort((a, b) => a.price - b.price);
+                else if (sortMode === 'price-high') filtered.sort((a, b) => b.price - a.price);
+                else if (sortMode === 'rating') filtered.sort((a, b) => b.rating - a.rating);
+
+                totalCountEl.textContent = filtered.length;
+
+                if (filtered.length === 0) {
+                    grid.innerHTML = '';
+                    emptyState.style.display = 'block';
+                } else {
+                    emptyState.style.display = 'none';
+                    grid.innerHTML = filtered.map(product => `
+                        <article class="product-card">
+                            <div class="product-thumb">
+                                ${product.tag ? `<span class="product-badge">${product.tag}</span>` : ''}
+                                <a href="${product.href}">
+                                    <img src="${product.image}" alt="${product.name}"/>
+                                </a>
+                            </div>
+                            <div class="product-body">
+                                <div class="product-rating">
+                                    <span class="material-symbols-outlined">star</span>
+                                    <span class="product-rating-score">${product.rating}</span>
+                                    <span>(${product.reviewsCount})</span>
+                                </div>
+                                <h3 class="product-name">
+                                    <a href="${product.href}">${product.name}</a>
+                                </h3>
+                                <p class="product-desc">${product.description}</p>
+                                <div class="product-footer">
+                                    <span class="product-price">${formatKES(product.price)}</span>
+                                    <button class="btn-primary" style="padding: 8px 16px; font-size: 0.75rem;" data-add-to-cart="${product.id}">
+                                        ADD TO CART
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                    `).join('');
+                }
+            }
+
+            categoryBoxes.forEach(box => {
+                box.addEventListener('change', (e) => {
+                    if (e.target.value === 'All' && e.target.checked) {
+                        categoryBoxes.forEach(b => { if (b.value !== 'All') b.checked = false; });
+                    } else if (e.target.value !== 'All' && e.target.checked) {
+                        const allBox = Array.from(categoryBoxes).find(b => b.value === 'All');
+                        if (allBox) allBox.checked = false;
+                    }
+                    renderCatalog();
+                });
+            });
+
+            priceRange.addEventListener('input', renderCatalog);
+            ratingRadios.forEach(r => r.addEventListener('change', renderCatalog));
+            sortSelect.addEventListener('change', renderCatalog);
+            if (searchInput) searchInput.addEventListener('input', renderCatalog);
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    categoryBoxes.forEach(b => b.checked = (b.value === 'All'));
+                    priceRange.value = 3000;
+                    ratingRadios.forEach(r => r.checked = (r.value === '0'));
+                    if (searchInput) searchInput.value = '';
+                    sortSelect.value = 'featured';
+                    renderCatalog();
+                });
+            }
+
+            renderCatalog();
+        });
+    </script>
+</body>
+</html>

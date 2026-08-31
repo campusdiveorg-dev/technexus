@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Receipt — TechNexus</title>
+    <meta name="description" content="Your official TechNexus purchase receipt."/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="css/style.css"/>
+    <style>
+        /* ── Receipt-specific styles ── */
+        .receipt-page { background: #0a192f; min-height: 100vh; padding: 2rem 1rem 4rem; }
+        .receipt-wrapper { max-width: 800px; margin: 0 auto; }
+
+        .receipt-card {
+            background: #fff; border-radius: 16px; overflow: hidden;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.4);
+        }
+
+        /* Header */
+        .receipt-header {
+            background: linear-gradient(135deg, #0a192f 0%, #0d2847 100%);
+            padding: 2rem 2.5rem; display: flex; justify-content: space-between; align-items: center;
+        }
+        .receipt-brand { display: flex; align-items: center; gap: .6rem; }
+        .receipt-brand-icon { font-size: 2rem; color: #00d1ff; }
+        .receipt-brand-name { font-size: 1.5rem; font-weight: 800; color: #fff; }
+        .receipt-brand-sub { font-size: .75rem; color: #94a3b8; }
+        .receipt-title-block { text-align: right; }
+        .receipt-official { font-size: 1rem; font-weight: 700; color: #00d1ff; letter-spacing: 2px; text-transform: uppercase; }
+        .receipt-order-num { font-size: .85rem; color: #94a3b8; margin-top: .2rem; }
+
+        /* Meta row */
+        .receipt-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding: 2rem 2.5rem; border-bottom: 1px solid #e2e8f0; }
+        .receipt-meta-block h4 { font-size: .7rem; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: .5rem; }
+        .receipt-meta-block p  { font-size: .9rem; color: #1e293b; font-weight: 500; }
+        .receipt-meta-block .meta-val { font-size: .85rem; color: #475569; margin-top: .15rem; }
+
+        /* Payment badge */
+        .payment-badge {
+            display: inline-flex; align-items: center; gap: .35rem;
+            padding: .25rem .75rem; border-radius: 20px; font-size: .8rem; font-weight: 600;
+            background: #dcfce7; color: #15803d;
+        }
+
+        /* Items table */
+        .receipt-table-wrap { padding: 0 2.5rem; overflow-x: auto; }
+        .receipt-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+        .receipt-table thead { background: #f1f5f9; }
+        .receipt-table th { padding: .75rem 1rem; text-align: left; font-size: .75rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; font-weight: 600; }
+        .receipt-table th:last-child, .receipt-table td:last-child { text-align: right; }
+        .receipt-table th:nth-child(4), .receipt-table td:nth-child(4) { text-align: center; }
+        .receipt-table td { padding: .875rem 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+        .receipt-table tr:last-child td { border-bottom: none; }
+        .receipt-table .receipt-product-cell { display: flex; align-items: center; gap: .75rem; }
+        .receipt-product-img { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid #e2e8f0; }
+        .receipt-td-bold { font-weight: 700; color: #0f172a; }
+
+        /* Totals */
+        .receipt-totals { padding: 1.5rem 2.5rem; border-top: 2px solid #e2e8f0; display: flex; justify-content: flex-end; }
+        .receipt-totals-table { min-width: 260px; }
+        .totals-row { display: flex; justify-content: space-between; padding: .4rem 0; font-size: .875rem; color: #475569; }
+        .totals-row.grand { border-top: 2px solid #0a192f; margin-top: .5rem; padding-top: .75rem; font-size: 1.1rem; font-weight: 800; color: #0a192f; }
+
+        /* Footer */
+        .receipt-footer { background: #f8fafc; padding: 1.5rem 2.5rem; text-align: center; border-top: 1px solid #e2e8f0; }
+        .receipt-footer p { font-size: .8rem; color: #94a3b8; }
+        .receipt-footer strong { color: #475569; }
+
+        /* Actions */
+        .receipt-actions { display: flex; gap: 1rem; justify-content: center; margin: 2rem 0 1rem; flex-wrap: wrap; }
+        .btn-receipt { display: inline-flex; align-items: center; gap: .5rem; padding: .75rem 1.75rem; border-radius: 50px; font-size: .9rem; font-weight: 600; cursor: pointer; border: none; transition: all .2s; text-decoration: none; }
+        .btn-receipt-primary { background: linear-gradient(135deg, #00d1ff, #0058bc); color: #fff; }
+        .btn-receipt-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,209,255,.4); }
+        .btn-receipt-outline { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,.3); }
+        .btn-receipt-outline:hover { background: rgba(255,255,255,.1); }
+
+        /* Loading / Error states */
+        .receipt-loading { text-align: center; padding: 4rem 2rem; color: #94a3b8; }
+        .receipt-spinner { width: 48px; height: 48px; border: 4px solid rgba(0,209,255,.2); border-top-color: #00d1ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .receipt-error { text-align: center; padding: 3rem; color: #ef4444; }
+        .hidden { display: none !important; }
+
+        /* Print styles */
+        @media print {
+            .receipt-page { background: #fff !important; padding: 0; }
+            .receipt-actions, .navbar, .receipt-back-link { display: none !important; }
+            .receipt-card { box-shadow: none; border-radius: 0; }
+            .receipt-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Nav -->
+    <header class="navbar">
+        <div class="navbar-container">
+            <a class="brand-logo" href="index.html">
+                <span class="material-symbols-outlined brand-icon">bolt</span>
+                <span>TechNexus</span>
+            </a>
+            <nav class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="catalog.html">Catalog</a>
+            </nav>
+            <div class="nav-actions">
+                <a href="cart.html" class="nav-icon-btn" aria-label="Cart">
+                    <span class="material-symbols-outlined">shopping_cart</span>
+                    <span class="cart-count-badge">0</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="receipt-page">
+        <div class="receipt-wrapper">
+
+            <!-- Back link -->
+            <a href="index.html" class="receipt-back-link" style="display:inline-flex;align-items:center;gap:.35rem;color:#94a3b8;text-decoration:none;font-size:.85rem;margin-bottom:1.5rem;">
+                <span class="material-symbols-outlined" style="font-size:1rem;">arrow_back</span>
+                Back to TechNexus
+            </a>
+
+            <!-- Loading state -->
+            <div id="receipt-loading" class="receipt-loading">
+                <div class="receipt-spinner"></div>
+                <p>Loading your receipt…</p>
+            </div>
+
+            <!-- Error state -->
+            <p id="receipt-error" class="receipt-error hidden"></p>
+
+            <!-- Receipt content -->
+            <div id="receipt-content" class="hidden">
+
+                <!-- Action buttons (above receipt) -->
+                <div class="receipt-actions">
+                    <button class="btn-receipt btn-receipt-primary" onclick="downloadReceiptPDF()">
+                        <span class="material-symbols-outlined">picture_as_pdf</span>
+                        Download PDF
+                    </button>
+                    <button class="btn-receipt btn-receipt-outline" onclick="printReceipt()">
+                        <span class="material-symbols-outlined">print</span>
+                        Print
+                    </button>
+                    <a href="catalog.html" class="btn-receipt btn-receipt-outline">
+                        <span class="material-symbols-outlined">storefront</span>
+                        Continue Shopping
+                    </a>
+                </div>
+
+                <!-- The Receipt Card -->
+                <div class="receipt-card">
+
+                    <!-- Header -->
+                    <div class="receipt-header">
+                        <div class="receipt-brand">
+                            <span class="material-symbols-outlined receipt-brand-icon">bolt</span>
+                            <div>
+                                <div class="receipt-brand-name">TechNexus</div>
+                                <div class="receipt-brand-sub">Electronics Marketplace</div>
+                            </div>
+                        </div>
+                        <div class="receipt-title-block">
+                            <div class="receipt-official">Official Receipt</div>
+                            <div class="receipt-order-num">Order: <strong id="receipt-order-id" style="color:#fff;"></strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Meta -->
+                    <div class="receipt-meta">
+                        <div class="receipt-meta-block">
+                            <h4>Bill To</h4>
+                            <p id="receipt-customer-name"></p>
+                            <p class="meta-val" id="receipt-customer-email"></p>
+                            <p class="meta-val" id="receipt-customer-phone"></p>
+                            <p class="meta-val" id="receipt-shipping-address"></p>
+                        </div>
+                        <div class="receipt-meta-block" style="text-align:right;">
+                            <h4>Payment Info</h4>
+                            <span class="payment-badge">
+                                <span class="material-symbols-outlined" style="font-size:1rem;">check_circle</span>
+                                <span id="receipt-payment-method">—</span>
+                            </span>
+                            <p class="meta-val" style="margin-top:.5rem;">Txn: <span id="receipt-txn-id"></span></p>
+                            <p class="meta-val" id="receipt-date"></p>
+                        </div>
+                    </div>
+
+                    <!-- Items table -->
+                    <div class="receipt-table-wrap" style="padding-top:1.5rem;">
+                        <table class="receipt-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Product</th>
+                                    <th>Seller</th>
+                                    <th>Qty</th>
+                                    <th>Unit Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="receipt-items-tbody"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="receipt-totals">
+                        <div class="receipt-totals-table">
+                            <div class="totals-row">
+                                <span>Subtotal (excl. VAT 16%)</span>
+                                <span id="receipt-subtotal">—</span>
+                            </div>
+                            <div class="totals-row">
+                                <span>VAT (16%)</span>
+                                <span id="receipt-vat">—</span>
+                            </div>
+                            <div class="totals-row grand">
+                                <span>Total Paid</span>
+                                <span id="receipt-total">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="receipt-footer">
+                        <p>Thank you for shopping at <strong>TechNexus</strong>! 🎉</p>
+                        <p style="margin-top:.25rem;">For support: <strong>support@technexus.co.ke</strong> · <strong>+254 700 000 000</strong></p>
+                        <p style="margin-top:.5rem;font-size:.7rem;">This is a computer-generated receipt and does not require a signature.</p>
+                    </div>
+                </div>
+
+                <!-- Actions below too -->
+                <div class="receipt-actions" style="margin-top:1.5rem;">
+                    <button class="btn-receipt btn-receipt-primary" onclick="downloadReceiptPDF()">
+                        <span class="material-symbols-outlined">picture_as_pdf</span>
+                        Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/receipt.js"></script>
+</body>
+</html>

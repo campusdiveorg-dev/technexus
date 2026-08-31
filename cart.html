@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Shopping Cart - TechNexus</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Master Design System Stylesheet -->
+    <link rel="stylesheet" href="css/style.css"/>
+    <style>
+        /* ── Checkout Modal ── */
+        .checkout-overlay {
+            display: none; position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0,0,0,.75); backdrop-filter: blur(6px);
+            align-items: center; justify-content: center; padding: 1rem;
+        }
+        .checkout-overlay.active { display: flex; }
+        .checkout-modal {
+            background: #0d1f3c; border: 1px solid rgba(255,255,255,.1);
+            border-radius: 20px; width: 100%; max-width: 520px; max-height: 90vh;
+            overflow-y: auto; box-shadow: 0 30px 80px rgba(0,0,0,.6);
+            animation: slideUp .3s ease;
+        }
+        @keyframes slideUp { from { transform:translateY(30px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+        .modal-header { display:flex; justify-content:space-between; align-items:center; padding:1.5rem 1.75rem; border-bottom:1px solid rgba(255,255,255,.08); }
+        .modal-title  { font-size:1.1rem; font-weight:800; color:#fff; }
+        .modal-close  { background:none; border:none; color:#94a3b8; cursor:pointer; font-size:1.4rem; line-height:1; }
+        .modal-body   { padding:1.75rem; }
+
+        /* Step indicator */
+        .step-indicator { display:flex; align-items:center; gap:.4rem; margin-bottom:1.75rem; justify-content:center; }
+        .step-dot {
+            width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,.15); transition:all .2s;
+        }
+        .step-dot.active { background:#00d1ff; box-shadow:0 0 8px rgba(0,209,255,.5); }
+        .step-line { flex:1; height:2px; background:rgba(255,255,255,.1); max-width:60px; }
+
+        /* Checkout steps */
+        .checkout-step { display:none; }
+        .checkout-step.active { display:block; }
+        .step-title { font-size:.95rem; font-weight:700; color:#e2e8f0; margin-bottom:1.25rem; }
+
+        /* Form fields */
+        .ch-form-group { margin-bottom:1rem; }
+        .ch-label { font-size:.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:#94a3b8; display:block; margin-bottom:.35rem; }
+        .ch-input {
+            width:100%; padding:.75rem .9rem; background:rgba(255,255,255,.06);
+            border:1px solid rgba(255,255,255,.1); border-radius:10px;
+            color:#fff; font-size:.9rem; font-family:inherit; box-sizing:border-box;
+        }
+        .ch-input:focus { outline:none; border-color:#00d1ff; background:rgba(0,209,255,.05); }
+        .ch-input-row { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+
+        /* Order summary in modal */
+        .modal-items { margin-bottom:1.25rem; }
+        .modal-item-row { display:flex; align-items:center; gap:.75rem; padding:.6rem 0; border-bottom:1px solid rgba(255,255,255,.05); }
+        .modal-item-img  { width:44px; height:44px; border-radius:8px; object-fit:cover; border:1px solid rgba(255,255,255,.1); flex-shrink:0; }
+        .modal-item-info { flex:1; min-width:0; }
+        .modal-item-name { font-size:.85rem; font-weight:600; color:#e2e8f0; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .modal-item-qty  { font-size:.75rem; color:#64748b; }
+        .modal-item-price { font-size:.9rem; font-weight:700; color:#00d1ff; white-space:nowrap; }
+        .modal-total-row { display:flex; justify-content:space-between; padding:.75rem 0 0; border-top:2px solid rgba(255,255,255,.1); margin-top:.25rem; }
+        .modal-total-label { font-weight:700; color:#e2e8f0; }
+        .modal-total-val   { font-size:1.1rem; font-weight:800; color:#00d1ff; }
+
+        /* Confirm block */
+        .confirm-block { background:rgba(255,255,255,.04); border-radius:12px; padding:1rem; margin-bottom:1rem; }
+        .confirm-row   { display:flex; gap:.5rem; font-size:.85rem; padding:.25rem 0; }
+        .confirm-label { color:#64748b; min-width:80px; }
+        .confirm-val   { color:#e2e8f0; font-weight:600; }
+
+        /* Buttons */
+        .btn-step-next {
+            width:100%; padding:.85rem; border-radius:50px; border:none;
+            background:linear-gradient(135deg,#00d1ff,#0058bc);
+            color:#fff; font-size:1rem; font-weight:700; cursor:pointer; font-family:inherit;
+            transition:all .2s; margin-top:1rem;
+        }
+        .btn-step-next:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,209,255,.4); }
+        .btn-step-next:disabled { opacity:.6; transform:none; cursor:wait; }
+        .btn-step-back {
+            background:none; border:none; color:#94a3b8; font-size:.85rem; cursor:pointer;
+            display:flex; align-items:center; gap:.3rem; margin-bottom:1rem; font-family:inherit;
+        }
+        .btn-step-back:hover { color:#fff; }
+
+        /* Payment methods info */
+        .payment-methods { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem; }
+        .pay-badge {
+            display:inline-flex; align-items:center; gap:.3rem; padding:.3rem .7rem;
+            background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
+            border-radius:20px; font-size:.75rem; color:#94a3b8; font-weight:600;
+        }
+        .pay-badge .pi { font-size:.85rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="navbar-container">
+            <!-- Brand Logo -->
+            <a class="brand-logo" href="index.html">
+                <span class="material-symbols-outlined brand-icon">bolt</span>
+                <span>TechNexus</span>
+            </a>
+
+            <!-- Checkout Security Indicator -->
+            <div style="display: flex; align-items: center; gap: 24px;">
+                <a href="catalog.html" style="font-family: var(--font-mono); font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px;">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">storefront</span>
+                    <span>Browse Catalog</span>
+                </a>
+                <div style="display: flex; align-items: center; gap: 8px; background: #ffffff; padding: 6px 14px; border-radius: var(--radius-full); border: 1px solid var(--surface-border); box-shadow: var(--shadow-sm);">
+                    <span class="material-symbols-outlined" style="color: var(--electric-blue); font-size: 16px; font-variation-settings: 'FILL' 1;">lock</span>
+                    <span style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 800; color: var(--midnight-navy); text-transform: uppercase; letter-spacing: 0.06em;">SECURE 256-BIT CHECKOUT</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Cart Content -->
+    <main class="main-content">
+        <div class="container" style="padding-top: 24px;">
+            <div style="margin-bottom: 28px;">
+                <h1 style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 800; color: var(--midnight-navy); letter-spacing: -0.02em;">Your Shopping Cart</h1>
+                <p id="cart-item-summary" style="color: var(--text-muted); font-size: 0.95rem; margin-top: 4px;">Review your items for express delivery.</p>
+            </div>
+
+            <div class="cart-layout">
+                
+                <!-- Items Container (Left) -->
+                <div>
+                    <div id="cart-items-list" class="cart-items-container">
+                        <!-- Injected via JavaScript -->
+                    </div>
+
+                    <!-- Empty Cart Message -->
+                    <div id="cart-empty-notice" style="display: none; text-align: center; padding: 64px 24px; background: #fff; border-radius: var(--radius-xl); border: 1px solid var(--surface-border);">
+                        <span class="material-symbols-outlined" style="font-size: 56px; color: var(--text-light); margin-bottom: 16px;">production_quantity_limits</span>
+                        <h2 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800; color: var(--midnight-navy); margin-bottom: 8px;">Your cart is empty</h2>
+                        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; max-width: 420px; margin-left: auto; margin-right: auto;">Explore our latest workstation laptops, 4K displays, and acoustic audio devices.</p>
+                        <a href="catalog.html" class="btn-primary">
+                            <span>Explore Catalog</span>
+                            <span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
+                        </a>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px;">
+                        <a href="catalog.html" class="btn-secondary" style="padding: 10px 20px; font-size: 0.78rem;">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">arrow_back</span>
+                            <span>Continue Shopping</span>
+                        </a>
+                        <button id="clear-cart-btn" style="font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">delete_sweep</span>
+                            <span>Clear Entire Cart</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Order Summary Console (Right) -->
+                <div class="order-summary-box">
+                    <h2 class="summary-title">Order Summary</h2>
+
+                    <!-- Promo Code Input -->
+                    <div style="margin-bottom: 24px;">
+                        <label class="form-label" for="promo-input">Promotional Voucher</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input id="promo-input" class="form-input" style="text-transform: uppercase; font-family: var(--font-mono); font-weight: 700;" placeholder="e.g. TECH2026" type="text"/>
+                            <button id="apply-promo-btn" class="btn-dark" style="padding: 10px 18px; font-size: 0.75rem;">Apply</button>
+                        </div>
+                        <div id="promo-status" style="display: none; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; margin-top: 6px;"></div>
+                    </div>
+
+                    <!-- Price Rows -->
+                    <div class="summary-row">
+                        <span>Items Subtotal</span>
+                        <strong id="summary-subtotal">$0.00</strong>
+                    </div>
+                    <div id="discount-row" class="summary-row" style="display: none; color: var(--accent-success);">
+                        <span>10% Promo Discount</span>
+                        <strong id="summary-discount">-$0.00</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Express Priority Shipping</span>
+                        <strong style="color: var(--accent-success);">FREE</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Estimated Sales Tax (8%)</span>
+                        <strong id="summary-tax">$0.00</strong>
+                    </div>
+
+                    <div class="summary-divider"></div>
+
+                    <div class="summary-total-row">
+                        <span class="summary-total-label">Total Amount</span>
+                        <span id="summary-total" class="summary-total-val">$0.00</span>
+                    </div>
+
+                    <button id="checkout-btn" class="btn-primary" style="width: 100%; padding: 16px; font-size: 0.85rem; margin-bottom: 20px;">
+                        <span>Proceed to Checkout</span>
+                        <span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
+                    </button>
+
+                    <!-- Trust Points -->
+                    <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.78rem; color: var(--text-muted); border-top: 1px solid var(--surface-border); padding-top: 20px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="material-symbols-outlined" style="color: var(--electric-blue); font-size: 16px; font-variation-settings: 'FILL' 1;">verified_user</span>
+                            <span>256-Bit SSL Encrypted Checkout</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="material-symbols-outlined" style="color: var(--electric-blue); font-size: 16px; font-variation-settings: 'FILL' 1;">workspace_premium</span>
+                            <span>3-Year TechNexus Warranty Included</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+
+    <!-- Footer Component -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                        <span class="material-symbols-outlined" style="color: var(--electric-blue); font-size: 28px;">bolt</span>
+                        <h3 style="margin-bottom: 0;">TechNexus</h3>
+                    </div>
+                    <p>High-performance industrial grade hardware, displays, and mobile computing crafted with obsessive attention to detail.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Navigation</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="catalog.html">Product Catalog</a></li>
+                        <li><a href="product.html">Flagship Laptop</a></li>
+                        <li><a href="cart.html">Shopping Cart</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Guarantees</h4>
+                    <ul class="footer-links">
+                        <li style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--electric-blue);">local_shipping</span> Free Worldwide Express</li>
+                        <li style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--electric-blue);">verified</span> 2-Year Full Hardware Warranty</li>
+                        <li style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--electric-blue);">lock</span> 256-Bit Encrypted Checkout</li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Newsletter</h4>
+                    <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; margin-bottom: 12px;">Get notified about exclusive drops & firmware updates.</p>
+                    <div style="display: flex;">
+                        <input placeholder="Enter your email" type="email" style="flex-grow: 1; padding: 10px 14px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--radius-sm) 0 0 var(--radius-sm); color: #fff; font-size: 0.85rem; outline: none;"/>
+                        <button class="btn-primary" style="border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 10px 18px; box-shadow: none;">Join</button>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 TechNexus Hardware Corp. All rights reserved.</span>
+                <span>Engineered for Peak Performance</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- App Engine Script -->
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const listEl = document.getElementById('cart-items-list');
+            const emptyNotice = document.getElementById('cart-empty-notice');
+            const summaryCountEl = document.getElementById('cart-item-summary');
+            const subtotalEl = document.getElementById('summary-subtotal');
+            const discountRow = document.getElementById('discount-row');
+            const discountEl = document.getElementById('summary-discount');
+            const taxEl = document.getElementById('summary-tax');
+            const totalEl = document.getElementById('summary-total');
+            const modalTotalDisplay = document.getElementById('modal-total-display');
+            const promoInput = document.getElementById('promo-input');
+            const applyPromoBtn = document.getElementById('apply-promo-btn');
+            const promoStatus = document.getElementById('promo-status');
+            const clearCartBtn = document.getElementById('clear-cart-btn');
+
+            let discountMultiplier = 0;
+
+            function renderCart() {
+                const cart = CartManager.getCart();
+                const totalItems = CartManager.getItemCount();
+
+                summaryCountEl.textContent = totalItems === 1 
+                    ? '1 item ready for express dispatch.' 
+                    : `${totalItems} items ready for express dispatch.`;
+
+                if (cart.length === 0) {
+                    listEl.innerHTML = '';
+                    emptyNotice.style.display = 'block';
+                    document.getElementById('checkout-btn').disabled = true;
+                    document.getElementById('checkout-btn').style.opacity = '0.5';
+                    document.getElementById('checkout-btn').style.cursor = 'not-allowed';
+                } else {
+                    emptyNotice.style.display = 'none';
+                    document.getElementById('checkout-btn').disabled = false;
+                    document.getElementById('checkout-btn').style.opacity = '1';
+                    document.getElementById('checkout-btn').style.cursor = 'pointer';
+
+                    listEl.innerHTML = cart.map(item => `
+                        <div class="cart-item-card">
+                            <div class="cart-item-img">
+                                <img src="${item.image}" alt="${item.name}"/>
+                            </div>
+                            <div class="cart-item-info">
+                                <h3>${item.name}</h3>
+                                <p class="cart-item-specs">${item.specs}</p>
+                                <div class="qty-control">
+                                    <button class="qty-btn qty-dec-btn" data-id="${item.id}" aria-label="Decrease quantity">
+                                        <span class="material-symbols-outlined" style="font-size: 14px;">remove</span>
+                                    </button>
+                                    <span class="qty-number">${item.qty}</span>
+                                    <button class="qty-btn qty-inc-btn" data-id="${item.id}" aria-label="Increase quantity">
+                                        <span class="material-symbols-outlined" style="font-size: 14px;">add</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="cart-item-price-side">
+                                <span class="cart-item-total">${formatKES(item.price * item.qty)}</span>
+                                <button class="btn-remove-item remove-item-btn" data-id="${item.id}">
+                                    <span class="material-symbols-outlined" style="font-size: 14px;">delete</span>
+                                    <span>Remove</span>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                const subtotal = CartManager.getSubtotal();
+                const discount = subtotal * discountMultiplier;
+                const taxableAmount = Math.max(0, subtotal - discount);
+                const vat = taxableAmount * 0.16;
+                const total = taxableAmount + vat;
+
+                subtotalEl.textContent = formatKES(subtotal);
+                
+                if (discountMultiplier > 0 && subtotal > 0) {
+                    discountRow.style.display = 'flex';
+                    discountEl.textContent = `-${formatKES(discount)}`;
+                } else {
+                    discountRow.style.display = 'none';
+                }
+
+                taxEl.textContent = formatKES(vat);
+                totalEl.textContent = formatKES(total);
+            }
+
+            listEl.addEventListener('click', (e) => {
+                const decBtn = e.target.closest('.qty-dec-btn');
+                if (decBtn) {
+                    CartManager.updateQty(decBtn.getAttribute('data-id'), -1);
+                    renderCart();
+                    return;
+                }
+                const incBtn = e.target.closest('.qty-inc-btn');
+                if (incBtn) {
+                    CartManager.updateQty(incBtn.getAttribute('data-id'), 1);
+                    renderCart();
+                    return;
+                }
+                const removeBtn = e.target.closest('.remove-item-btn');
+                if (removeBtn) {
+                    CartManager.removeItem(removeBtn.getAttribute('data-id'));
+                    renderCart();
+                    return;
+                }
+            });
+
+            clearCartBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to clear your cart?')) {
+                    CartManager.clearCart();
+                    renderCart();
+                }
+            });
+
+            applyPromoBtn.addEventListener('click', () => {
+                const code = promoInput.value.trim().toUpperCase();
+                if (code === 'TECH2026') {
+                    discountMultiplier = 0.10;
+                    promoStatus.textContent = '✓ Voucher TECH2026 Applied (10% Off)';
+                    promoStatus.style.color = 'var(--accent-success)';
+                    promoStatus.style.display = 'block';
+                    renderCart();
+                    showToast('10% Promo Code applied successfully!');
+                } else {
+                    promoStatus.textContent = '✕ Invalid promo code. Try TECH2026';
+                    promoStatus.style.color = 'var(--accent-error)';
+                    promoStatus.style.display = 'block';
+                }
+            });
+
+            const checkoutBtn = document.getElementById('checkout-btn');
+            checkoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (typeof openCheckoutModal === 'function') {
+                    openCheckoutModal();
+                }
+            });
+
+            renderCart();
+        });
+    </script>
+
+    <!-- ── Checkout Modal ─────────────────────────────────────── -->
+    <div class="checkout-overlay" id="checkout-overlay">
+        <div class="checkout-modal">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span class="material-symbols-outlined" style="vertical-align:middle;font-size:1.1rem;color:#00d1ff;">lock</span>
+                    Secure Checkout
+                </div>
+                <button class="modal-close" id="checkout-close-btn" aria-label="Close">&#x2715;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Step indicator -->
+                <div class="step-indicator">
+                    <div class="step-dot active" id="dot-1"></div>
+                    <div class="step-line"></div>
+                    <div class="step-dot" id="dot-2"></div>
+                </div>
+
+                <!-- Step 1: Customer Info -->
+                <div class="checkout-step active" id="checkout-step-1">
+                    <div class="step-title">📦 Delivery Information</div>
+                    <div class="ch-input-row">
+                        <div class="ch-form-group">
+                            <label class="ch-label" for="cust-name">Full Name</label>
+                            <input id="cust-name" class="ch-input" type="text" placeholder="Your full name" required/>
+                        </div>
+                        <div class="ch-form-group">
+                            <label class="ch-label" for="cust-phone">Phone (M-Pesa)</label>
+                            <input id="cust-phone" class="ch-input" type="tel" placeholder="+254 7XX XXX XXX" required/>
+                        </div>
+                    </div>
+                    <div class="ch-form-group">
+                        <label class="ch-label" for="cust-email">Email Address</label>
+                        <input id="cust-email" class="ch-input" type="email" placeholder="you@example.com" required/>
+                    </div>
+                    <div class="ch-form-group">
+                        <label class="ch-label" for="cust-address">Delivery Address</label>
+                        <input id="cust-address" class="ch-input" type="text" placeholder="Street, City, County" required/>
+                    </div>
+                    <button class="btn-step-next" id="step1-next">Continue to Payment →</button>
+                </div>
+
+                <!-- Step 2: Payment -->
+                <div class="checkout-step" id="checkout-step-2">
+                    <button class="btn-step-back" id="step2-back">
+                        <span class="material-symbols-outlined" style="font-size:1rem;">arrow_back</span> Back
+                    </button>
+                    <div class="step-title">💳 Order Summary &amp; Payment</div>
+
+                    <!-- Confirm customer -->  
+                    <div class="confirm-block">
+                        <div class="confirm-row"><span class="confirm-label">Name:</span>    <span class="confirm-val" id="confirm-name"></span></div>
+                        <div class="confirm-row"><span class="confirm-label">Email:</span>   <span class="confirm-val" id="confirm-email"></span></div>
+                        <div class="confirm-row"><span class="confirm-label">Phone:</span>   <span class="confirm-val" id="confirm-phone"></span></div>
+                        <div class="confirm-row"><span class="confirm-label">Address:</span> <span class="confirm-val" id="confirm-address"></span></div>
+                    </div>
+
+                    <!-- Items summary -->
+                    <div class="modal-items" id="modal-order-items"></div>
+                    <div class="modal-total-row">
+                        <span class="modal-total-label">Total</span>
+                        <span class="modal-total-val" id="modal-order-total">$0.00</span>
+                    </div>
+
+                    <!-- Payment methods -->
+                    <div style="margin:1rem 0 .5rem;">
+                        <div class="ch-label" style="margin-bottom:.5rem;">Accepted Payment Methods</div>
+                        <div class="payment-methods">
+                            <span class="pay-badge"><span class="pi">📱</span> M-Pesa</span>
+                            <span class="pay-badge"><span class="pi">📡</span> Airtel Money</span>
+                            <span class="pay-badge"><span class="pi">💳</span> Visa / Mastercard</span>
+                            <span class="pay-badge"><span class="pi">🏦</span> Bank Transfer</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-step-next" id="pay-btn">
+                        <span class="material-symbols-outlined" style="vertical-align:middle;font-size:1rem;">lock</span>
+                        Pay Now via Flutterwave
+                    </button>
+                    <p style="text-align:center;font-size:.72rem;color:#475569;margin-top:.75rem;">
+                        🔒 Payments secured by Flutterwave. TechNexus never stores card details.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flutterwave Checkout SDK -->
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+    <script src="js/checkout.js"></script>
+</body>
+</html>
