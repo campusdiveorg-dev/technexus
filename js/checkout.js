@@ -5,8 +5,7 @@
  */
 
 // ── Config ─────────────────────────────────────────────────────
-// Replace with your live Flutterwave PUBLIC key in production
-const FLW_PUBLIC_KEY = 'FLWPUBK_TEST-SANDBOXDEMOKEY-X';
+const FLW_PUBLIC_KEY = window.FLW_PUBLIC_KEY || '716d0110-8d16-4004-9d5d-55b0f5f4eb41';
 
 // ── State ──────────────────────────────────────────────────────
 let checkoutCustomer = {};
