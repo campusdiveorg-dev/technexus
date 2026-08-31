@@ -140,8 +140,10 @@ function launchPayment() {
     const total = cart.reduce((s, i) => s + i.price * (i.qty || i.quantity || 1), 0);
     const txRef = `TN-${Date.now()}-${Math.random().toString(36).substring(2,6).toUpperCase()}`;
 
-    // If Flutterwave SDK is loaded and a real key is present
-    if (typeof FlutterwaveCheckout === 'function' && FLW_PUBLIC_KEY && !FLW_PUBLIC_KEY.includes('SANDBOXDEMOKEY')) {
+    // If Flutterwave SDK is loaded and a valid Flutterwave Public Key (starting with FLWPUBK) is provided
+    const isValidFlwKey = FLW_PUBLIC_KEY && (FLW_PUBLIC_KEY.startsWith('FLWPUBK_TEST-') || FLW_PUBLIC_KEY.startsWith('FLWPUBK-'));
+
+    if (typeof FlutterwaveCheckout === 'function' && isValidFlwKey) {
         FlutterwaveCheckout({
             public_key:   FLW_PUBLIC_KEY,
             tx_ref:       txRef,
@@ -156,7 +158,7 @@ function launchPayment() {
             customizations: {
                 title:       'TechNexus Marketplace',
                 description: `Order of ${cart.length} item(s)`,
-                logo:        'https://res.cloudinary.com/technexus/image/upload/logo.png'
+                logo:        'https://res.cloudinary.com/stez7ars/image/upload/v1/logo.png'
             },
             callback: async (response) => {
                 if (response.status === 'successful') {
@@ -170,7 +172,8 @@ function launchPayment() {
             }
         });
     } else {
-        // Sandbox Simulation Mode (works offline/locally for seamless demo testing)
+        // Instant Sandbox / Demo Simulation Mode (works offline, locally & if FLWPUBK key is pending)
+        console.log('[Checkout] Using Instant Simulation Mode (FLWPUBK key pending or offline)');
         simulateSandboxPayment(txRef, cart, total);
     }
 }
