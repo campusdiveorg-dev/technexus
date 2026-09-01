@@ -155,7 +155,7 @@ function initSellerRegister() {
 
         showToast('Store registered successfully! Redirecting…', 'success');
         setTimeout(() => {
-            window.location.href = 'seller-dashboard.html';
+            window.location.href = '/seller-dashboard.html';
         }, 800);
     });
 }
