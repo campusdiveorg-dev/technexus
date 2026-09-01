@@ -843,12 +843,25 @@
                                     <div style="grid-column: 1 / -1;">
                                         <label class="input-label">Product Photography</label>
                                         <div class="logo-upload-box" id="product-image-upload-btn" style="border: 2px dashed var(--seller-border); border-radius: 8px; padding: 18px; text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.2s;">
-                                            <span class="material-symbols-outlined" style="font-size: 32px; color: var(--seller-primary);">add_photo_alternate</span>
-                                            <p style="font-size: 0.85rem; font-weight: 600; color: var(--seller-dark); margin: 4px 0 2px;">Click to upload hardware photo (Cloudinary / Local File)</p>
-                                            <p style="font-size: 0.72rem; color: var(--seller-muted);">PNG, WebP, JPG supported</p>
+                                            <span class="material-symbols-outlined" style="font-size: 32px; color: var(--seller-primary);">add_a_photo</span>
+                                            <p style="font-size: 0.85rem; font-weight: 600; color: var(--seller-dark); margin: 4px 0 2px;">Click to upload hardware photo or use device camera</p>
+                                            <p style="font-size: 0.72rem; color: var(--seller-muted);">PNG, WebP, JPG supported · Direct Cloudinary CDN Sync</p>
                                             <img id="product-img-preview" style="width: 90px; height: 90px; border-radius: 8px; object-fit: cover; border: 2px solid var(--seller-primary); display: none; margin: 12px auto 0;" alt="Preview"/>
                                         </div>
                                         <input type="file" id="product-local-file-input" accept="image/*" style="display:none;"/>
+                                        <input type="file" id="product-camera-input" accept="image/*" capture="environment" style="display:none;"/>
+                                        
+                                        <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-top:10px; flex-wrap:wrap;">
+                                            <button type="button" class="btn-secondary" id="btn-open-camera" style="padding:6px 12px; font-size:0.78rem; display:inline-flex; align-items:center; gap:4px;">
+                                                <span class="material-symbols-outlined" style="font-size:16px; color:var(--seller-primary);">photo_camera</span>
+                                                <span>Take Photo with Camera</span>
+                                            </button>
+                                            <button type="button" class="btn-secondary" id="btn-browse-file" style="padding:6px 12px; font-size:0.78rem; display:inline-flex; align-items:center; gap:4px;">
+                                                <span class="material-symbols-outlined" style="font-size:16px;">folder_open</span>
+                                                <span>Browse Files</span>
+                                            </button>
+                                        </div>
+
                                         <div style="display:flex; align-items:center; gap:8px; margin-top:10px;">
                                             <span style="font-size:0.75rem; color:var(--seller-muted); white-space:nowrap;">Or direct image URL:</span>
                                             <input id="product-image-url" class="input-control" type="url" placeholder="https://images.unsplash.com/... or paste link" style="font-size:0.8rem; padding:8px 12px;"/>

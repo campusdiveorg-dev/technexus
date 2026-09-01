@@ -57,10 +57,13 @@ function initSellerRegister() {
     const form = document.getElementById('seller-register-form');
     const logoBtn = document.getElementById('logo-upload-btn');
 
-    // Store Logo Upload (Cloudinary Signed API + Local File Reader + URL Fallback)
-    const logoUrlInput = document.getElementById('logo-url-input');
+    // Store Logo Upload (Cloudinary Signed API + Local File Reader + Camera + URL Fallback)
+    const logoUrlInput  = document.getElementById('logo-url-input');
     const logoFileInput = document.getElementById('logo-local-file-input');
-    const logoPreview = document.getElementById('logo-preview');
+    const logoCamInput  = document.getElementById('logo-camera-input');
+    const logoPreview   = document.getElementById('logo-preview');
+    const btnLogoCamera = document.getElementById('btn-logo-camera');
+    const btnLogoBrowse = document.getElementById('btn-logo-browse');
 
     if (logoUrlInput && logoPreview) {
         logoUrlInput.addEventListener('input', () => {
@@ -72,43 +75,55 @@ function initSellerRegister() {
         });
     }
 
-    if (logoFileInput && logoPreview) {
-        logoFileInput.addEventListener('change', async (e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-
-            // Instant preview
-            const reader = new FileReader();
-            reader.onload = async (evt) => {
-                const dataUrl = evt.target.result;
+    async function processLogoFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            const dataUrl = evt.target.result;
+            if (logoPreview) {
                 logoPreview.src = dataUrl;
                 logoPreview.style.display = 'block';
-                if (logoUrlInput) logoUrlInput.value = dataUrl;
+            }
+            if (logoUrlInput) logoUrlInput.value = dataUrl;
 
-                // Upload to signed backend
-                try {
-                    showToast('Uploading logo to Cloudinary...', 'info');
-                    const res = await fetch('/api/upload', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ file: dataUrl, folder: 'seller_logos' })
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.secure_url) {
-                            if (logoUrlInput) logoUrlInput.value = data.secure_url;
-                            logoPreview.src = data.secure_url;
-                            showToast('Logo saved to Cloudinary CDN!', 'success');
-                        }
+            // Upload to signed backend
+            try {
+                showToast('Uploading logo to Cloudinary...', 'info');
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file: dataUrl, folder: 'seller_logos' })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.secure_url) {
+                        if (logoUrlInput) logoUrlInput.value = data.secure_url;
+                        if (logoPreview) logoPreview.src = data.secure_url;
+                        showToast('Logo saved to Cloudinary CDN!', 'success');
                     }
-                } catch(err) {
-                    console.warn('Backend upload fallback:', err);
                 }
-            };
-            reader.readAsDataURL(file);
-        });
+            } catch(err) {
+                console.warn('Backend upload fallback:', err);
+            }
+        };
+        reader.readAsDataURL(file);
     }
 
+    if (logoFileInput) logoFileInput.addEventListener('change', (e) => processLogoFile(e.target.files?.[0]));
+    if (logoCamInput)  logoCamInput.addEventListener('change',  (e) => processLogoFile(e.target.files?.[0]));
+
+    if (btnLogoCamera) {
+        btnLogoCamera.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (logoCamInput) logoCamInput.click();
+        });
+    }
+    if (btnLogoBrowse) {
+        btnLogoBrowse.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (logoFileInput) logoFileInput.click();
+        });
+    }
     if (logoBtn) {
         logoBtn.addEventListener('click', () => {
             if (logoFileInput) logoFileInput.click();
@@ -582,9 +597,13 @@ function initAddProductForm(token, seller) {
     const imgBtn = document.getElementById('product-image-upload-btn');
 
     // Product Image Upload (Cloudinary Signed API + Local File Reader + Direct URL Fallback)
-    const prodUrlInput = document.getElementById('product-image-url');
-    const prodFileInput = document.getElementById('product-local-file-input');
-    const prodPrev = document.getElementById('product-img-preview');
+    // Product Image Upload (Cloudinary Signed API + Local File Reader + Camera + Direct URL)
+    const prodUrlInput   = document.getElementById('product-image-url');
+    const prodFileInput  = document.getElementById('product-local-file-input');
+    const prodCamInput   = document.getElementById('product-camera-input');
+    const prodPrev       = document.getElementById('product-img-preview');
+    const btnCamera      = document.getElementById('btn-open-camera');
+    const btnBrowse      = document.getElementById('btn-browse-file');
 
     if (prodUrlInput && prodPrev) {
         prodUrlInput.addEventListener('input', () => {
@@ -596,43 +615,58 @@ function initAddProductForm(token, seller) {
         });
     }
 
-    if (prodFileInput && prodPrev) {
-        prodFileInput.addEventListener('change', async (e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-
-            // Instant preview
-            const reader = new FileReader();
-            reader.onload = async (evt) => {
-                const dataUrl = evt.target.result;
+    async function processProductPhoto(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            const dataUrl = evt.target.result;
+            if (prodPrev) {
                 prodPrev.src = dataUrl;
                 prodPrev.style.display = 'block';
-                if (prodUrlInput) prodUrlInput.value = dataUrl;
+            }
+            if (prodUrlInput) prodUrlInput.value = dataUrl;
 
-                // Upload to signed backend
-                try {
-                    showToast('Uploading photo to Cloudinary CDN...', 'info');
-                    const res = await fetch('/api/upload', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ file: dataUrl, folder: 'products' })
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.secure_url) {
-                            if (prodUrlInput) prodUrlInput.value = data.secure_url;
-                            prodPrev.src = data.secure_url;
-                            showToast('Hardware photo uploaded to Cloudinary!', 'success');
-                        }
+            // Upload to signed backend Cloudinary
+            try {
+                showToast('Uploading photo to Cloudinary CDN...', 'info');
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file: dataUrl, folder: 'products' })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.secure_url) {
+                        if (prodUrlInput) prodUrlInput.value = data.secure_url;
+                        if (prodPrev) prodPrev.src = data.secure_url;
+                        showToast('Hardware photo uploaded to Cloudinary!', 'success');
                     }
-                } catch(err) {
-                    console.warn('Backend upload fallback:', err);
                 }
-            };
-            reader.readAsDataURL(file);
-        });
+            } catch(err) {
+                console.warn('Backend upload fallback:', err);
+            }
+        };
+        reader.readAsDataURL(file);
     }
 
+    if (prodFileInput) {
+        prodFileInput.addEventListener('change', (e) => processProductPhoto(e.target.files?.[0]));
+    }
+    if (prodCamInput) {
+        prodCamInput.addEventListener('change', (e) => processProductPhoto(e.target.files?.[0]));
+    }
+    if (btnCamera) {
+        btnCamera.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (prodCamInput) prodCamInput.click();
+        });
+    }
+    if (btnBrowse) {
+        btnBrowse.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (prodFileInput) prodFileInput.click();
+        });
+    }
     if (imgBtn && !imgBtn.dataset.bound) {
         imgBtn.dataset.bound = 'true';
         imgBtn.addEventListener('click', () => {

@@ -277,12 +277,23 @@
                         <div class="form-field-group col-span-2">
                             <label class="form-field-label">Store Brand Logo</label>
                             <div class="logo-upload-box" id="logo-upload-btn">
-                                <span class="material-symbols-outlined" style="font-size: 28px; color: var(--primary-blue);">add_photo_alternate</span>
-                                <p style="font-size: 0.85rem; color: var(--text-main); font-weight: 600; margin: 4px 0 2px;">Click to upload store badge (Cloudinary / Local File)</p>
+                                <span class="material-symbols-outlined" style="font-size: 28px; color: var(--primary-blue);">add_a_photo</span>
+                                <p style="font-size: 0.85rem; color: var(--text-main); font-weight: 600; margin: 4px 0 2px;">Click to upload store badge or use camera</p>
                                 <p style="font-size: 0.72rem; color: var(--text-light);">PNG, WebP or JPG (Square format recommended)</p>
                                 <img id="logo-preview" alt="Logo preview"/>
                             </div>
                             <input type="file" id="logo-local-file-input" accept="image/*" style="display:none;"/>
+                            <input type="file" id="logo-camera-input" accept="image/*" capture="environment" style="display:none;"/>
+                            <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-top:8px;">
+                                <button type="button" class="btn-secondary" id="btn-logo-camera" style="padding:5px 12px; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                                    <span class="material-symbols-outlined" style="font-size:15px; color:var(--primary-blue);">photo_camera</span>
+                                    <span>Take Photo</span>
+                                </button>
+                                <button type="button" class="btn-secondary" id="btn-logo-browse" style="padding:5px 12px; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                                    <span class="material-symbols-outlined" style="font-size:15px;">folder_open</span>
+                                    <span>Browse Files</span>
+                                </button>
+                            </div>
                             <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
                                 <span style="font-size:0.75rem; color:var(--text-muted); white-space:nowrap;">Or logo URL:</span>
                                 <input id="logo-url-input" class="form-field-input" type="url" placeholder="https://... or paste image URL" style="font-size:0.8rem; padding:6px 12px;"/>
