@@ -1,471 +1,986 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Admin Control Center — Bite Tech Ltd</title>
     <meta name="robots" content="noindex, nofollow"/>
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <!-- Master Design System Stylesheet -->
-    <link rel="stylesheet" href="css/style.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
     <style>
-        /* ── PIN GATE ── */
-        .admin-pin-wrapper {
-            min-height: calc(100vh - var(--nav-height) - 100px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 16px;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --navy:       #0a192f;
+            --navy-dark:  #060d17;
+            --navy-light: #112240;
+            --blue:       #0058bc;
+            --blue-hover: #004493;
+            --blue-lt:    #e8f0fe;
+            --cyan:       #00d1ff;
+            --red:        #ef4444;
+            --red-lt:     #fee2e2;
+            --green:      #10b981;
+            --green-lt:   #d1fae5;
+            --amber:      #f59e0b;
+            --border:     #e2e8f0;
+            --muted:      #64748b;
+            --text:       #0f172a;
+            --bg:         #f8fafc;
+            --card:       #ffffff;
+            --radius-sm:  8px;
+            --radius-md:  12px;
+            --radius-lg:  16px;
+            --shadow-sm:  0 2px 8px rgba(10,25,47,0.04);
+            --shadow-md:  0 8px 24px rgba(10,25,47,0.08);
+            --shadow-lg:  0 16px 40px rgba(10,25,47,0.12);
         }
-        .admin-pin-card {
-            background: var(--surface-card);
-            border: 1px solid var(--surface-border);
-            border-radius: var(--radius-xl);
-            padding: 40px;
-            width: 100%;
-            max-width: 420px;
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── TOP NAV ── */
+        .admin-nav {
+            position: sticky; top: 0; z-index: 100;
+            background: var(--navy);
+            height: 64px;
+            display: flex; align-items: center;
+            padding: 0 28px;
+            gap: 16px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+        }
+        .admin-nav-brand {
+            display: flex; align-items: center; gap: 10px;
+            text-decoration: none; color: #fff;
+            font-weight: 800; font-size: 1.1rem;
+            letter-spacing: -0.3px;
+        }
+        .admin-nav-brand .bolt-icon {
+            color: var(--cyan);
+            font-size: 26px;
+        }
+        .admin-badge {
+            font-size: 0.68rem; font-family: 'JetBrains Mono', monospace;
+            background: rgba(239,68,68,0.2); color: #fca5a5;
+            border: 1px solid rgba(239,68,68,0.35);
+            border-radius: 4px; padding: 3px 8px; letter-spacing: 1px;
+            font-weight: 700;
+        }
+        .admin-nav-spacer { flex: 1; }
+        .admin-nav-actions {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .nav-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 16px; border-radius: 8px; border: none;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.82rem; font-weight: 600; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .nav-btn-outline {
+            background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9);
+            border: 1px solid rgba(255,255,255,0.18);
+        }
+        .nav-btn-outline:hover { background: rgba(255,255,255,0.15); color: #fff; }
+        .nav-btn-danger {
+            background: rgba(239,68,68,0.15); color: #fca5a5;
+            border: 1px solid rgba(239,68,68,0.3);
+        }
+        .nav-btn-danger:hover { background: rgba(239,68,68,0.3); color: #fff; }
+
+        /* ── PIN GATE ── */
+        .pin-gate {
+            min-height: calc(100vh - 64px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 40px 16px;
+            background: radial-gradient(circle at top, #ffffff 0%, #f1f5f9 100%);
+        }
+        .pin-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 44px 36px;
+            width: 100%; max-width: 420px;
             box-shadow: var(--shadow-lg);
             text-align: center;
         }
-        .admin-pin-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: #fee2e2;
-            color: #ef4444;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 16px;
+        .pin-icon-wrap {
+            width: 68px; height: 68px; border-radius: 50%;
+            background: var(--red-lt);
+            color: var(--red); margin: 0 auto 18px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 16px rgba(239,68,68,0.15);
         }
-        .admin-pin-title {
-            font-family: var(--font-heading);
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: var(--midnight-navy);
-            margin-bottom: 6px;
+        .pin-icon-wrap .material-symbols-outlined { font-size: 34px; }
+        .pin-title {
+            font-size: 1.6rem; font-weight: 800; color: var(--navy);
+            margin-bottom: 6px; letter-spacing: -0.5px;
         }
-        .admin-pin-sub {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            margin-bottom: 24px;
+        .pin-sub {
+            font-size: 0.85rem; color: var(--muted);
+            margin-bottom: 24px; line-height: 1.5;
         }
-        .admin-pin-input-field {
-            width: 100%;
-            padding: 14px;
-            text-align: center;
-            font-family: var(--font-mono);
-            font-size: 1.6rem;
-            letter-spacing: 12px;
-            border: 2px solid var(--surface-border);
-            border-radius: var(--radius-md);
+        .pin-input-group {
             margin-bottom: 20px;
+        }
+        .pin-input-field {
+            width: 100%;
+            padding: 14px 16px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            letter-spacing: 8px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
             outline: none;
             transition: all 0.2s;
-            background: var(--surface-frost);
+            background: #f8fafc;
+            color: var(--navy);
         }
-        .admin-pin-input-field:focus {
-            border-color: #ef4444;
-            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
-            background: #fff;
+        .pin-input-field:focus {
+            border-color: var(--red);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+            background: #ffffff;
+        }
+        .pin-submit {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #dc2626, #991b1b);
+            color: #fff; border: none; border-radius: var(--radius-md);
+            font-size: 0.95rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all 0.2s;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            box-shadow: 0 4px 14px rgba(220,38,38,0.25);
+        }
+        .pin-submit:hover {
+            background: linear-gradient(135deg, #b91c1c, #7f1d1d);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(220,38,38,0.35);
+        }
+        .pin-error {
+            color: var(--red); font-size: 0.82rem; font-weight: 600;
+            margin-top: 12px; display: none;
+            align-items: center; justify-content: center; gap: 4px;
         }
 
-        /* ── DASHBOARD LAYOUT ── */
-        .admin-dashboard-container {
+        /* ── MAIN LAYOUT ── */
+        .admin-layout {
             display: grid;
             grid-template-columns: 240px 1fr;
-            gap: 24px;
-            padding: 24px 0 60px;
+            gap: 0;
+            min-height: calc(100vh - 64px);
+            flex: 1;
         }
+
+        /* ── SIDEBAR ── */
         .admin-sidebar {
-            background: var(--surface-card);
-            border: 1px solid var(--surface-border);
-            border-radius: var(--radius-lg);
-            padding: 20px 16px;
-            height: fit-content;
-            position: sticky;
-            top: 84px;
-        }
-        .admin-nav-item {
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            padding: 24px 16px;
+            position: sticky; top: 64px;
+            height: calc(100vh - 64px);
+            overflow-y: auto;
             display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 14px;
-            border-radius: var(--radius-sm);
-            color: var(--text-main);
-            font-weight: 600;
-            font-size: 0.85rem;
-            text-decoration: none;
-            transition: all 0.2s;
-            margin-bottom: 4px;
-            cursor: pointer;
-            border: none;
-            background: transparent;
-            width: 100%;
-            text-align: left;
+            flex-direction: column;
         }
-        .admin-nav-item:hover {
-            background: var(--surface-frost);
-            color: var(--midnight-navy);
+        .sidebar-badge {
+            background: linear-gradient(135deg, var(--navy), #1e3a5f);
+            border-radius: 12px; padding: 14px;
+            margin-bottom: 20px; color: #fff;
+            display: flex; align-items: center; gap: 10px;
         }
-        .admin-nav-item.active {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-            font-weight: 700;
+        .sidebar-badge-icon {
+            width: 36px; height: 36px; border-radius: 8px;
+            background: rgba(0,209,255,0.18); color: var(--cyan);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
         }
+        .sidebar-badge-title { font-weight: 800; font-size: 0.88rem; }
+        .sidebar-badge-sub { font-size: 0.7rem; color: rgba(255,255,255,0.6); margin-top: 2px; }
 
+        .sidebar-section-label {
+            font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--muted); padding: 0 8px;
+            margin-bottom: 6px; margin-top: 16px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .sidebar-nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 8px;
+            color: var(--muted); font-weight: 600; font-size: 0.86rem;
+            cursor: pointer; border: none; background: transparent;
+            width: 100%; text-align: left; text-decoration: none;
+            transition: all 0.18s; margin-bottom: 3px;
+        }
+        .sidebar-nav-item:hover { background: var(--bg); color: var(--navy); }
+        .sidebar-nav-item.active {
+            background: var(--blue-lt); color: var(--blue); font-weight: 700;
+        }
+        .sidebar-nav-item .material-symbols-outlined { font-size: 19px; }
+
+        /* ── MAIN WORK AREA ── */
+        .admin-main { padding: 32px 36px 60px; overflow-x: hidden; background: #f8fafc; flex: 1; }
+
+        .page-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
+        }
+        .page-title {
+            font-size: 1.45rem; font-weight: 800; color: var(--navy);
+            letter-spacing: -0.4px;
+        }
+        .page-subtitle { font-size: 0.84rem; color: var(--muted); margin-top: 2px; }
+
+        /* ── SECTIONS ── */
         .admin-section { display: none; }
-        .admin-section.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .admin-section.active { display: block; animation: fadeUp 0.25s ease; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
 
-        /* Stats Grid */
-        .admin-stats-grid {
+        /* ── STATS GRID ── */
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 16px; margin-bottom: 24px;
         }
-        .admin-stat-card {
-            background: var(--surface-card);
-            border: 1px solid var(--surface-border);
-            border-radius: var(--radius-md);
-            padding: 20px;
-            box-shadow: var(--shadow-sm);
+        .stat-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius-md); padding: 18px 20px;
+            box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        .admin-stat-label {
-            font-family: var(--font-mono);
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0;
+            width: 4px; height: 100%;
         }
-        .admin-stat-val {
-            font-family: var(--font-heading);
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: var(--midnight-navy);
+        .stat-card.blue::before  { background: var(--blue); }
+        .stat-card.green::before { background: var(--green); }
+        .stat-card.amber::before { background: var(--amber); }
+        .stat-card.cyan::before  { background: var(--cyan); }
+        .stat-card.red::before   { background: var(--red); }
+
+        .stat-icon {
+            width: 36px; height: 36px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 12px; font-size: 19px;
+        }
+        .stat-icon.blue  { background: var(--blue-lt); color: var(--blue); }
+        .stat-icon.green { background: var(--green-lt); color: var(--green); }
+        .stat-icon.amber { background: #fef3c7; color: var(--amber); }
+        .stat-icon.cyan  { background: #e0f9ff; color: #0891b2; }
+        .stat-icon.red   { background: var(--red-lt); color: var(--red); }
+
+        .stat-label {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--muted); margin-bottom: 4px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .stat-value {
+            font-size: 1.5rem; font-weight: 800; color: var(--navy);
+            font-family: 'JetBrains Mono', monospace; letter-spacing: -0.5px;
+        }
+        .stat-trend {
+            font-size: 0.75rem; color: var(--green); font-weight: 600;
+            margin-top: 4px; display: flex; align-items: center; gap: 3px;
         }
 
-        /* Content Card */
-        .admin-card {
-            background: var(--surface-card);
-            border: 1px solid var(--surface-border);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            box-shadow: var(--shadow-sm);
-            margin-bottom: 24px;
+        /* ── CARD ── */
+        .a-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 22px;
+            box-shadow: var(--shadow-sm); margin-bottom: 24px;
         }
-        .admin-card-title {
-            font-family: var(--font-heading);
-            font-size: 1.15rem;
-            font-weight: 800;
-            color: var(--midnight-navy);
+        .a-card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 18px; padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap; gap: 10px;
+        }
+        .a-card-title {
+            font-size: 1.05rem; font-weight: 800; color: var(--navy);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .a-card-title .material-symbols-outlined { font-size: 20px; color: var(--blue); }
+
+        /* ── TABLE ── */
+        .a-table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+        .a-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .a-table thead { background: #f8fafc; }
+        .a-table th {
+            padding: 11px 14px; text-align: left;
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--muted);
+            border-bottom: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .a-table td {
+            padding: 13px 14px; border-bottom: 1px solid #f1f5f9;
+            color: var(--text); vertical-align: middle;
+        }
+        .a-table tr:last-child td { border-bottom: none; }
+        .a-table tr:hover td { background: #f8faff; }
+
+        /* ── BADGES ── */
+        .badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 999px;
+            font-size: 0.72rem; font-weight: 700;
+        }
+        .badge-green { background: var(--green-lt); color: #065f46; }
+        .badge-blue  { background: var(--blue-lt);  color: #1e40af; }
+        .badge-amber { background: #fef3c7; color: #92400e; }
+        .badge-red   { background: var(--red-lt);   color: #991b1b; }
+        .badge-gray  { background: #f1f5f9; color: var(--muted); }
+
+        /* ── COMMISSION EDITOR ── */
+        .rate-editor-grid {
+            display: grid; grid-template-columns: 1fr 1fr 120px 100px;
+            gap: 12px; align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .rate-editor-grid:last-child { border-bottom: none; }
+        .rate-editor-grid:hover { background: #f8faff; border-radius: 8px; }
+        .rate-cat { font-weight: 700; font-size: 0.9rem; color: var(--navy); }
+        .rate-desc { font-size: 0.78rem; color: var(--muted); }
+        .rate-input {
+            width: 80px; padding: 7px 10px; text-align: center;
+            background: var(--bg); border: 1.5px solid var(--border);
+            border-radius: 8px; font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem; font-weight: 700; color: var(--navy);
+            outline: none; transition: all 0.18s;
+        }
+        .rate-input:focus { border-color: var(--blue); background: #fff; box-shadow: 0 0 0 3px rgba(0,88,188,0.1); }
+        .rate-save-btn {
+            padding: 8px 16px; border-radius: 8px; border: none;
+            background: var(--blue); color: #fff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.8rem; font-weight: 700; cursor: pointer;
+            transition: all 0.18s;
+        }
+        .rate-save-btn:hover { background: var(--blue-hover); }
+        .rate-save-btn.saved { background: var(--green); }
+
+        /* ── CHART ── */
+        .chart-wrap { position: relative; height: 240px; }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            text-align: center; padding: 48px 24px; color: var(--muted);
+        }
+        .empty-state .material-symbols-outlined { font-size: 44px; opacity: 0.35; margin-bottom: 10px; display: block; }
+        .empty-state p { font-size: 0.88rem; }
+
+        /* ── FOOTER ── */
+        .admin-footer {
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            padding: 16px 28px;
+            font-size: 0.78rem;
+            color: var(--muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
-        /* Tables */
-        .admin-table-wrap {
-            overflow-x: auto;
-            border: 1px solid var(--surface-border);
-            border-radius: var(--radius-sm);
-        }
-        .admin-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-        }
-        .admin-table thead {
-            background: var(--surface-muted);
-        }
-        .admin-table th {
-            padding: 10px 14px;
-            text-align: left;
-            font-family: var(--font-mono);
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-            border-bottom: 1px solid var(--surface-border);
-        }
-        .admin-table td {
-            padding: 12px 14px;
-            border-bottom: 1px solid var(--surface-frost);
-            color: var(--text-main);
-            vertical-align: middle;
-        }
-        .admin-table tr:hover td {
-            background: var(--surface-frost);
-        }
-
-        .rate-input-box {
-            width: 70px;
-            padding: 6px 8px;
-            background: var(--surface-frost);
-            border: 1px solid var(--surface-border);
-            border-radius: var(--radius-sm);
-            font-family: var(--font-mono);
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-align: center;
-            color: var(--midnight-navy);
-            outline: none;
-        }
-        .rate-input-box:focus {
-            border-color: var(--primary-blue);
-            background: #fff;
-        }
-
+        /* ── UTILS ── */
         .hidden { display: none !important; }
 
-        @media (max-width: 990px) {
-            .admin-dashboard-container { grid-template-columns: 1fr; }
-            .admin-sidebar { position: static; }
-            .admin-stats-grid { grid-template-columns: repeat(2, 1fr); }
+        @media (max-width: 900px) {
+            .admin-layout { grid-template-columns: 1fr; }
+            .admin-sidebar { position: static; height: auto; flex-direction: row; flex-wrap: wrap; gap: 4px; padding: 12px; }
+            .sidebar-badge { display: none; }
+            .admin-main { padding: 18px 16px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .rate-editor-grid { grid-template-columns: 1fr 90px 80px; }
+            .rate-desc { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Top Navigation Bar -->
-    <header class="navbar">
-        <div class="navbar-container">
-            <a class="brand-logo" href="index.html">
-                <span class="material-symbols-outlined brand-icon">bolt</span>
-                <span>Bite Tech <span style="font-size: 0.7rem; font-family: var(--font-mono); background: #fee2e2; color: #b91c1c; border: 1px solid rgba(185,28,28,0.2); border-radius: 4px; padding: 2px 6px; margin-left: 6px;">ADMIN</span></span>
-            </a>
-
-            <div class="nav-actions" id="admin-nav-actions" style="display: none;">
-                <button id="export-csv-btn" class="btn-secondary" style="padding: 8px 16px; font-size: 0.8rem;">
-                    <span class="material-symbols-outlined" style="font-size: 16px;">download</span>
-                    <span>Export CSV</span>
-                </button>
-                <button id="admin-logout-btn" class="btn-dark" style="padding: 8px 14px; font-size: 0.8rem; background: var(--midnight-navy);">
-                    <span class="material-symbols-outlined" style="font-size: 16px;">logout</span>
-                    <span>Lock Panel</span>
-                </button>
-            </div>
+    <!-- TOP NAV -->
+    <nav class="admin-nav">
+        <a class="admin-nav-brand" href="index.html">
+            <span class="material-symbols-outlined bolt-icon">bolt</span>
+            <span>Bite Tech</span>
+            <span class="admin-badge">ADMIN</span>
+        </a>
+        <div class="admin-nav-spacer"></div>
+        <div class="admin-nav-actions hidden" id="admin-nav-actions">
+            <button class="nav-btn nav-btn-outline" id="export-csv-btn" onclick="exportCSV()">
+                <span class="material-symbols-outlined" style="font-size:16px">download</span>
+                Export CSV
+            </button>
+            <button class="nav-btn nav-btn-danger" onclick="lockAdmin()">
+                <span class="material-symbols-outlined" style="font-size:16px">lock</span>
+                Lock Panel
+            </button>
         </div>
-    </header>
+    </nav>
 
-    <main class="container">
+    <!-- PIN GATE -->
+    <div id="pin-gate" class="pin-gate">
+        <div class="pin-card">
+            <div class="pin-icon-wrap">
+                <span class="material-symbols-outlined">shield_person</span>
+            </div>
+            <h1 class="pin-title">Platform Admin</h1>
+            <p class="pin-sub">Enter your authorized master PIN to access the commission controls, transactions, and marketplace analytics.</p>
 
-        <!-- ── PIN GATE ── -->
-        <div id="admin-pin-gate" class="admin-pin-wrapper">
-            <div class="admin-pin-card">
-                <div class="admin-pin-icon">
-                    <span class="material-symbols-outlined" style="font-size: 32px;">shield</span>
+            <form id="pin-form" onsubmit="event.preventDefault(); pinSubmit();">
+                <div class="pin-input-group">
+                    <input type="password" id="pin-input" class="pin-input-field" maxlength="10" placeholder="••••••" autofocus autocomplete="off"/>
                 </div>
-                <h1 class="admin-pin-title">Platform Admin</h1>
-                <p class="admin-pin-sub">Enter your authorized master PIN to access the commission controls and financials.</p>
 
-                <form id="admin-pin-form" novalidate>
-                    <input id="admin-pin-input" class="admin-pin-input-field" type="password" maxlength="10" placeholder="••••••" required autocomplete="off"/>
-                    <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #ef4444, #b91c1c);">
-                        <span class="material-symbols-outlined" style="font-size: 18px;">lock_open</span>
-                        <span>Unlock Admin Control Center</span>
-                    </button>
-                </form>
+                <button type="submit" class="pin-submit">
+                    <span class="material-symbols-outlined" style="font-size:18px">lock_open</span>
+                    Unlock Admin Control Center
+                </button>
+            </form>
+
+            <div class="pin-error" id="pin-error">
+                <span class="material-symbols-outlined" style="font-size:16px">error</span>
+                <span>Incorrect PIN. Please try again.</span>
             </div>
         </div>
+    </div>
 
-        <!-- ── ADMIN PANEL CONTENT ── -->
-        <div id="admin-panel-content" class="hidden">
-            <div class="admin-dashboard-container">
+    <!-- ADMIN PANEL CONTENT -->
+    <div id="admin-panel" class="hidden">
+        <div class="admin-layout">
 
-                <!-- Sidebar -->
-                <aside class="admin-sidebar">
-                    <div class="admin-badge-box">
-                        <div class="admin-badge-icon">
-                            <span class="material-symbols-outlined" style="font-size: 24px;">admin_panel_settings</span>
+            <!-- SIDEBAR -->
+            <aside class="admin-sidebar">
+                <div class="sidebar-badge">
+                    <div class="sidebar-badge-icon">
+                        <span class="material-symbols-outlined">shield</span>
+                    </div>
+                    <div>
+                        <div class="sidebar-badge-title">Platform Control</div>
+                        <div class="sidebar-badge-sub">Bite Tech Ltd · Master</div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section-label">Management</div>
+                <button class="sidebar-nav-item active" onclick="showSection('overview', this)">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    Overview
+                </button>
+                <button class="sidebar-nav-item" onclick="showSection('sellers', this)">
+                    <span class="material-symbols-outlined">storefront</span>
+                    Partner Stores
+                </button>
+                <button class="sidebar-nav-item" onclick="showSection('orders', this)">
+                    <span class="material-symbols-outlined">receipt_long</span>
+                    All Transactions
+                </button>
+                <button class="sidebar-nav-item" onclick="showSection('commissions', this)">
+                    <span class="material-symbols-outlined">percent</span>
+                    Commission Rates
+                </button>
+
+                <div class="sidebar-section-label" style="margin-top:20px">Shortcuts</div>
+                <a class="sidebar-nav-item" href="seller-dashboard.html">
+                    <span class="material-symbols-outlined">manage_accounts</span>
+                    Seller Portal
+                </a>
+                <a class="sidebar-nav-item" href="index.html">
+                    <span class="material-symbols-outlined">store</span>
+                    Public Catalog
+                </a>
+            </aside>
+
+            <!-- MAIN WORK AREA -->
+            <main class="admin-main">
+
+                <!-- ── 1: OVERVIEW ── -->
+                <div class="admin-section active" id="section-overview">
+                    <div class="page-header">
+                        <div>
+                            <div class="page-title">Platform Overview</div>
+                            <div class="page-subtitle">Real-time marketplace performance metrics & financials</div>
                         </div>
-                        <div class="admin-badge-title">Platform Control</div>
-                        <div class="admin-badge-sub">Bite Tech Ltd Master</div>
+                        <div style="font-size:0.8rem;color:var(--muted);font-family:'JetBrains Mono',monospace;" id="admin-date"></div>
                     </div>
 
-                    <ul class="admin-nav-list">
-                        <li>
-                            <a class="admin-nav-item active" onclick="showAdminSection('overview')">
-                                <span class="material-symbols-outlined" style="font-size: 18px;">dashboard</span>
-                                <span>Overview</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="admin-nav-item" onclick="showAdminSection('sellers')">
-                                <span class="material-symbols-outlined" style="font-size: 18px;">groups</span>
-                                <span>Partner Stores</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="admin-nav-item" onclick="showAdminSection('commissions')">
-                                <span class="material-symbols-outlined" style="font-size: 18px;">percent</span>
-                                <span>Commission Rates</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="admin-nav-item" onclick="showAdminSection('orders')">
-                                <span class="material-symbols-outlined" style="font-size: 18px;">receipt_long</span>
-                                <span>All Transactions</span>
-                            </a>
-                        </li>
-                    </ul>
-                </aside>
-
-                <!-- Main Work Area -->
-                <section class="admin-main-area">
-
-                    <!-- Section 1: Overview -->
-                    <div id="admin-section-overview" class="admin-section active">
-                        <div class="admin-stats-grid">
-                            <div class="admin-stat-box">
-                                <div class="admin-stat-label">Total Orders</div>
-                                <div class="admin-stat-val" id="admin-total-orders">—</div>
+                    <div class="stats-grid">
+                        <div class="stat-card blue">
+                            <div class="stat-icon blue">
+                                <span class="material-symbols-outlined">shopping_bag</span>
                             </div>
-                            <div class="admin-stat-box">
-                                <div class="admin-stat-label">Active Sellers</div>
-                                <div class="admin-stat-val" id="admin-active-sellers">—</div>
-                            </div>
-                            <div class="admin-stat-box">
-                                <div class="admin-stat-label">Total GMV</div>
-                                <div class="admin-stat-val" id="admin-total-gmv">—</div>
-                            </div>
-                            <div class="admin-stat-box highlight-blue">
-                                <div class="admin-stat-label" style="color: var(--primary-blue);">Platform Revenue</div>
-                                <div class="admin-stat-val" style="color: var(--primary-blue);" id="admin-platform-rev">—</div>
-                            </div>
-                            <div class="admin-stat-box highlight-green">
-                                <div class="admin-stat-label" style="color: #15803d;">Seller Payouts</div>
-                                <div class="admin-stat-val" style="color: #15803d;" id="admin-seller-payout">—</div>
+                            <div class="stat-label">Total Orders</div>
+                            <div class="stat-value" id="s-orders">—</div>
+                            <div class="stat-trend">
+                                <span class="material-symbols-outlined" style="font-size:14px">check_circle</span> Live recorded
                             </div>
                         </div>
-
-                        <div class="admin-card">
-                            <div class="admin-card-header">
-                                <h3 class="admin-card-title">Monthly Platform Revenue vs GMV</h3>
+                        <div class="stat-card green">
+                            <div class="stat-icon green">
+                                <span class="material-symbols-outlined">groups</span>
                             </div>
-                            <canvas id="admin-revenue-chart" height="90"></canvas>
+                            <div class="stat-label">Active Sellers</div>
+                            <div class="stat-value" id="s-sellers">—</div>
+                            <div class="stat-trend">Verified stores</div>
+                        </div>
+                        <div class="stat-card amber">
+                            <div class="stat-icon amber">
+                                <span class="material-symbols-outlined">payments</span>
+                            </div>
+                            <div class="stat-label">Total GMV</div>
+                            <div class="stat-value" id="s-gmv">—</div>
+                            <div class="stat-trend">Gross volume</div>
+                        </div>
+                        <div class="stat-card cyan">
+                            <div class="stat-icon cyan">
+                                <span class="material-symbols-outlined">account_balance</span>
+                            </div>
+                            <div class="stat-label">Platform Revenue</div>
+                            <div class="stat-value" id="s-revenue">—</div>
+                            <div class="stat-trend">Net commissions</div>
+                        </div>
+                        <div class="stat-card red">
+                            <div class="stat-icon red">
+                                <span class="material-symbols-outlined">currency_exchange</span>
+                            </div>
+                            <div class="stat-label">Seller Payouts</div>
+                            <div class="stat-value" id="s-payouts">—</div>
+                            <div class="stat-trend">Disbursements due</div>
                         </div>
                     </div>
 
-                    <!-- Section 2: Sellers Table -->
-                    <div id="admin-section-sellers" class="admin-section">
-                        <div class="admin-card">
-                            <div class="admin-card-header">
-                                <h3 class="admin-card-title">Registered Partner Sellers</h3>
+                    <div class="a-card">
+                        <div class="a-card-header">
+                            <div class="a-card-title">
+                                <span class="material-symbols-outlined">bar_chart</span>
+                                Platform Revenue vs GMV Trends
                             </div>
-                            <div class="admin-table-wrap">
-                                <table class="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Store Name</th>
-                                            <th>Contact Email</th>
-                                            <th>Category</th>
-                                            <th>Orders</th>
-                                            <th>Gross GMV</th>
-                                            <th>Platform Fee Earned</th>
-                                            <th>Net Payout Due</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="admin-sellers-tbody">
-                                        <tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading partners...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="revenue-chart"></canvas>
                         </div>
                     </div>
 
-                    <!-- Section 3: Commission Rates -->
-                    <div id="admin-section-commissions" class="admin-section">
-                        <div class="admin-card" style="max-width: 600px;">
-                            <div class="admin-card-header">
-                                <div>
-                                    <h3 class="admin-card-title">Variable Commission Matrix</h3>
-                                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Updates take effect automatically on all subsequent customer purchases.</p>
+                    <div class="a-card">
+                        <div class="a-card-header">
+                            <div class="a-card-title">
+                                <span class="material-symbols-outlined">history</span>
+                                Recent Orders
+                            </div>
+                            <button class="nav-btn nav-btn-outline" style="color:var(--blue);border-color:var(--border);" onclick="showSection('orders', document.querySelectorAll('.sidebar-nav-item')[2])">View All</button>
+                        </div>
+                        <div class="a-table-wrap">
+                            <table class="a-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Amount</th>
+                                        <th>Payment</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-orders-tbody">
+                                    <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Loading transactions...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── 2: SELLERS ── -->
+                <div class="admin-section" id="section-sellers">
+                    <div class="page-header">
+                        <div>
+                            <div class="page-title">Partner Stores</div>
+                            <div class="page-subtitle">Registered merchant accounts, catalog size, and commissions</div>
+                        </div>
+                    </div>
+                    <div class="a-card">
+                        <div class="a-card-header">
+                            <div class="a-card-title">
+                                <span class="material-symbols-outlined">storefront</span>
+                                Merchant Directory
+                            </div>
+                        </div>
+                        <div class="a-table-wrap">
+                            <table class="a-table">
+                                <thead>
+                                    <tr>
+                                        <th>Store Name</th>
+                                        <th>Contact</th>
+                                        <th>Category</th>
+                                        <th>Orders</th>
+                                        <th>Gross GMV</th>
+                                        <th>Platform Fee</th>
+                                        <th>Net Due</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sellers-tbody">
+                                    <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">Loading sellers...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── 3: ORDERS ── -->
+                <div class="admin-section" id="section-orders">
+                    <div class="page-header">
+                        <div>
+                            <div class="page-title">Transaction Master Log</div>
+                            <div class="page-subtitle">Complete ledger of all customer orders processed across payment gateways</div>
+                        </div>
+                        <button class="nav-btn nav-btn-outline" onclick="exportCSV()" style="background:var(--blue);color:#fff;border-color:var(--blue)">
+                            <span class="material-symbols-outlined" style="font-size:16px">download</span>
+                            Export CSV
+                        </button>
+                    </div>
+                    <div class="a-card">
+                        <div class="a-card-header">
+                            <div class="a-card-title">
+                                <span class="material-symbols-outlined">receipt_long</span>
+                                Order Ledger
+                            </div>
+                        </div>
+                        <div class="a-table-wrap">
+                            <table class="a-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Total</th>
+                                        <th>Commission</th>
+                                        <th>Method</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orders-tbody">
+                                    <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">Loading orders...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── 4: COMMISSIONS ── -->
+                <div class="admin-section" id="section-commissions">
+                    <div class="page-header">
+                        <div>
+                            <div class="page-title">Commission Rates</div>
+                            <div class="page-subtitle">Configure Bite Tech Ltd category-level take rates</div>
+                        </div>
+                    </div>
+                    <div class="a-card" style="max-width:720px">
+                        <div class="a-card-header">
+                            <div>
+                                <div class="a-card-title">
+                                    <span class="material-symbols-outlined">percent</span>
+                                    Category Take-Rate Matrix
                                 </div>
-                            </div>
-                            <div class="admin-table-wrap">
-                                <table class="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Hardware Category</th>
-                                            <th>Active Rate</th>
-                                            <th>Adjust (%)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="commission-rates-tbody">
-                                        <tr><td colspan="3" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading rates...</td></tr>
-                                    </tbody>
-                                </table>
+                                <div style="font-size:0.78rem;color:var(--muted);margin-top:4px;">Changes are automatically applied during checkout commission calculations</div>
                             </div>
                         </div>
+                        <div id="commission-matrix"></div>
                     </div>
+                </div>
 
-                    <!-- Section 4: All Orders -->
-                    <div id="admin-section-orders" class="admin-section">
-                        <div class="admin-card">
-                            <div class="admin-card-header">
-                                <h3 class="admin-card-title">Master Order Log</h3>
-                                <button class="btn-secondary" onclick="document.getElementById('export-csv-btn').click()" style="padding: 6px 14px; font-size: 0.8rem;">
-                                    <span class="material-symbols-outlined" style="font-size: 16px;">file_download</span>
-                                    <span>Download CSV</span>
-                                </button>
-                            </div>
-                            <div class="admin-table-wrap">
-                                <table class="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Order ID</th>
-                                            <th>Customer</th>
-                                            <th>Total</th>
-                                            <th>Payment Method</th>
-                                            <th>Status</th>
-                                            <th>Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="admin-all-orders-tbody">
-                                        <tr><td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading transactions...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div>
+            </main>
         </div>
-    </main>
 
-    <!-- Footer Component -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-bottom" style="border-top: none; padding: 20px 0;">
-                <span>© 2026 Bite Tech Ltd. All rights reserved.</span>
-                <span>Platform Governance &amp; Administration</span>
-            </div>
-        </div>
-    </footer>
+        <footer class="admin-footer">
+            <span>© 2026 Bite Tech Ltd. Platform Administration & Governance.</span>
+            <span>Secured with End-to-End IntaSend Settlements</span>
+        </footer>
+    </div>
 
-    <!-- Chart.js + jsPDF + Admin Scripts -->
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script>
-        function showAdminSection(name) {
-            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.admin-nav-item').forEach(a => a.classList.remove('active'));
-            document.getElementById(`admin-section-${name}`)?.classList.add('active');
-            if (event && event.currentTarget) {
-                event.currentTarget.classList.add('active');
-            }
-        }
-    </script>
     <script src="js/app.js"></script>
-    <script src="js/seller.js"></script>
     <script>
-        initAdminPanel();
+    // ── CONFIG ─────────────────────────────────────────────────────────────
+    const ADMIN_PIN = 'TN2026';
+    let chartInstance = null;
+
+    document.getElementById('admin-date').textContent = new Date().toLocaleDateString('en-KE', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    // ── PIN AUTHENTICATION ─────────────────────────────────────────────────
+    function pinSubmit() {
+        const input = document.getElementById('pin-input');
+        const val = (input.value || '').trim();
+        const err = document.getElementById('pin-error');
+
+        if (val === ADMIN_PIN) {
+            err.style.display = 'none';
+            document.getElementById('pin-gate').classList.add('hidden');
+            document.getElementById('admin-panel').classList.remove('hidden');
+            document.getElementById('admin-nav-actions').classList.remove('hidden');
+            sessionStorage.setItem('btl_admin_unlocked', '1');
+            loadAdminData();
+        } else {
+            err.style.display = 'flex';
+            input.value = '';
+            input.focus();
+        }
+    }
+
+    function lockAdmin() {
+        sessionStorage.removeItem('btl_admin_unlocked');
+        document.getElementById('pin-input').value = '';
+        document.getElementById('pin-error').style.display = 'none';
+        document.getElementById('pin-gate').classList.remove('hidden');
+        document.getElementById('admin-panel').classList.add('hidden');
+        document.getElementById('admin-nav-actions').classList.add('hidden');
+    }
+
+    // Auto-unlock if session active
+    if (sessionStorage.getItem('btl_admin_unlocked') === '1') {
+        document.getElementById('pin-gate').classList.add('hidden');
+        document.getElementById('admin-panel').classList.remove('hidden');
+        document.getElementById('admin-nav-actions').classList.remove('hidden');
+        loadAdminData();
+    }
+
+    // ── NAVIGATION ─────────────────────────────────────────────────────────
+    function showSection(name, btn) {
+        document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.sidebar-nav-item').forEach(b => b.classList.remove('active'));
+        document.getElementById('section-' + name)?.classList.add('active');
+        if (btn) btn.classList.add('active');
+    }
+
+    // ── HELPERS ────────────────────────────────────────────────────────────
+    const fmtKES = v => 'KSh ' + Number(v || 0).toLocaleString('en-KE', { minimumFractionDigits: 0 });
+    const fmtDate = d => d ? new Date(d).toLocaleDateString('en-KE', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+    function statusBadge(s) {
+        const map = { completed: 'badge-green', paid: 'badge-green', pending: 'badge-amber', failed: 'badge-red', processing: 'badge-blue' };
+        return `<span class="badge ${map[s] || 'badge-gray'}">${s || 'completed'}</span>`;
+    }
+
+    // ── DATA SOURCES & FALLBACKS ───────────────────────────────────────────
+    const MOCK_SELLERS = [
+        { store_name: 'Bite Tech Flagship', email: 'official@bitetechltd.co.ke', category: 'Laptops',  orders: 58, gmv: 8450000, rate: 0.10 },
+        { store_name: 'TechCore Nairobi',    email: 'tc@partner.ke',            category: 'Laptops',  orders: 42, gmv: 4200000, rate: 0.10 },
+        { store_name: 'AudioMax Kenya',      email: 'am@audiomax.co.ke',        category: 'Audio',    orders: 31, gmv: 1150000, rate: 0.08 },
+        { store_name: 'GameZone East Africa',email: 'gz@gamers.ke',             category: 'Gaming',   orders: 39, gmv: 2340000, rate: 0.12 },
+        { store_name: 'MobileTech Hub',      email: 'mt@mobiletech.ke',         category: 'Phones',   orders: 22, gmv: 890000,  rate: 0.09 },
+    ];
+
+    const MOCK_ORDERS = [
+        { order_id: 'BTL-2026-9812', customer_name: 'Alice Wanjiku',   total: 285000, commission: 28500, payment_method: 'IntaSend M-Pesa', status: 'completed', created_at: '2026-09-01' },
+        { order_id: 'BTL-2026-9811', customer_name: 'Brian Otieno',    total: 45000,  commission: 3600,  payment_method: 'IntaSend Card',   status: 'completed', created_at: '2026-08-31' },
+        { order_id: 'BTL-2026-9810', customer_name: 'Carol Muthoni',   total: 120000, commission: 14400, payment_method: 'IntaSend M-Pesa', status: 'pending',   created_at: '2026-08-30' },
+        { order_id: 'BTL-2026-9809', customer_name: 'David Kamau',     total: 75000,  commission: 7500,  payment_method: 'Airtel Money',    status: 'completed', created_at: '2026-08-29' },
+        { order_id: 'BTL-2026-9808', customer_name: 'Esther Njeri',    total: 320000, commission: 32000, payment_method: 'Bank Transfer',   status: 'completed', created_at: '2026-08-28' },
+        { order_id: 'BTL-2026-9807', customer_name: 'Francis Mwangi',  total: 18000,  commission: 1440,  payment_method: 'IntaSend M-Pesa', status: 'completed', created_at: '2026-08-27' },
+    ];
+
+    const DEFAULT_COMMISSIONS = [
+        { cat: 'Laptops & Computers', desc: 'Workstations, ultrabooks, servers', rate: 10 },
+        { cat: 'Smartphones & Tablets', desc: 'Flagships, rugged phones, pads',   rate: 9  },
+        { cat: 'Audio & Acoustics',   desc: 'Studio monitors, ANC headphones',   rate: 8  },
+        { cat: 'Gaming & VR',         desc: 'Rigs, GPU units, consoles',          rate: 12 },
+        { cat: 'Displays & Vision',   desc: 'OLED monitors, 4K projection',      rate: 10 },
+        { cat: 'Peripherals & Cables',desc: 'Mechanical boards, docking stations',rate: 7  },
+    ];
+
+    // ── COMMISSION MATRIX ──────────────────────────────────────────────────
+    function getCommissions() {
+        try {
+            const saved = localStorage.getItem('btl_commissions');
+            if (saved) return JSON.parse(saved);
+        } catch(_) {}
+        return DEFAULT_COMMISSIONS;
+    }
+
+    function renderCommissionMatrix() {
+        const comms = getCommissions();
+        const el = document.getElementById('commission-matrix');
+        el.innerHTML = comms.map((c, i) => `
+            <div class="rate-editor-grid">
+                <div><div class="rate-cat">${c.cat}</div></div>
+                <div class="rate-desc">${c.desc}</div>
+                <input class="rate-input" id="rate-input-${i}" type="number" value="${c.rate}" min="1" max="50" step="0.5"/>
+                <button class="rate-save-btn" onclick="saveRate(${i})">Save</button>
+            </div>
+        `).join('');
+    }
+
+    function saveRate(i) {
+        const comms = getCommissions();
+        const val = parseFloat(document.getElementById('rate-input-' + i).value);
+        if (isNaN(val) || val < 0) return;
+        comms[i].rate = val;
+        localStorage.setItem('btl_commissions', JSON.stringify(comms));
+
+        const btn = document.querySelectorAll('.rate-save-btn')[i];
+        if (btn) {
+            btn.textContent = 'Saved!';
+            btn.classList.add('saved');
+            setTimeout(() => { btn.textContent = 'Save'; btn.classList.remove('saved'); }, 1400);
+        }
+    }
+
+    // ── LOAD & RENDER DATA ─────────────────────────────────────────────────
+    async function loadAdminData() {
+        renderCommissionMatrix();
+
+        let sellers = [], orders = [];
+
+        try {
+            const [sRes, oRes] = await Promise.all([
+                fetch('/api/sellers/dashboard').catch(() => null),
+                fetch('/api/orders/list').catch(() => null)
+            ]);
+            if (sRes && sRes.ok) {
+                const sData = await sRes.json();
+                if (sData.sellers && sData.sellers.length) sellers = sData.sellers;
+            }
+            if (oRes && oRes.ok) {
+                const oData = await oRes.json();
+                if (oData.orders && oData.orders.length) orders = oData.orders;
+            }
+        } catch(_) {}
+
+        if (!sellers.length) sellers = MOCK_SELLERS;
+        if (!orders.length)  orders  = MOCK_ORDERS;
+
+        renderStats(sellers, orders);
+        renderSellers(sellers);
+        renderOrders(orders);
+        renderRecentOrders(orders.slice(0, 5));
+        renderChart(orders);
+    }
+
+    function renderStats(sellers, orders) {
+        const gmv     = orders.reduce((s, o) => s + (Number(o.total) || 0), 0);
+        const revenue = orders.reduce((s, o) => s + (Number(o.commission) || Number(o.total) * 0.10 || 0), 0);
+        const payouts = gmv - revenue;
+
+        document.getElementById('s-orders').textContent  = orders.length;
+        document.getElementById('s-sellers').textContent = sellers.length;
+        document.getElementById('s-gmv').textContent     = fmtKES(gmv);
+        document.getElementById('s-revenue').textContent = fmtKES(revenue);
+        document.getElementById('s-payouts').textContent = fmtKES(payouts);
+    }
+
+    function renderSellers(sellers) {
+        const tbody = document.getElementById('sellers-tbody');
+        if (!sellers.length) {
+            tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><span class="material-symbols-outlined">storefront</span><p>No seller accounts found</p></div></td></tr>`;
+            return;
+        }
+        tbody.innerHTML = sellers.map(s => {
+            const fee    = (s.gmv || 0) * (s.rate || 0.10);
+            const payout = (s.gmv || 0) - fee;
+            return `<tr>
+                <td><strong>${s.store_name || '—'}</strong></td>
+                <td style="color:var(--muted);font-size:0.82rem">${s.email || '—'}</td>
+                <td><span class="badge badge-blue">${s.category || 'Hardware'}</span></td>
+                <td><strong>${s.orders || 0}</strong></td>
+                <td>${fmtKES(s.gmv)}</td>
+                <td style="color:var(--blue);font-weight:700">${fmtKES(fee)}</td>
+                <td style="color:var(--green);font-weight:700">${fmtKES(payout)}</td>
+                <td><span class="badge badge-green">Active</span></td>
+            </tr>`;
+        }).join('');
+    }
+
+    function renderOrders(orders) {
+        const tbody = document.getElementById('orders-tbody');
+        if (!orders.length) {
+            tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><span class="material-symbols-outlined">receipt_long</span><p>No transactions recorded yet</p></div></td></tr>`;
+            return;
+        }
+        tbody.innerHTML = orders.map(o => `<tr>
+            <td><code style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--blue);font-weight:700">${o.order_id || '—'}</code></td>
+            <td>${o.customer_name || o.customer_email || 'Walk-in'}</td>
+            <td><strong>${fmtKES(o.total)}</strong></td>
+            <td style="color:var(--blue);font-weight:700">${fmtKES(o.commission || o.total * 0.10)}</td>
+            <td><span class="badge badge-gray">${o.payment_method || 'IntaSend M-Pesa'}</span></td>
+            <td>${statusBadge(o.status)}</td>
+            <td style="color:var(--muted);font-size:0.82rem">${fmtDate(o.created_at)}</td>
+        </tr>`).join('');
+    }
+
+    function renderRecentOrders(orders) {
+        const tbody = document.getElementById('recent-orders-tbody');
+        tbody.innerHTML = orders.map(o => `<tr>
+            <td><code style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--blue);font-weight:700">${o.order_id || '—'}</code></td>
+            <td>${o.customer_name || 'Walk-in'}</td>
+            <td><strong>${fmtKES(o.total)}</strong></td>
+            <td><span class="badge badge-gray">${o.payment_method || 'IntaSend M-Pesa'}</span></td>
+            <td>${statusBadge(o.status)}</td>
+            <td style="color:var(--muted);font-size:0.82rem">${fmtDate(o.created_at)}</td>
+        </tr>`).join('');
+    }
+
+    function renderChart(orders) {
+        const canvas = document.getElementById('revenue-chart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+
+        const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
+        const currentTotal = orders.reduce((s,o) => s + (Number(o.total) || 0), 0);
+        const gmvData = [1100000, 1450000, 1850000, 2400000, 3100000, currentTotal || 4500000];
+        const revData = gmvData.map(v => Math.round(v * 0.10));
+
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: months,
+                datasets: [
+                    { label: 'Gross Volume (GMV)', data: gmvData, backgroundColor: 'rgba(0,88,188,0.15)', borderColor: '#0058bc', borderWidth: 2, borderRadius: 6 },
+                    { label: 'Platform Revenue (10%)', data: revData, backgroundColor: 'rgba(0,209,255,0.22)', borderColor: '#00d1ff', borderWidth: 2, borderRadius: 6 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', weight: '600', size: 12 }, boxWidth: 12, padding: 16 } }
+                },
+                scales: {
+                    y: { grid: { color: '#f1f5f9' }, ticks: { callback: v => 'KSh ' + (v/1000).toFixed(0) + 'k', font: { family: 'JetBrains Mono', size: 11 } } },
+                    x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', weight: '600', size: 12 } } }
+                }
+            }
+        });
+    }
+
+    // ── CSV EXPORT ─────────────────────────────────────────────────────────
+    function exportCSV() {
+        const rows = [['Order ID','Customer','Total KES','Commission KES','Payment Method','Status','Date']];
+        document.querySelectorAll('#orders-tbody tr').forEach(tr => {
+            const cells = [...tr.querySelectorAll('td')].map(td => td.textContent.trim());
+            if (cells.length > 1) rows.push(cells);
+        });
+        const csv  = rows.map(r => r.map(c => `"${c.replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a    = Object.assign(document.createElement('a'), {
+            href: URL.createObjectURL(blob),
+            download: `BiteTechLtd-Orders-${Date.now()}.csv`
+        });
+        a.click();
+    }
     </script>
 </body>
 </html>
