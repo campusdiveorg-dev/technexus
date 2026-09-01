@@ -1,6 +1,6 @@
-# ⚡ TechNexus Marketplace (Kenya Edition)
+# ⚡ Bite Tech Ltd (Kenya Edition)
 
-A high-performance, full-stack multi-vendor electronics & hardware marketplace built specifically for the Kenyan ecosystem with **Kenyan Shilling (KES / KSh)** pricing, **Flutterwave (M-Pesa, Airtel Money, Visa/Mastercard)** payment processing, **TiDB Serverless (MySQL)** relational storage, and **Cloudinary** media CDN.
+A high-performance, full-stack multi-vendor electronics & hardware marketplace built specifically for the Kenyan ecosystem with **Kenyan Shilling (KES / KSh)** pricing, **IntaSend (M-Pesa, Airtel Money, Visa/Mastercard, Bank Transfer)** payment processing, **TiDB Serverless (MySQL)** relational storage, and **Cloudinary** media CDN.
 
 ---
 
@@ -11,7 +11,7 @@ A high-performance, full-stack multi-vendor electronics & hardware marketplace b
 - **Product Catalog (`catalog.html`)**: Dynamic category filter, real-time KSh price slider (up to KSh 350,000), search bar, and rating filters.
 - **Product Detail (`product.html`)**: Hardware configurator (RAM/SSD upgrades in KES), stock indicators, and instant cart integration.
 - **Dynamic Cart (`cart.html`)**: Cart quantity controls, voucher system (`TECH2026` for 10% off), 16% Kenyan VAT computation, and clear cart actions.
-- **Kenyan Payment Flow (`js/checkout.js`)**: 2-step checkout modal with customer contact details and Flutterwave payment modal supporting **M-Pesa**, **Airtel Money**, and **Cards**.
+- **Kenyan Payment Flow (`js/checkout.js`)**: 2-step checkout modal with customer contact details and IntaSend payment modal supporting **M-Pesa STK Push**, **Airtel Money**, and **Cards**.
 - **Tax Receipt & Invoice (`receipt.html`)**: Branded tax invoice with itemized line items, VAT breakdown, transaction reference, and 1-click **jsPDF client-side PDF download**.
 
 ### 💼 Partner Seller Ecosystem (`seller-register.html` & `seller-dashboard.html`)
@@ -41,7 +41,7 @@ A high-performance, full-stack multi-vendor electronics & hardware marketplace b
 | **Visuals & Charts** | Chart.js 4.4, jsPDF 2.5 |
 | **Backend & Hosting** | Node.js Serverless Functions deployed on **Vercel** (`/api/*`) |
 | **Database** | **TiDB Serverless** (Distributed ACID MySQL 8.0 compatible) with SSL |
-| **Payments** | **Flutterwave Standard SDK** (KES: M-Pesa, Airtel Money, Card) |
+| **Payments** | **IntaSend Checkout SDK** (KES: M-Pesa STK Push, Airtel Money, Card) |
 | **Media Hosting** | **Cloudinary CDN** with Upload Widget |
 
 ---
@@ -67,16 +67,16 @@ TIDB_HOST=gateway01.ap-southeast-1.prod.aws.tidbcloud.com
 TIDB_PORT=4000
 TIDB_USER=<your-tidb-user>
 TIDB_PASSWORD=<your-tidb-password>
-TIDB_DATABASE=technexus
+TIDB_DATABASE=bitetechltd
 
-# Payment Gateway (Flutterwave)
-FLW_PUBLIC_KEY=FLWPUBK_TEST-xxxxxxxxxxxxxxxxxxxx
-FLW_SECRET_KEY=FLWSECK_TEST-xxxxxxxxxxxxxxxxxxxx
-FLW_ENCRYPTION_KEY=FLWSECK_TEST_ENVxxxxxxxx
+# Payment Gateway (IntaSend)
+INTASEND_PUBLISHABLE_KEY=716d0110-8d16-4004-9d5d-55b0f5f4eb41
+INTASEND_SECRET_KEY=525umJNUY1SmNBiqLVval2LolU12ZNwT
+INTASEND_IS_LIVE=false
 
 # Cloudinary (Image Uploads)
 CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_UPLOAD_PRESET=technexus_uploads
+CLOUDINARY_UPLOAD_PRESET=bitetechltd_uploads
 
 # Security & Admin PIN
 JWT_SECRET=super_secret_jwt_key_2026
@@ -109,7 +109,7 @@ vercel dev
 3. Import your repository.
 4. Under **Environment Variables**, add the keys from your `.env`:
    - `TIDB_HOST`, `TIDB_PORT`, `TIDB_USER`, `TIDB_PASSWORD`, `TIDB_DATABASE`
-   - `FLW_PUBLIC_KEY`, `FLW_SECRET_KEY`, `FLW_ENCRYPTION_KEY`
+   - `INTASEND_PUBLISHABLE_KEY`, `INTASEND_SECRET_KEY`, `INTASEND_IS_LIVE`
    - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_UPLOAD_PRESET`
    - `JWT_SECRET`, `ADMIN_PIN`
 5. Click **Deploy**. Vercel will build the frontend and serve all API endpoints in `api/` automatically according to `vercel.json`.
@@ -126,4 +126,4 @@ vercel dev
 ---
 
 ## 📄 License
-© 2026 TechNexus Hardware Corp. All rights reserved.
+© 2026 Bite Tech Ltd. All rights reserved.

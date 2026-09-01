@@ -1,4 +1,4 @@
-/**
+﻿/**
  * scripts/verify-api.js
  * Verifies live queries against TiDB through lib/db.js
  */
@@ -11,7 +11,7 @@ async function test() {
     console.table(rates);
     
     const tables = await query('SHOW TABLES');
-    console.log('✓ Verified live tables in TiDB `technexus` database:');
+    console.log('✓ Verified live tables in TiDB `Bite Tech Ltd` database:');
     console.table(tables);
     
     process.exit(0);

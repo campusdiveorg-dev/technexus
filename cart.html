@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Shopping Cart - TechNexus</title>
+    <title>Shopping Cart — Bite Tech Ltd</title>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -106,7 +106,7 @@
             <!-- Brand Logo -->
             <a class="brand-logo" href="index.html">
                 <span class="material-symbols-outlined brand-icon">bolt</span>
-                <span>TechNexus</span>
+                <span>Bite Tech</span>
             </a>
 
             <!-- Checkout Security Indicator -->
@@ -150,43 +150,41 @@
                         </a>
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px;">
-                        <a href="catalog.html" class="btn-secondary" style="padding: 10px 20px; font-size: 0.78rem;">
+                    <div class="cart-actions-bar">
+                        <button id="clear-cart-btn" class="btn-clear-cart">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">delete_sweep</span>
+                            <span>Clear Cart</span>
+                        </button>
+                        <a href="catalog.html" class="btn-continue-shopping">
                             <span class="material-symbols-outlined" style="font-size: 16px;">arrow_back</span>
                             <span>Continue Shopping</span>
                         </a>
-                        <button id="clear-cart-btn" style="font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
-                            <span class="material-symbols-outlined" style="font-size: 16px;">delete_sweep</span>
-                            <span>Clear Entire Cart</span>
-                        </button>
                     </div>
                 </div>
 
-                <!-- Order Summary Console (Right) -->
-                <div class="order-summary-box">
+                <!-- Order Summary Sidebar (Right) -->
+                <div class="summary-card">
                     <h2 class="summary-title">Order Summary</h2>
 
-                    <!-- Promo Code Input -->
-                    <div style="margin-bottom: 24px;">
-                        <label class="form-label" for="promo-input">Promotional Voucher</label>
-                        <div style="display: flex; gap: 8px;">
-                            <input id="promo-input" class="form-input" style="text-transform: uppercase; font-family: var(--font-mono); font-weight: 700;" placeholder="e.g. TECH2026" type="text"/>
-                            <button id="apply-promo-btn" class="btn-dark" style="padding: 10px 18px; font-size: 0.75rem;">Apply</button>
+                    <!-- Voucher Box -->
+                    <div class="voucher-box">
+                        <div class="voucher-input-wrap">
+                            <input id="voucher-input" class="voucher-input" placeholder="Promo code (e.g. TECH2026)" type="text"/>
+                            <button id="apply-voucher-btn" class="btn-voucher-apply">Apply</button>
                         </div>
-                        <div id="promo-status" style="display: none; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; margin-top: 6px;"></div>
+                        <div id="voucher-message" class="voucher-msg"></div>
                     </div>
 
-                    <!-- Price Rows -->
                     <div class="summary-row">
                         <span>Items Subtotal</span>
                         <strong id="summary-subtotal">$0.00</strong>
                     </div>
-                    <div id="discount-row" class="summary-row" style="display: none; color: var(--accent-success);">
-                        <span>10% Promo Discount</span>
+                    <div id="summary-discount-row" class="summary-row" style="display: none; color: var(--accent-success);">
+                        <span id="summary-discount-label">Discount</span>
                         <strong id="summary-discount">-$0.00</strong>
                     </div>
                     <div class="summary-row">
-                        <span>Express Priority Shipping</span>
+                        <span>Kenya Express Delivery</span>
                         <strong style="color: var(--accent-success);">FREE</strong>
                     </div>
                     <div class="summary-row">
@@ -214,7 +212,7 @@
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span class="material-symbols-outlined" style="color: var(--electric-blue); font-size: 16px; font-variation-settings: 'FILL' 1;">workspace_premium</span>
-                            <span>3-Year TechNexus Warranty Included</span>
+                            <span>3-Year Bite Tech Warranty Included</span>
                         </div>
                     </div>
                 </div>
@@ -231,7 +229,7 @@
                 <div class="footer-brand">
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
                         <span class="material-symbols-outlined" style="color: var(--electric-blue); font-size: 28px;">bolt</span>
-                        <h3 style="margin-bottom: 0;">TechNexus</h3>
+                        <h3 style="margin-bottom: 0;">Bite Tech Ltd</h3>
                     </div>
                     <p>High-performance industrial grade hardware, displays, and mobile computing crafted with obsessive attention to detail.</p>
                 </div>
@@ -247,9 +245,9 @@
                 <div class="footer-col">
                     <h4>Guarantees</h4>
                     <ul class="footer-links">
-                        <li style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--electric-blue);">local_shipping</span> Free Worldwide Express</li>
+                        <li style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--electric-blue);">local_shipping</span> Free Kenya Express Delivery</li>
                         <li style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--electric-blue);">verified</span> 2-Year Full Hardware Warranty</li>
-                        <li style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--electric-blue);">lock</span> 256-Bit Encrypted Checkout</li>
+                        <li style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--electric-blue);">lock</span> Secure IntaSend M-Pesa Checkout</li>
                     </ul>
                 </div>
                 <div class="footer-col">
@@ -262,7 +260,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>© 2026 TechNexus Hardware Corp. All rights reserved.</span>
+                <span>© 2026 Bite Tech Ltd. All rights reserved.</span>
                 <span>Engineered for Peak Performance</span>
             </div>
         </div>
@@ -432,7 +430,10 @@
 
                 <!-- Step 1: Customer Info -->
                 <div class="checkout-step active" id="checkout-step-1">
-                    <div class="step-title">📦 Delivery Information</div>
+                    <div class="step-title">
+                        <span class="material-symbols-outlined" style="vertical-align:middle;font-size:1.15rem;margin-right:6px;color:var(--primary-blue);">local_shipping</span>
+                        Delivery Information
+                    </div>
                     <div class="ch-input-row">
                         <div class="ch-form-group">
                             <label class="ch-label" for="cust-name">Full Name</label>
@@ -459,7 +460,10 @@
                     <button class="btn-step-back" id="step2-back">
                         <span class="material-symbols-outlined" style="font-size:1rem;">arrow_back</span> Back
                     </button>
-                    <div class="step-title">💳 Order Summary &amp; Payment</div>
+                    <div class="step-title">
+                        <span class="material-symbols-outlined" style="vertical-align:middle;font-size:1.15rem;margin-right:6px;color:var(--primary-blue);">payments</span>
+                        Order Summary &amp; Payment
+                    </div>
 
                     <!-- Confirm customer -->  
                     <div class="confirm-block">
@@ -480,19 +484,20 @@
                     <div style="margin:1rem 0 .5rem;">
                         <div class="ch-label" style="margin-bottom:.5rem;">Accepted Payment Methods</div>
                         <div class="payment-methods">
-                            <span class="pay-badge"><span class="pi">📱</span> M-Pesa</span>
-                            <span class="pay-badge"><span class="pi">📡</span> Airtel Money</span>
-                            <span class="pay-badge"><span class="pi">💳</span> Visa / Mastercard</span>
-                            <span class="pay-badge"><span class="pi">🏦</span> Bank Transfer</span>
+                            <span class="pay-badge"><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;color:var(--primary-blue);">smartphone</span> M-Pesa</span>
+                            <span class="pay-badge"><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;color:var(--primary-blue);">cell_tower</span> Airtel Money</span>
+                            <span class="pay-badge"><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;color:var(--primary-blue);">credit_card</span> Visa / Mastercard</span>
+                            <span class="pay-badge"><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;color:var(--primary-blue);">account_balance</span> Bank Transfer</span>
                         </div>
                     </div>
 
-                    <button class="btn-step-next" id="pay-btn">
+                    <button class="btn-step-next intaSendPayButton" id="pay-btn" data-currency="KES">
                         <span class="material-symbols-outlined" style="vertical-align:middle;font-size:1rem;">lock</span>
-                        Pay Now via Flutterwave
+                        Pay Now via IntaSend (M-Pesa / Card)
                     </button>
-                    <p style="text-align:center;font-size:.72rem;color:#475569;margin-top:.75rem;">
-                        🔒 Payments secured by Flutterwave. TechNexus never stores card details.
+                    <p style="text-align:center;font-size:.72rem;color:#475569;margin-top:.75rem;display:flex;align-items:center;justify-content:center;gap:4px;">
+                        <span class="material-symbols-outlined" style="font-size:0.95rem;color:var(--primary-blue);">verified_user</span>
+                        Payments secured by IntaSend. Bite Tech Ltd never stores M-Pesa PIN or card details.
                     </p>
                 </div>
             </div>
@@ -501,8 +506,8 @@
 
     <!-- App Engine & Checkout Script -->
     <script src="js/app.js?v=2"></script>
-    <!-- Flutterwave Checkout SDK -->
-    <script src="https://checkout.flutterwave.com/v3.js"></script>
-    <script src="js/checkout.js?v=2"></script>
+    <!-- IntaSend Checkout SDK -->
+    <script src="https://unpkg.com/intasend-inlinejs-sdk@3.0.4/build/intasend-inline.js"></script>
+    <script src="js/checkout.js?v=3"></script>
 </body>
 </html>

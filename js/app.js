@@ -1,5 +1,5 @@
 /**
- * TechNexus Marketplace - Global Application Engine
+ * Bite Tech Ltd - Global Application Engine
  * Handles shared cart state, catalog filtering, navigation, search, seller commissions, and interactions across all pages.
  */
 
@@ -49,8 +49,8 @@ const PRODUCTS = [
         image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCwZbn2lF_suhISA5hVYGC_3MjqW2Me9QLwaECX4UxOPUFur42KTpKF5doBV-Hie9eLMEcusP4vdoqIFu33kGe6-khcFEoQsZcepBu_H0_6q19agCF3AQJCyqpymMOs3S65gu8jj4JAK8YrJ7iqihyh6rnhBJn97S-J11rBWKuzJbyRVbYFMI7x3rrSPbncN5ZwkIMMQ7uB-TTOnUR_A2WctxTrZPIYdVwaqIt_gwVp_xMY55Lggitx4w',
         specs: 'Midnight Black • 16GB RAM • 512GB SSD',
         href: 'product.html?id=nexus-air-13',
-        seller: 'TechNexus Official',
-        sellerId: 'seller-technexus',
+        seller: 'Bite Tech Ltd Official',
+        sellerId: 'seller-Bite Tech Ltd',
         commissionRate: 0.10
     },
     {
@@ -156,7 +156,7 @@ const DEFAULT_CART = [];
 
 // Cart State Helpers
 const CartManager = {
-    STORAGE_KEY: 'technexus_cart',
+    STORAGE_KEY: 'bitetechltd_cart',
 
     getCart() {
         try {
@@ -167,7 +167,7 @@ const CartManager = {
                     ...item,
                     qty: item.qty || item.quantity || 1,
                     quantity: item.quantity || item.qty || 1,
-                    seller: item.seller || 'TechNexus Official',
+                    seller: item.seller || 'Bite Tech Ltd Official',
                     sellerId: item.sellerId || null,
                     commissionRate: item.commissionRate || 0.10
                 }));
@@ -209,7 +209,7 @@ const CartManager = {
                 quantity: qty,
                 image: product.image,
                 specs: product.specs || 'Standard Configuration',
-                seller: product.seller || 'TechNexus Official',
+                seller: product.seller || 'Bite Tech Ltd Official',
                 sellerId: product.sellerId || null,
                 commissionRate: product.commissionRate || 0.10
             });
@@ -339,7 +339,7 @@ function formatKES(amount) {
 window.formatKES = formatKES;
 window.CartManager = CartManager;
 window.PRODUCTS = PRODUCTS;
-window.TechNexus = { showToast, CartManager, PRODUCTS, calcCommission, formatKES };
+window.BiteTechLtd = { showToast, CartManager, PRODUCTS, calcCommission, formatKES };
 
 // Setup Global Navbar and Badges
 document.addEventListener('DOMContentLoaded', () => {

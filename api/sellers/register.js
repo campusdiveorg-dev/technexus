@@ -13,42 +13,45 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     const { store_name, full_name, email, password, phone, category, commission_rate, logo_url } = req.body || {};
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanStore = (store_name || '').trim();
+    const cleanName  = (full_name || '').trim();
 
-    if (!store_name || !full_name || !email || !password) {
+    if (!cleanStore || !cleanName || !cleanEmail || !password) {
         return res.status(400).json({ error: 'Missing required fields: store_name, full_name, email, password' });
     }
 
     try {
-        // Check duplicate email
-        const existing = await query('SELECT id FROM sellers WHERE email = ?', [email]);
+        // Check duplicate email (case-insensitive)
+        const existing = await query('SELECT id FROM sellers WHERE LOWER(email) = LOWER(?)', [cleanEmail]);
         if (existing.length > 0) {
-            return res.status(409).json({ error: 'Email already registered' });
+            return res.status(409).json({ error: 'Email is already registered. Please login instead.' });
         }
 
         // Get commission rate from category table if not provided
-        let rate = commission_rate || 0.10;
+        let rate = commission_rate ? parseFloat(commission_rate) : 0.10;
         if (!commission_rate && category) {
             const catRate = await query(
                 'SELECT rate FROM commission_rates WHERE category = ?', [category]
             );
-            if (catRate.length > 0) rate = catRate[0].rate;
+            if (catRate.length > 0) rate = parseFloat(catRate[0].rate);
         }
 
         const password_hash = await bcrypt.hash(password, 12);
-        const id = `seller-${Date.now()}`;
+        const id = `seller-${Date.now()}-${Math.random().toString(36).substring(2,6).toUpperCase()}`;
 
         await query(`
             INSERT INTO sellers (id, store_name, full_name, email, password_hash, phone, category, commission_rate, logo_url)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [id, store_name, full_name, email, password_hash, phone || null, category || null, rate, logo_url || null]);
+        `, [id, cleanStore, cleanName, cleanEmail, password_hash, phone || null, category || null, rate, logo_url || null]);
 
-        const seller = { id, store_name, full_name, email, commission_rate: rate };
+        const seller = { id, store_name: cleanStore, full_name: cleanName, email: cleanEmail, category, commission_rate: rate, logo_url: logo_url || null };
         const token  = signToken(seller);
 
         res.status(201).json({
             message: 'Seller registered successfully',
             token,
-            seller: { id, store_name, full_name, email, category, commission_rate: rate }
+            seller
         });
     } catch (err) {
         console.error('[POST /api/sellers/register]', err);

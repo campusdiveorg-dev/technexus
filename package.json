@@ -1,18 +1,20 @@
 {
-  "name": "technexus-marketplace",
+  "name": "bitetechltd-marketplace",
   "version": "1.0.0",
-  "description": "TechNexus Electronics E-Commerce Marketplace",
+  "description": "Bite Tech Ltd Electronics E-Commerce Marketplace",
   "type": "commonjs",
   "scripts": {
+    "start": "npx serve . -p 3000",
     "dev": "vercel dev",
     "deploy": "vercel --prod",
     "db:init": "node scripts/init-db.js"
   },
   "dependencies": {
-    "mysql2": "^3.9.7",
-    "jsonwebtoken": "^9.0.2",
     "bcryptjs": "^2.4.3",
-    "node-fetch": "^2.7.0"
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.9.7",
+    "node-fetch": "^2.7.0",
+    "pdfkit": "^0.20.2"
   },
   "devDependencies": {
     "vercel": "^37.0.0"

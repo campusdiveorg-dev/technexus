@@ -1,4 +1,4 @@
-/**
+﻿/**
  * scripts/init-db.js
  * Automatically connects to TiDB Serverless, provisions tables & inserts default commission rates.
  */
@@ -42,9 +42,9 @@ async function init() {
 
     console.log('✓ Successfully connected to TiDB cluster!');
 
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.TIDB_DATABASE || 'technexus'}\`;`);
-    await connection.query(`USE \`${process.env.TIDB_DATABASE || 'technexus'}\`;`);
-    console.log(`✓ Using database: ${process.env.TIDB_DATABASE || 'technexus'}`);
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.TIDB_DATABASE || 'Bite Tech Ltd'}\`;`);
+    await connection.query(`USE \`${process.env.TIDB_DATABASE || 'Bite Tech Ltd'}\`;`);
+    console.log(`✓ Using database: ${process.env.TIDB_DATABASE || 'Bite Tech Ltd'}`);
 
     // Create sellers table
     await connection.query(`

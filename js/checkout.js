@@ -1,15 +1,19 @@
 /**
  * js/checkout.js
- * TechNexus — Flutterwave Checkout Integration
+ * Bite Tech Ltd — IntaSend Checkout Integration
  * Multi-step checkout modal: Customer Info → Payment → Confirmation & Receipt Redirect
+ * Supports M-Pesa STK Push, Airtel Money, Visa/Mastercard & Bank Transfers
  */
 
 // ── Config ─────────────────────────────────────────────────────
-const FLW_PUBLIC_KEY = window.FLW_PUBLIC_KEY || '716d0110-8d16-4004-9d5d-55b0f5f4eb41';
+const INTASEND_PUBLIC_KEY = window.INTASEND_PUBLISHABLE_KEY || window.INTASEND_PUBLIC_KEY || window.FLW_PUBLIC_KEY || '716d0110-8d16-4004-9d5d-55b0f5f4eb41';
+const INTASEND_IS_LIVE    = window.INTASEND_IS_LIVE === true || window.INTASEND_IS_LIVE === 'true' || false;
 
 // ── State ──────────────────────────────────────────────────────
 let checkoutCustomer = {};
 let checkoutStep     = 1;
+let currentTxRef     = '';
+let intasendInstance = null;
 
 // ── Initialize ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -24,14 +28,64 @@ document.addEventListener('DOMContentLoaded', () => {
     // Step navigation
     document.getElementById('step1-next')?.addEventListener('click', goToStep2);
     document.getElementById('step2-back')?.addEventListener('click', () => showStep(1));
-    document.getElementById('pay-btn')?.addEventListener('click', launchPayment);
-
+    
     // Close modal
     document.getElementById('checkout-overlay')?.addEventListener('click', (e) => {
         if (e.target.id === 'checkout-overlay') closeCheckoutModal();
     });
     document.getElementById('checkout-close-btn')?.addEventListener('click', closeCheckoutModal);
+
+    // Initialize IntaSend SDK
+    initIntaSendSDK();
 });
+
+// ── Initialize IntaSend SDK ────────────────────────────────────
+function initIntaSendSDK() {
+    if (typeof window.IntaSend === 'function') {
+        try {
+            intasendInstance = new window.IntaSend({
+                publicAPIKey: INTASEND_PUBLIC_KEY,
+                live: INTASEND_IS_LIVE
+            });
+
+            intasendInstance
+                .on("COMPLETE", async (results) => {
+                    console.log("[IntaSend] Payment Successful:", results);
+                    const cart = getNormalizedCart();
+                    const invoiceId = results.invoice_id || results.tracking_id || `IS-${Date.now()}`;
+                    const txRef = results.api_ref || currentTxRef || `TN-${Date.now()}`;
+                    await processOrderCreation(invoiceId, txRef, cart, results);
+                })
+                .on("FAILED", (results) => {
+                    console.error("[IntaSend] Payment Failed:", results);
+                    const msg = results?.message || 'Payment was not completed. Please try again.';
+                    showToast(msg, 'error');
+                    resetPayButton();
+                })
+                .on("IN-PROGRESS", (results) => {
+                    console.log("[IntaSend] Payment In Progress:", results);
+                    const payBtn = document.getElementById('pay-btn');
+                    if (payBtn) {
+                        payBtn.disabled = true;
+                        payBtn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:1.1rem;vertical-align:middle;">sync</span> Awaiting M-Pesa / Card Prompt…';
+                    }
+                });
+
+            console.log('[Checkout] IntaSend SDK initialized in ' + (INTASEND_IS_LIVE ? 'LIVE' : 'SANDBOX') + ' mode.');
+        } catch (e) {
+            console.warn('[Checkout] IntaSend initialization warning:', e);
+        }
+    } else {
+        // Fallback button handler if IntaSend SDK was blocked or offline
+        document.getElementById('pay-btn')?.addEventListener('click', () => {
+            if (!intasendInstance) {
+                const cart  = getNormalizedCart();
+                const total = cart.reduce((s, i) => s + i.price * (i.qty || i.quantity || 1), 0);
+                simulateSandboxPayment(currentTxRef, cart, total);
+            }
+        });
+    }
+}
 
 // ── Open / Close Modal ──────────────────────────────────────────
 function openCheckoutModal() {
@@ -59,6 +113,18 @@ function closeCheckoutModal() {
     }
     document.body.style.overflow = '';
     checkoutStep = 1;
+    resetPayButton();
+}
+
+function resetPayButton() {
+    const payBtn = document.getElementById('pay-btn');
+    if (payBtn) {
+        payBtn.disabled = false;
+        payBtn.innerHTML = `
+            <span class="material-symbols-outlined" style="vertical-align:middle;font-size:1rem;">lock</span>
+            Pay Now via IntaSend (M-Pesa / Card)
+        `;
+    }
 }
 
 // ── Step Navigation ─────────────────────────────────────────────
@@ -101,7 +167,26 @@ function goToStep2() {
 
     // Refresh totals with current cart
     const cart = getNormalizedCart();
+    const total = cart.reduce((s, i) => s + i.price * (i.qty || i.quantity || 1), 0);
     renderModalSummary(cart);
+
+    // Set IntaSend button dataset attributes for auto-trigger
+    currentTxRef = `TN-${Date.now()}-${Math.random().toString(36).substring(2,6).toUpperCase()}`;
+    const payBtn = document.getElementById('pay-btn');
+    if (payBtn) {
+        const nameParts = name.split(' ');
+        const firstName = nameParts[0] || 'Customer';
+        const lastName  = nameParts.slice(1).join(' ') || firstName;
+
+        payBtn.setAttribute('data-amount', total.toFixed(2));
+        payBtn.setAttribute('data-currency', 'KES');
+        payBtn.setAttribute('data-email', email);
+        payBtn.setAttribute('data-first_name', firstName);
+        payBtn.setAttribute('data-last_name', lastName);
+        payBtn.setAttribute('data-phone_number', phone);
+        payBtn.setAttribute('data-api_ref', currentTxRef);
+        payBtn.setAttribute('data-country', 'KE');
+    }
 
     showStep(2);
 }
@@ -123,7 +208,7 @@ function renderModalSummary(cart) {
                 <img src="${item.image}" alt="${item.name}" class="modal-item-img" onerror="this.src='https://via.placeholder.com/48'"/>
                 <div class="modal-item-info">
                     <span class="modal-item-name">${item.name}</span>
-                    <span class="modal-item-qty">Qty: ${qty} • ${item.seller || 'TechNexus'}</span>
+                    <span class="modal-item-qty">Qty: ${qty} • ${item.seller || 'Bite Tech Ltd'}</span>
                 </div>
                 <span class="modal-item-price" style="font-weight: 700; color: var(--primary-blue);">${formattedPrice}</span>
             </div>`;
@@ -134,68 +219,32 @@ function renderModalSummary(cart) {
     }
 }
 
-// ── Launch Payment (Flutterwave / Sandbox Demo) ───────────────────
-function launchPayment() {
-    const cart  = getNormalizedCart();
-    const total = cart.reduce((s, i) => s + i.price * (i.qty || i.quantity || 1), 0);
-    const txRef = `TN-${Date.now()}-${Math.random().toString(36).substring(2,6).toUpperCase()}`;
-
-    // If Flutterwave SDK is loaded and a valid Flutterwave Public Key (starting with FLWPUBK) is provided
-    const isValidFlwKey = FLW_PUBLIC_KEY && (FLW_PUBLIC_KEY.startsWith('FLWPUBK_TEST-') || FLW_PUBLIC_KEY.startsWith('FLWPUBK-'));
-
-    if (typeof FlutterwaveCheckout === 'function' && isValidFlwKey) {
-        FlutterwaveCheckout({
-            public_key:   FLW_PUBLIC_KEY,
-            tx_ref:       txRef,
-            amount:       parseFloat(total.toFixed(2)),
-            currency:     'KES',
-            payment_options: 'mpesa, card, airtel_money, ussd, bank_transfer',
-            customer: {
-                email:        checkoutCustomer.email,
-                phone_number: checkoutCustomer.phone,
-                name:         checkoutCustomer.name
-            },
-            customizations: {
-                title:       'TechNexus Marketplace',
-                description: `Order of ${cart.length} item(s)`,
-                logo:        'https://res.cloudinary.com/stez7ars/image/upload/v1/logo.png'
-            },
-            callback: async (response) => {
-                if (response.status === 'successful') {
-                    await processOrderCreation(response.transaction_id, txRef, cart);
-                } else {
-                    showToast('Payment was not completed. Please try again.', 'error');
-                }
-            },
-            onclose: () => {
-                showToast('Payment window closed.', 'info');
-            }
-        });
-    } else {
-        // Instant Sandbox / Demo Simulation Mode (works offline, locally & if FLWPUBK key is pending)
-        console.log('[Checkout] Using Instant Simulation Mode (FLWPUBK key pending or offline)');
-        simulateSandboxPayment(txRef, cart, total);
-    }
-}
-
-// ── Sandbox Demo Payment Simulation ──────────────────────────────
+// ── Sandbox Demo Payment Simulation (Offline / Direct Trigger Fallback) ──
 async function simulateSandboxPayment(txRef, cart, total) {
     const payBtn = document.getElementById('pay-btn');
     if (payBtn) {
         payBtn.disabled = true;
-        payBtn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:1.1rem;vertical-align:middle;">sync</span> Processing Payment (M-Pesa / Card)…';
+        payBtn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:1.1rem;vertical-align:middle;">sync</span> Processing Payment (IntaSend M-Pesa / Card)…';
     }
 
     // Simulate 1.5s gateway confirmation
     setTimeout(async () => {
-        const mockTransactionId = `FLW-${Date.now()}`;
-        await processOrderCreation(mockTransactionId, txRef, cart);
+        const mockInvoiceId = `IS-${Date.now()}`;
+        await processOrderCreation(mockInvoiceId, txRef, cart, {
+            provider: 'M-PESA',
+            invoice_id: mockInvoiceId
+        });
     }, 1500);
 }
 
 // ── Create Order via Backend API (or LocalStorage Fallback) ───────
-async function processOrderCreation(transactionId, txRef, cart) {
+async function processOrderCreation(transactionId, txRef, cart, intasendData = {}) {
     const payBtn = document.getElementById('pay-btn');
+    if (payBtn) {
+        payBtn.disabled = true;
+        payBtn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:1.1rem;vertical-align:middle;">check_circle</span> Finalizing Order…';
+    }
+
     const enrichedItems = cart.map(item => {
         const qty = item.qty || item.quantity || 1;
         const commissionRate = item.commissionRate || 0.10;
@@ -212,13 +261,15 @@ async function processOrderCreation(transactionId, txRef, cart) {
             platformFee,
             sellerEarning,
             image: item.image,
-            seller: item.seller || 'TechNexus Official',
+            seller: item.seller || 'Bite Tech Ltd Official',
             sellerId: item.sellerId || null,
             commissionRate
         };
     });
 
     let orderId = `TN-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.random().toString(36).substring(2,6).toUpperCase()}`;
+    const paymentProvider = intasendData?.provider || 'M-PESA';
+    const paymentMethodLabel = paymentProvider === 'M-PESA' ? 'M-Pesa (IntaSend)' : `${paymentProvider} (IntaSend)`;
 
     try {
         const res = await fetch('/api/orders/create', {
@@ -226,9 +277,11 @@ async function processOrderCreation(transactionId, txRef, cart) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 transaction_id: transactionId,
+                invoice_id:     transactionId,
                 tx_ref:         txRef,
                 cartItems:      enrichedItems,
-                customer:       checkoutCustomer
+                customer:       checkoutCustomer,
+                payment_method: paymentMethodLabel
             })
         });
 
@@ -250,8 +303,9 @@ async function processOrderCreation(transactionId, txRef, cart) {
         shipping_address: checkoutCustomer.address,
         total_amount: totalAmount,
         currency: 'KES',
-        payment_method: 'M-Pesa / Flutterwave',
+        payment_method: paymentMethodLabel,
         flw_transaction_id: transactionId,
+        invoice_id: transactionId,
         flw_tx_ref: txRef,
         status: 'paid',
         created_at: new Date().toISOString(),
@@ -264,7 +318,7 @@ async function processOrderCreation(transactionId, txRef, cart) {
     if (window.CartManager) {
         window.CartManager.clearCart();
     } else {
-        localStorage.removeItem('technexus_cart');
+        localStorage.removeItem('bitetechltd_cart');
         localStorage.removeItem('tn_cart');
     }
 
@@ -278,7 +332,7 @@ function getNormalizedCart() {
         return window.CartManager.getCart();
     }
     try {
-        const raw = localStorage.getItem('technexus_cart') || localStorage.getItem('tn_cart') || '[]';
+        const raw = localStorage.getItem('bitetechltd_cart') || localStorage.getItem('tn_cart') || '[]';
         return JSON.parse(raw);
     } catch {
         return [];
@@ -302,8 +356,8 @@ function setText(id, text) {
 }
 
 function showToast(msg, type = 'success') {
-    if (window.TechNexus?.showToast) {
-        window.TechNexus.showToast(msg, type);
+    if (window.BiteTechLtd?.showToast) {
+        window.BiteTechLtd.showToast(msg, type);
         return;
     }
     alert(msg);

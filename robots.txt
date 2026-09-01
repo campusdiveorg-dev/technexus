@@ -1,9 +1,9 @@
-User-agent: *
+﻿User-agent: *
 Disallow: /seller-register.html
 Disallow: /seller-dashboard.html
 Disallow: /admin.html
 
-# TechNexus public pages
+# Bite Tech Ltd public pages
 Allow: /index.html
 Allow: /catalog.html
 Allow: /product.html

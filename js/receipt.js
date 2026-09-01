@@ -1,6 +1,6 @@
-/**
+﻿/**
  * js/receipt.js
- * TechNexus — Receipt page logic + jsPDF generation
+ * Bite Tech Ltd — Receipt page logic + jsPDF generation
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -100,7 +100,7 @@ function renderReceipt(order, items) {
                         <span>${item.product_name || item.name}</span>
                     </div>
                 </td>
-                <td class="receipt-td">${item.seller_name || item.seller || 'TechNexus Official'}</td>
+                <td class="receipt-td">${item.seller_name || item.seller || 'Bite Tech Ltd Official'}</td>
                 <td class="receipt-td receipt-td-center">${item.quantity || 1}</td>
                 <td class="receipt-td receipt-td-right">${formattedUnit}</td>
                 <td class="receipt-td receipt-td-right receipt-td-bold">${formattedTotal}</td>
@@ -149,7 +149,7 @@ function downloadReceiptPDF() {
     doc.setTextColor(0, 209, 255);
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text('⚡ TechNexus', 15, 15);
+    doc.text('Bite Tech Ltd', 15, 15);
 
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
@@ -254,9 +254,9 @@ function downloadReceiptPDF() {
     doc.setFontSize(8);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(120, 120, 120);
-    doc.text('Thank you for shopping at TechNexus! For support: support@technexus.co.ke', pageW / 2, 285, { align: 'center' });
+    doc.text('Thank you for shopping at Bite Tech Ltd! For support: support@bitetechltd.co.ke', pageW / 2, 285, { align: 'center' });
 
-    doc.save(`TechNexus-Receipt-${orderId}.pdf`);
+    doc.save(`BiteTechLtd-Receipt-${orderId}.pdf`);
 }
 
 // ── Print ───────────────────────────────────────────────────────
@@ -279,14 +279,20 @@ function formatDate(dateStr) {
 }
 
 function formatPaymentMethod(method) {
+    if (!method) return '—';
+    const lower = method.toLowerCase();
+    if (lower.includes('mpesa') || lower.includes('m-pesa')) return 'M-Pesa (IntaSend)';
+    if (lower.includes('airtel')) return 'Airtel Money (IntaSend)';
+    if (lower.includes('card')) return 'Visa / Mastercard (IntaSend)';
+    if (lower.includes('bank')) return 'Bank Transfer (IntaSend)';
     const map = {
-        mpesa:        'M-Pesa',
-        card:         'Debit/Credit Card',
-        airtel_money: 'Airtel Money',
-        ussd:         'USSD / Bank',
-        bank_transfer:'Bank Transfer'
+        'mpesa':        'M-Pesa',
+        'card':         'Debit/Credit Card',
+        'airtel_money': 'Airtel Money',
+        'ussd':         'USSD / Bank',
+        'bank_transfer':'Bank Transfer'
     };
-    return map[method] || method || '—';
+    return map[method] || method;
 }
 
 function showError(msg) {

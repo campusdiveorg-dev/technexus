@@ -13,20 +13,23 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     const { email, password } = req.body || {};
-    if (!email || !password) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPassword = password || '';
+
+    if (!cleanEmail || !cleanPassword) {
         return res.status(400).json({ error: 'Email and password are required' });
     }
 
     try {
         const seller = await queryOne(
-            'SELECT * FROM sellers WHERE email = ? AND is_active = TRUE', [email]
+            'SELECT * FROM sellers WHERE LOWER(email) = LOWER(?) AND is_active = TRUE', [cleanEmail]
         );
 
         if (!seller) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        const valid = await bcrypt.compare(password, seller.password_hash);
+        const valid = await bcrypt.compare(cleanPassword, seller.password_hash);
         if (!valid) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
@@ -42,7 +45,7 @@ module.exports = async (req, res) => {
                 full_name:       seller.full_name,
                 email:           seller.email,
                 category:        seller.category,
-                commission_rate: seller.commission_rate,
+                commission_rate: parseFloat(seller.commission_rate || 0.10),
                 logo_url:        seller.logo_url
             }
         });

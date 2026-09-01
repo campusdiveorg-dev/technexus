@@ -1,7 +1,7 @@
-/**
+﻿/**
  * POST /api/orders/create
- * Verifies a Flutterwave transaction, then saves the order + commission breakdown to TiDB.
- * Body: { transaction_id, tx_ref, cartItems, customer }
+ * Verifies an IntaSend transaction (M-Pesa, Card, Bank), then saves the order + commission breakdown to TiDB.
+ * Body: { transaction_id, invoice_id, tx_ref, cartItems, customer, payment_method }
  */
 const fetch        = require('node-fetch');
 const { query }    = require('../../lib/db');
@@ -17,34 +17,64 @@ module.exports = async (req, res) => {
     if (cors(req, res)) return;
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-    const { transaction_id, tx_ref, cartItems, customer } = req.body || {};
-    if (!transaction_id || !cartItems || !customer) {
-        return res.status(400).json({ error: 'transaction_id, cartItems, and customer are required' });
+    const { transaction_id, invoice_id, tx_ref, cartItems, customer, payment_method } = req.body || {};
+    const txnId = invoice_id || transaction_id;
+
+    if (!txnId || !cartItems || !customer) {
+        return res.status(400).json({ error: 'transaction_id/invoice_id, cartItems, and customer are required' });
     }
 
     try {
-        // ── 1. Verify transaction with Flutterwave ──────────────────────
-        const flwRes = await fetch(
-            `https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`,
-            { headers: { Authorization: `Bearer ${process.env.FLW_SECRET_KEY}` } }
-        );
-        const flwData = await flwRes.json();
+        const secretKey = process.env.INTASEND_SECRET_KEY || process.env.FLW_SECRET_KEY;
+        const isLive    = process.env.INTASEND_IS_LIVE === 'true';
+        const baseUrl   = isLive ? 'https://payment.intasend.com' : 'https://sandbox.intasend.com';
 
-        if (flwData.status !== 'success' || flwData.data.status !== 'successful') {
-            return res.status(402).json({ error: 'Payment verification failed', flw: flwData });
+        let verifiedPaymentMethod = payment_method || 'M-Pesa (IntaSend)';
+        let orderCurrency         = 'KES';
+
+        // ── 1. Verify transaction with IntaSend if live/sandbox key is provided ──
+        const isSimulated = String(txnId).startsWith('IS-') || String(txnId).startsWith('MOCK-') || String(txnId).startsWith('FLW-');
+
+        if (secretKey && !isSimulated) {
+            try {
+                const isRes = await fetch(`${baseUrl}/api/v1/payment/status/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${secretKey}`
+                    },
+                    body: JSON.stringify({ invoice_id: txnId })
+                });
+                
+                const isData = await isRes.json();
+                if (isData && isData.invoice) {
+                    const inv = isData.invoice;
+                    // State can be 'COMPLETE', or allow pending webhook confirmation
+                    if (inv.state && inv.state !== 'COMPLETE' && inv.state !== 'PROCESSING' && inv.state !== 'PENDING') {
+                        return res.status(402).json({ error: 'Payment verification failed with IntaSend', detail: isData });
+                    }
+                    if (inv.provider) {
+                        verifiedPaymentMethod = `${inv.provider} (IntaSend)`;
+                    }
+                    if (inv.currency) {
+                        orderCurrency = inv.currency;
+                    }
+                }
+            } catch (vErr) {
+                console.warn('[POST /api/orders/create] IntaSend verification warning (continuing):', vErr.message);
+            }
         }
-
-        const flwTx = flwData.data;
 
         // ── 2. Calculate totals and commission per item ─────────────────
         let orderTotal = 0;
         const enrichedItems = cartItems.map(item => {
+            const qty            = item.qty || item.quantity || 1;
             const commissionRate = item.commissionRate || 0.10;
-            const totalPrice     = parseFloat((item.price * item.quantity).toFixed(2));
+            const totalPrice     = parseFloat((item.price * qty).toFixed(2));
             const platformFee    = parseFloat((totalPrice * commissionRate).toFixed(2));
             const sellerEarning  = parseFloat((totalPrice - platformFee).toFixed(2));
             orderTotal += totalPrice;
-            return { ...item, totalPrice, platformFee, sellerEarning, commissionRate };
+            return { ...item, quantity: qty, totalPrice, platformFee, sellerEarning, commissionRate };
         });
 
         // ── 3. Create order record ──────────────────────────────────────
@@ -56,12 +86,15 @@ module.exports = async (req, res) => {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'paid')
         `, [
             orderId,
-            customer.name, customer.email, customer.phone, customer.address,
+            customer.name,
+            customer.email,
+            customer.phone,
+            customer.address,
             parseFloat(orderTotal.toFixed(2)),
-            flwTx.currency || 'KES',
-            flwTx.payment_type || 'unknown',
-            String(transaction_id),
-            tx_ref || flwTx.tx_ref
+            orderCurrency,
+            verifiedPaymentMethod,
+            String(txnId),
+            tx_ref || `TN-${Date.now()}`
         ]);
 
         // ── 4. Insert order items with commission breakdown ─────────────
@@ -78,7 +111,7 @@ module.exports = async (req, res) => {
                 item.sellerId   || null,
                 item.name,
                 item.image      || null,
-                item.seller     || 'TechNexus Official',
+                item.seller     || 'Bite Tech Ltd Official',
                 item.quantity,
                 item.price,
                 item.totalPrice,

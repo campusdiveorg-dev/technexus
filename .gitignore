@@ -20,3 +20,6 @@ yarn-error.log*
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Generated PDFs (serve locally)
+*.pdf
