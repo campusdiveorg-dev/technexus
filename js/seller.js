@@ -57,28 +57,69 @@ function initSellerRegister() {
     const form = document.getElementById('seller-register-form');
     const logoBtn = document.getElementById('logo-upload-btn');
 
-    // Cloudinary logo upload
-    if (logoBtn && window.cloudinary) {
-        const widget = cloudinary.createUploadWidget({
-            cloudName:    window.CLOUDINARY_CLOUD_NAME || 'stez7ars',
-            uploadPreset: window.CLOUDINARY_UPLOAD_PRESET || 'bitetechltd_uploads',
-            sources:      ['local', 'url', 'camera'],
-            cropping:     true,
-            croppingAspectRatio: 1,
-            folder:       'seller_logos',
-            multiple:     false
-        }, (err, result) => {
-            if (result?.event === 'success') {
-                document.getElementById('logo-url-input').value = result.info.secure_url;
-                const preview = document.getElementById('logo-preview');
-                if (preview) {
-                    preview.src = result.info.secure_url;
-                    preview.style.display = 'block';
-                }
-                showToast('Logo uploaded to Cloudinary!', 'success');
+    // Store Logo Upload (Cloudinary + Local File Reader + URL Fallback)
+    const logoUrlInput = document.getElementById('logo-url-input');
+    const logoFileInput = document.getElementById('logo-local-file-input');
+    const logoPreview = document.getElementById('logo-preview');
+
+    if (logoUrlInput && logoPreview) {
+        logoUrlInput.addEventListener('input', () => {
+            const url = logoUrlInput.value.trim();
+            if (url) {
+                logoPreview.src = url;
+                logoPreview.style.display = 'block';
             }
         });
-        logoBtn.addEventListener('click', () => widget.open());
+    }
+
+    if (logoFileInput && logoPreview) {
+        logoFileInput.addEventListener('change', (e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const dataUrl = evt.target.result;
+                    if (logoUrlInput) logoUrlInput.value = dataUrl;
+                    logoPreview.src = dataUrl;
+                    logoPreview.style.display = 'block';
+                    showToast('Logo loaded from file!', 'success');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    if (logoBtn) {
+        logoBtn.addEventListener('click', () => {
+            if (window.cloudinary) {
+                try {
+                    const widget = cloudinary.createUploadWidget({
+                        cloudName:    window.CLOUDINARY_CLOUD_NAME || 'stez7ars',
+                        uploadPreset: window.CLOUDINARY_UPLOAD_PRESET || 'technexus_uploads',
+                        sources:      ['local', 'url', 'camera'],
+                        cropping:     true,
+                        croppingAspectRatio: 1,
+                        folder:       'seller_logos',
+                        multiple:     false
+                    }, (err, result) => {
+                        if (result?.event === 'success') {
+                            if (logoUrlInput) logoUrlInput.value = result.info.secure_url;
+                            if (logoPreview) {
+                                logoPreview.src = result.info.secure_url;
+                                logoPreview.style.display = 'block';
+                            }
+                            showToast('Logo uploaded to Cloudinary!', 'success');
+                        }
+                    });
+                    widget.open();
+                    return;
+                } catch(err) {
+                    console.warn('Cloudinary widget failed, opening local file dialog:', err);
+                }
+            }
+            // Fallback to local file picker
+            if (logoFileInput) logoFileInput.click();
+        });
     }
 
     if (!form) return;
@@ -547,26 +588,68 @@ function initAddProductForm(token, seller) {
     const form = document.getElementById('add-product-form');
     const imgBtn = document.getElementById('product-image-upload-btn');
 
-    if (imgBtn && window.cloudinary && !imgBtn.dataset.bound) {
-        imgBtn.dataset.bound = 'true';
-        const widget = cloudinary.createUploadWidget({
-            cloudName:    window.CLOUDINARY_CLOUD_NAME || 'stez7ars',
-            uploadPreset: window.CLOUDINARY_UPLOAD_PRESET || 'bitetechltd_uploads',
-            sources:      ['local', 'url', 'camera'],
-            folder:       'products',
-            multiple:     false
-        }, (err, result) => {
-            if (result?.event === 'success') {
-                document.getElementById('product-image-url').value = result.info.secure_url;
-                const prev = document.getElementById('product-img-preview');
-                if (prev) {
-                    prev.src = result.info.secure_url;
-                    prev.style.display = 'block';
-                }
-                showToast('Hardware photo uploaded to Cloudinary!', 'success');
+    // Product Image Upload (Cloudinary + Local File Reader + Direct URL Fallback)
+    const prodUrlInput = document.getElementById('product-image-url');
+    const prodFileInput = document.getElementById('product-local-file-input');
+    const prodPrev = document.getElementById('product-img-preview');
+
+    if (prodUrlInput && prodPrev) {
+        prodUrlInput.addEventListener('input', () => {
+            const url = prodUrlInput.value.trim();
+            if (url) {
+                prodPrev.src = url;
+                prodPrev.style.display = 'block';
             }
         });
-        imgBtn.addEventListener('click', () => widget.open());
+    }
+
+    if (prodFileInput && prodPrev) {
+        prodFileInput.addEventListener('change', (e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const dataUrl = evt.target.result;
+                    if (prodUrlInput) prodUrlInput.value = dataUrl;
+                    prodPrev.src = dataUrl;
+                    prodPrev.style.display = 'block';
+                    showToast('Product photo loaded from file!', 'success');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    if (imgBtn && !imgBtn.dataset.bound) {
+        imgBtn.dataset.bound = 'true';
+        imgBtn.addEventListener('click', () => {
+            if (window.cloudinary) {
+                try {
+                    const widget = cloudinary.createUploadWidget({
+                        cloudName:    window.CLOUDINARY_CLOUD_NAME || 'stez7ars',
+                        uploadPreset: window.CLOUDINARY_UPLOAD_PRESET || 'technexus_uploads',
+                        sources:      ['local', 'url', 'camera'],
+                        folder:       'products',
+                        multiple:     false
+                    }, (err, result) => {
+                        if (result?.event === 'success') {
+                            if (prodUrlInput) prodUrlInput.value = result.info.secure_url;
+                            if (prodPrev) {
+                                prodPrev.src = result.info.secure_url;
+                                prodPrev.style.display = 'block';
+                            }
+                            showToast('Hardware photo uploaded to Cloudinary!', 'success');
+                        }
+                    });
+                    widget.open();
+                    return;
+                } catch(err) {
+                    console.warn('Cloudinary widget failed, opening local file dialog:', err);
+                }
+            }
+            // Fallback to local file picker
+            if (prodFileInput) prodFileInput.click();
+        });
     }
 
     if (!form || form.dataset.bound) return;

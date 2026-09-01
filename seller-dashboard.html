@@ -841,14 +841,18 @@
                                         <input id="prod-tag" class="input-control" type="text" placeholder="e.g. FLAGSHIP, PRO, NEW ARRIVAL"/>
                                     </div>
                                     <div style="grid-column: 1 / -1;">
-                                        <label class="input-label">Product High-Resolution Photography</label>
-                                        <div class="logo-upload-box" id="product-image-upload-btn" style="border: 2px dashed var(--seller-border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; background: #f8fafc;">
+                                        <label class="input-label">Product Photography</label>
+                                        <div class="logo-upload-box" id="product-image-upload-btn" style="border: 2px dashed var(--seller-border); border-radius: 8px; padding: 18px; text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.2s;">
                                             <span class="material-symbols-outlined" style="font-size: 32px; color: var(--seller-primary);">add_photo_alternate</span>
-                                            <p style="font-size: 0.85rem; font-weight: 600; color: var(--seller-dark); margin: 4px 0 2px;">Click to upload hardware photo via Cloudinary</p>
-                                            <p style="font-size: 0.72rem; color: var(--seller-muted);">PNG, WebP or JPG (Direct CDN hosting &amp; optimization)</p>
-                                            <img id="product-img-preview" style="width: 80px; height: 80px; border-radius: 6px; object-fit: cover; border: 2px solid var(--seller-accent); display: none; margin: 10px auto 0;" alt="Preview"/>
+                                            <p style="font-size: 0.85rem; font-weight: 600; color: var(--seller-dark); margin: 4px 0 2px;">Click to upload hardware photo (Cloudinary / Local File)</p>
+                                            <p style="font-size: 0.72rem; color: var(--seller-muted);">PNG, WebP, JPG supported</p>
+                                            <img id="product-img-preview" style="width: 90px; height: 90px; border-radius: 8px; object-fit: cover; border: 2px solid var(--seller-primary); display: none; margin: 12px auto 0;" alt="Preview"/>
                                         </div>
-                                        <input type="hidden" id="product-image-url"/>
+                                        <input type="file" id="product-local-file-input" accept="image/*" style="display:none;"/>
+                                        <div style="display:flex; align-items:center; gap:8px; margin-top:10px;">
+                                            <span style="font-size:0.75rem; color:var(--seller-muted); white-space:nowrap;">Or direct image URL:</span>
+                                            <input id="product-image-url" class="input-control" type="url" placeholder="https://images.unsplash.com/... or paste link" style="font-size:0.8rem; padding:8px 12px;"/>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -874,6 +878,10 @@
     </footer>
 
     <!-- Scripts: Chart.js + Cloudinary + jsPDF + App Scripts -->
+    <script>
+        window.CLOUDINARY_CLOUD_NAME    = 'stez7ars';
+        window.CLOUDINARY_UPLOAD_PRESET = 'technexus_uploads';
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

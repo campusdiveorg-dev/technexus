@@ -278,11 +278,15 @@
                             <label class="form-field-label">Store Brand Logo</label>
                             <div class="logo-upload-box" id="logo-upload-btn">
                                 <span class="material-symbols-outlined" style="font-size: 28px; color: var(--primary-blue);">add_photo_alternate</span>
-                                <p style="font-size: 0.85rem; color: var(--text-main); font-weight: 600; margin: 4px 0 2px;">Click to upload store badge via Cloudinary</p>
+                                <p style="font-size: 0.85rem; color: var(--text-main); font-weight: 600; margin: 4px 0 2px;">Click to upload store badge (Cloudinary / Local File)</p>
                                 <p style="font-size: 0.72rem; color: var(--text-light);">PNG, WebP or JPG (Square format recommended)</p>
                                 <img id="logo-preview" alt="Logo preview"/>
                             </div>
-                            <input type="hidden" id="logo-url-input"/>
+                            <input type="file" id="logo-local-file-input" accept="image/*" style="display:none;"/>
+                            <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                                <span style="font-size:0.75rem; color:var(--text-muted); white-space:nowrap;">Or logo URL:</span>
+                                <input id="logo-url-input" class="form-field-input" type="url" placeholder="https://... or paste image URL" style="font-size:0.8rem; padding:6px 12px;"/>
+                            </div>
                         </div>
 
                         <div class="form-field-group">
@@ -348,7 +352,7 @@
     <!-- Cloudinary Widget + App Scripts -->
     <script>
         window.CLOUDINARY_CLOUD_NAME    = 'stez7ars';
-        window.CLOUDINARY_UPLOAD_PRESET = 'bitetechltd_uploads';
+        window.CLOUDINARY_UPLOAD_PRESET = 'technexus_uploads';
     </script>
     <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
     <script src="js/app.js"></script>
