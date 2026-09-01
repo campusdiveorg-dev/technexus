@@ -57,7 +57,7 @@ function initSellerRegister() {
     const form = document.getElementById('seller-register-form');
     const logoBtn = document.getElementById('logo-upload-btn');
 
-    // Store Logo Upload (Cloudinary + Local File Reader + URL Fallback)
+    // Store Logo Upload (Cloudinary Signed API + Local File Reader + URL Fallback)
     const logoUrlInput = document.getElementById('logo-url-input');
     const logoFileInput = document.getElementById('logo-local-file-input');
     const logoPreview = document.getElementById('logo-preview');
@@ -73,51 +73,44 @@ function initSellerRegister() {
     }
 
     if (logoFileInput && logoPreview) {
-        logoFileInput.addEventListener('change', (e) => {
+        logoFileInput.addEventListener('change', async (e) => {
             const file = e.target.files?.[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (evt) => {
-                    const dataUrl = evt.target.result;
-                    if (logoUrlInput) logoUrlInput.value = dataUrl;
-                    logoPreview.src = dataUrl;
-                    logoPreview.style.display = 'block';
-                    showToast('Logo loaded from file!', 'success');
-                };
-                reader.readAsDataURL(file);
-            }
+            if (!file) return;
+
+            // Instant preview
+            const reader = new FileReader();
+            reader.onload = async (evt) => {
+                const dataUrl = evt.target.result;
+                logoPreview.src = dataUrl;
+                logoPreview.style.display = 'block';
+                if (logoUrlInput) logoUrlInput.value = dataUrl;
+
+                // Upload to signed backend
+                try {
+                    showToast('Uploading logo to Cloudinary...', 'info');
+                    const res = await fetch('/api/upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ file: dataUrl, folder: 'seller_logos' })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.secure_url) {
+                            if (logoUrlInput) logoUrlInput.value = data.secure_url;
+                            logoPreview.src = data.secure_url;
+                            showToast('Logo saved to Cloudinary CDN!', 'success');
+                        }
+                    }
+                } catch(err) {
+                    console.warn('Backend upload fallback:', err);
+                }
+            };
+            reader.readAsDataURL(file);
         });
     }
 
     if (logoBtn) {
         logoBtn.addEventListener('click', () => {
-            if (window.cloudinary) {
-                try {
-                    const widget = cloudinary.createUploadWidget({
-                        cloudName:    window.CLOUDINARY_CLOUD_NAME || 'stez7ars',
-                        uploadPreset: window.CLOUDINARY_UPLOAD_PRESET || 'technexus_uploads',
-                        sources:      ['local', 'url', 'camera'],
-                        cropping:     true,
-                        croppingAspectRatio: 1,
-                        folder:       'seller_logos',
-                        multiple:     false
-                    }, (err, result) => {
-                        if (result?.event === 'success') {
-                            if (logoUrlInput) logoUrlInput.value = result.info.secure_url;
-                            if (logoPreview) {
-                                logoPreview.src = result.info.secure_url;
-                                logoPreview.style.display = 'block';
-                            }
-                            showToast('Logo uploaded to Cloudinary!', 'success');
-                        }
-                    });
-                    widget.open();
-                    return;
-                } catch(err) {
-                    console.warn('Cloudinary widget failed, opening local file dialog:', err);
-                }
-            }
-            // Fallback to local file picker
             if (logoFileInput) logoFileInput.click();
         });
     }
@@ -588,7 +581,7 @@ function initAddProductForm(token, seller) {
     const form = document.getElementById('add-product-form');
     const imgBtn = document.getElementById('product-image-upload-btn');
 
-    // Product Image Upload (Cloudinary + Local File Reader + Direct URL Fallback)
+    // Product Image Upload (Cloudinary Signed API + Local File Reader + Direct URL Fallback)
     const prodUrlInput = document.getElementById('product-image-url');
     const prodFileInput = document.getElementById('product-local-file-input');
     const prodPrev = document.getElementById('product-img-preview');
@@ -604,50 +597,45 @@ function initAddProductForm(token, seller) {
     }
 
     if (prodFileInput && prodPrev) {
-        prodFileInput.addEventListener('change', (e) => {
+        prodFileInput.addEventListener('change', async (e) => {
             const file = e.target.files?.[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (evt) => {
-                    const dataUrl = evt.target.result;
-                    if (prodUrlInput) prodUrlInput.value = dataUrl;
-                    prodPrev.src = dataUrl;
-                    prodPrev.style.display = 'block';
-                    showToast('Product photo loaded from file!', 'success');
-                };
-                reader.readAsDataURL(file);
-            }
+            if (!file) return;
+
+            // Instant preview
+            const reader = new FileReader();
+            reader.onload = async (evt) => {
+                const dataUrl = evt.target.result;
+                prodPrev.src = dataUrl;
+                prodPrev.style.display = 'block';
+                if (prodUrlInput) prodUrlInput.value = dataUrl;
+
+                // Upload to signed backend
+                try {
+                    showToast('Uploading photo to Cloudinary CDN...', 'info');
+                    const res = await fetch('/api/upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ file: dataUrl, folder: 'products' })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.secure_url) {
+                            if (prodUrlInput) prodUrlInput.value = data.secure_url;
+                            prodPrev.src = data.secure_url;
+                            showToast('Hardware photo uploaded to Cloudinary!', 'success');
+                        }
+                    }
+                } catch(err) {
+                    console.warn('Backend upload fallback:', err);
+                }
+            };
+            reader.readAsDataURL(file);
         });
     }
 
     if (imgBtn && !imgBtn.dataset.bound) {
         imgBtn.dataset.bound = 'true';
         imgBtn.addEventListener('click', () => {
-            if (window.cloudinary) {
-                try {
-                    const widget = cloudinary.createUploadWidget({
-                        cloudName:    window.CLOUDINARY_CLOUD_NAME || 'stez7ars',
-                        uploadPreset: window.CLOUDINARY_UPLOAD_PRESET || 'technexus_uploads',
-                        sources:      ['local', 'url', 'camera'],
-                        folder:       'products',
-                        multiple:     false
-                    }, (err, result) => {
-                        if (result?.event === 'success') {
-                            if (prodUrlInput) prodUrlInput.value = result.info.secure_url;
-                            if (prodPrev) {
-                                prodPrev.src = result.info.secure_url;
-                                prodPrev.style.display = 'block';
-                            }
-                            showToast('Hardware photo uploaded to Cloudinary!', 'success');
-                        }
-                    });
-                    widget.open();
-                    return;
-                } catch(err) {
-                    console.warn('Cloudinary widget failed, opening local file dialog:', err);
-                }
-            }
-            // Fallback to local file picker
             if (prodFileInput) prodFileInput.click();
         });
     }
