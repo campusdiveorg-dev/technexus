@@ -1,6 +1,6 @@
 /**
  * js/seller.js
- * Bite Tech Ltd — Merchant Portal + Admin Control Center Logic
+ * Byte Tech Ltd — Merchant Portal + Admin Control Center Logic
  * Reliable authentication, real-time KES analytics, Cloudinary uploads, and statement generation
  */
 
@@ -347,7 +347,7 @@ async function loadSellerDashboard() {
 
     // Populate Sidebar Profile
     setText('seller-store-name', seller.store_name || 'Partner Store');
-    setText('seller-email-display', seller.email || 'partner@bitetechltd.co.ke');
+    setText('seller-email-display', seller.email || 'partner@bytetech.co.ke');
     setText('seller-commission-rate', `${((seller.commission_rate || 0.12) * 100).toFixed(0)}% Fee Tier`);
     setText('seller-avatar-initials', (seller.store_name || 'S').charAt(0).toUpperCase());
 
@@ -742,7 +742,7 @@ function initAddProductForm(token, seller) {
         customProducts.unshift(body);
         localStorage.setItem('tn_custom_products', JSON.stringify(customProducts));
 
-        showToast(`"${name}" published to Bite Tech Ltd catalog!`, 'success');
+        showToast(`"${name}" published to Byte Tech Ltd catalog!`, 'success');
         form.reset();
         document.getElementById('product-img-preview').style.display = 'none';
 
@@ -779,7 +779,7 @@ function downloadCommissionStatement(dashboardData, seller) {
     doc.setTextColor(0, 209, 255);
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('Bite Tech Ltd Merchant Hub', 15, 15);
+    doc.text('Byte Tech Ltd Merchant Hub', 15, 15);
 
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
@@ -852,9 +852,9 @@ function downloadCommissionStatement(dashboardData, seller) {
     doc.setFontSize(8);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(120, 120, 120);
-    doc.text('Official statement verified by Bite Tech Ltd Kenya • Settlements via IntaSend M-Pesa & Bank Gateway', pageW / 2, 285, { align: 'center' });
+    doc.text('Official statement verified by Byte Tech Ltd Kenya • Settlements via IntaSend M-Pesa & Bank Gateway', pageW / 2, 285, { align: 'center' });
 
-    doc.save(`BiteTechLtd-Statement-${seller.store_name || 'Seller'}-${Date.now()}.pdf`);
+    doc.save(`ByteTechLtd-Statement-${seller.store_name || 'Seller'}-${Date.now()}.pdf`);
     showToast('Commission Statement PDF downloaded!', 'success');
 }
 
@@ -1113,7 +1113,7 @@ function exportCSV(data) {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
-    a.download = `BiteTechLtd-Commissions-${Date.now()}.csv`;
+    a.download = `ByteTechLtd-Commissions-${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
 }
@@ -1132,6 +1132,10 @@ function setText(id, text) {
 }
 
 function showToast(msg, type = 'success') {
+    if (window.ByteTechLtd?.showToast) {
+        window.ByteTechLtd.showToast(msg, type);
+        return;
+    }
     if (window.BiteTechLtd?.showToast) {
         window.BiteTechLtd.showToast(msg, type);
         return;

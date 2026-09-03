@@ -1,6 +1,6 @@
-﻿/**
+/**
  * js/receipt.js
- * Bite Tech Ltd — Receipt page logic + jsPDF generation
+ * Byte Tech Ltd — Receipt page logic + jsPDF generation
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -100,7 +100,7 @@ function renderReceipt(order, items) {
                         <span>${item.product_name || item.name}</span>
                     </div>
                 </td>
-                <td class="receipt-td">${item.seller_name || item.seller || 'Bite Tech Ltd Official'}</td>
+                <td class="receipt-td">${item.seller_name || item.seller || 'Byte Tech Ltd Official'}</td>
                 <td class="receipt-td receipt-td-center">${item.quantity || 1}</td>
                 <td class="receipt-td receipt-td-right">${formattedUnit}</td>
                 <td class="receipt-td receipt-td-right receipt-td-bold">${formattedTotal}</td>
@@ -149,7 +149,7 @@ function downloadReceiptPDF() {
     doc.setTextColor(0, 209, 255);
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text('Bite Tech Ltd', 15, 15);
+    doc.text('Byte Tech Ltd', 15, 15);
 
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
@@ -254,9 +254,9 @@ function downloadReceiptPDF() {
     doc.setFontSize(8);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(120, 120, 120);
-    doc.text('Thank you for shopping at Bite Tech Ltd! For support: support@bitetechltd.co.ke', pageW / 2, 285, { align: 'center' });
+    doc.text('Thank you for shopping at Byte Tech Ltd! For support: support@bytetech.co.ke', pageW / 2, 285, { align: 'center' });
 
-    doc.save(`BiteTechLtd-Receipt-${orderId}.pdf`);
+    doc.save(`ByteTechLtd-Receipt-${orderId}.pdf`);
 }
 
 // ── Print ───────────────────────────────────────────────────────

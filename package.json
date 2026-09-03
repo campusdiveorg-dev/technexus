@@ -1,7 +1,7 @@
 {
-  "name": "bitetechltd-marketplace",
+  "name": "bytetech-marketplace",
   "version": "1.0.0",
-  "description": "Bite Tech Ltd Electronics E-Commerce Marketplace",
+  "description": "Byte Tech Ltd Electronics E-Commerce Marketplace",
   "type": "commonjs",
   "scripts": {
     "start": "npx serve . -p 3000",

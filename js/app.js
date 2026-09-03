@@ -1,6 +1,6 @@
 /**
- * Bite Tech Ltd - Global Application Engine
- * Handles shared cart state, catalog filtering, navigation, search, seller commissions, and interactions across all pages.
+ * Byte Tech Ltd - Global Application Engine
+ * Handles shared cart state, dynamic catalog API sync, search, seller commissions, and interactions across all pages.
  */
 
 // Global Product Catalog Data (in Kenyan Shillings KES with Seller & Commission fields)
@@ -14,9 +14,9 @@ const PRODUCTS = [
         reviewsCount: 128,
         tag: 'FLAGSHIP',
         description: 'Engineered for absolute performance. M4 Neural Processor, aerospace-grade carbon chassis, and Liquid Retina XDR display.',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDyXKtzLAgZmERYv3tkP4IXzbmYpuIV6ph16noF_zOGVJrRgmtVZOARZosjo5zljLlwqE9FGFUa5kCY5GmpFG0w7uemjiosf4KhyxjmCP9W25JdJHPUhHnpu-SCGUzb9tiwv9oIM2XQ72fT2XDbnAfY7NXJsIgIIVYLXAOr5H7XWHB2TrvGl34p54yu03lMK2cnmvOzjN81LQKXzbSeQkCosOvT65k8gGOg8ehukdm5SgMHBUm530RC_Q',
+        image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1000&q=80',
         specs: '16-Core M4 • 32GB RAM • 1TB SSD',
-        href: 'product.html',
+        href: 'product.html?id=pro-x1-carbon',
         seller: 'TechCore Ltd',
         sellerId: 'seller-techcore',
         commissionRate: 0.12
@@ -30,7 +30,7 @@ const PRODUCTS = [
         reviewsCount: 128,
         tag: 'PRO',
         description: 'M3 Max chip, 32GB RAM, 1TB SSD. The ultimate powerhouse for software engineers and digital creators.',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAx-xdkK80dq8c_EF3auTMT1oiWvAZ5JgRNu3cyybjKv6KMQe5YNY12_wMlIATFa6dHGWSi12V5_COAARZsTUggGKyDOAiaJyLIZJXWUGuxhlnDNmBpmJX4-W1nBUMXKLbpJQQj9EG1KTZnNnHuuysgRtpt4ywTSX5dua1RZIv6tZtDi76Mx_blhiY8CykGbQPGRgiTOnhXphja4qgHh5L165EDRU0YH_lAxdmcbJyRdUh_LcJqb8bqKA',
+        image: 'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?auto=format&fit=crop&w=1000&q=80',
         specs: 'Space Gray • 32GB RAM • 1TB SSD',
         href: 'product.html?id=nexus-pro-16',
         seller: 'Apex Silicon',
@@ -46,11 +46,11 @@ const PRODUCTS = [
         reviewsCount: 342,
         tag: 'LIMITED',
         description: 'Feather-light matte design, all-day 20-hour battery life. Your ultimate mobile workstation companion.',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCwZbn2lF_suhISA5hVYGC_3MjqW2Me9QLwaECX4UxOPUFur42KTpKF5doBV-Hie9eLMEcusP4vdoqIFu33kGe6-khcFEoQsZcepBu_H0_6q19agCF3AQJCyqpymMOs3S65gu8jj4JAK8YrJ7iqihyh6rnhBJn97S-J11rBWKuzJbyRVbYFMI7x3rrSPbncN5ZwkIMMQ7uB-TTOnUR_A2WctxTrZPIYdVwaqIt_gwVp_xMY55Lggitx4w',
+        image: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=1000&q=80',
         specs: 'Midnight Black • 16GB RAM • 512GB SSD',
         href: 'product.html?id=nexus-air-13',
-        seller: 'Bite Tech Ltd Official',
-        sellerId: 'seller-Bite Tech Ltd',
+        seller: 'Byte Tech Ltd Official',
+        sellerId: 'seller-bytetech',
         commissionRate: 0.10
     },
     {
@@ -62,7 +62,7 @@ const PRODUCTS = [
         reviewsCount: 89,
         tag: '2-IN-1',
         description: 'OLED 120Hz touchscreen with versatile 360-degree precision hinge and stylus pen included.',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAcLk0OyAjE8gkgi81kmaiqLMgTlZDwzTW8lXDIboi42AuXttmJIaQE_gsfva58zYjqE3q4hf8QVpY3rFG5_DXzaUFgDN4U-qZLEN5FXTbRqvot7wInyZty3Tjsp8Rw4-x66IEABBm69P2QsVUZBs1VrXNNvKsU4zPQy8wLpc9JLrAV2eJHy4pUT78AqbGL3CBFh8wJVbC41UnxQ6BTKcnqzJY-KvQEYI_JTijbnNyFhjGSmMmSFJT_lQ',
+        image: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1000&q=80',
         specs: '14" 4K OLED • Pen Included',
         href: 'product.html?id=flex-360',
         seller: 'OmniGear Labs',
@@ -78,7 +78,7 @@ const PRODUCTS = [
         reviewsCount: 312,
         tag: 'ANC',
         description: 'Studio-grade acoustic architecture with active noise cancellation and 24-hour ultra-low latency playback.',
-        image: 'https://lh3.googleusercontent.com/aida/AEtjO1X0LqEuow5IRcltHFBvwx3I9ncX7ZKoVEWkm8BxqEyYbJUBhrq1QaWPelpEVpQZfel3cXceF8g5xnLi5d0uXhaDrMEknOncofxK9qT_qSIRvCwU0uR9yYO41ea7DwgDxyvcU15lQCFg19E9YB74d0rCKnEUtCOftAytLQClMwmMum6zaYN-dRjx6oK5TCezR3UvVCJaymOilaYFTC7HLcymKJ58tbOc1NWJFqiTkfg0qlnD65HWKeOTG2Rv',
+        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1000&q=80',
         specs: 'Noise Cancelling • 24h Battery',
         href: 'product.html?id=aural-pro',
         seller: 'SoundWave Audio',
@@ -94,7 +94,7 @@ const PRODUCTS = [
         reviewsCount: 204,
         tag: 'STUDIO',
         description: 'Over-ear titanium diaphragm drivers with spatial lossless audio tuning and memory foam acoustic seals.',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAfeMQEyI-u4WYsrKZBRULsjdLR7aUklVVgBMLNB2loePn-DC0yKuIf1Braxv5vWYCo0em04vnVXIglR327u_fOZrdVi3D7QqBKRi3JrLU5nk1YYVRis2S3-iPk5QZTAch3uYwS5RNPYrFSWKP-OGRrEVCgXoppctlYpNeeK--qsQBFROwGuLa8m5_JSHnoOKjFJfY5jcmQLElFLgg1ytgDDzsL5D2mN0zeopUnG3-NEVLgF0qbgzeDWg',
+        image: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=1000&q=80',
         specs: 'Lunar Silver • Titanium Drivers',
         href: 'product.html?id=aura-anc',
         seller: 'SoundWave Audio',
@@ -110,7 +110,7 @@ const PRODUCTS = [
         reviewsCount: 74,
         tag: '144Hz 4K',
         description: '32" professional Nano-IPS 4K display with 144Hz refresh rate, 1ms response, and 99% DCI-P3 color gamut.',
-        image: 'https://lh3.googleusercontent.com/aida/AEtjO1UZDGECOkupKlC_3pgwhh1sb_QxggohxEIw1QaaKezhavt1mrMz86ZeWiypjFLk75P8R7HS5ODZ3jUJ0szJRZgsb2U-YBBf1OHB-Qh-GhjDN506IDPhynPirXd_SKhLSiXiKr6NYztc4Pj-CRdk4RSUqisErcafo1B2EjZ1r-efpZkY936I9jFaDfiCGI1Fi4EkaH9V_BUTA8Hx_kRZCSXvezCPRhmEHSFC-GpRf2RTh173lUksNrmfS-0_',
+        image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=1000&q=80',
         specs: 'IPS Panel • 1ms Response • 144Hz',
         href: 'product.html?id=nexus-monitor',
         seller: 'PixelForge Gaming',
@@ -126,7 +126,7 @@ const PRODUCTS = [
         reviewsCount: 189,
         tag: '20K DPI',
         description: 'Ultra-lightweight 58g wireless gaming & productivity mouse with optical switches and sub-1ms response.',
-        image: 'https://lh3.googleusercontent.com/aida/AEtjO1VxeqDPk2J1VlFcmBwz1hyJwGZadU9IddWmOV0DkYlxegFTfFfvQrbtwY4jJGzd62aQXCncdNqQ9URGvyruZpN2KD6wm_s7ccJw6KTUx0_rRYHosmK-KLLBF9qoRbvDggVMw66fEN8Pp5B5ANw5waWFNJcT_VN7qlvjWTZEbZe72JT1e6Rx-yZp_h2E2arKNHPDiw-NkaJBIF2-d5klR4BQ5AQ3SmPgj3ojCOQlVIuOYoQ6octIEuXV-PHM',
+        image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=1000&q=80',
         specs: 'Ultra-light 58g • Wireless 2.4G',
         href: 'product.html?id=glide-mouse',
         seller: 'Nexus Peripherals',
@@ -142,7 +142,7 @@ const PRODUCTS = [
         reviewsCount: 115,
         tag: 'TITANIUM',
         description: 'Grade 5 aerospace titanium chassis with sapphire crystal, dual-frequency GPS, and medical-grade ECG biosensors.',
-        image: 'https://lh3.googleusercontent.com/aida/AEtjO1XT5URHgv-judAyxtZmxTKdxtFt3GnkgrHbIV2wAZXtjJ7c47bN2bkgZog1tJCFmUrBrqiGja0lMLK2MQQ156yN-9k3vwmwZC_UaVGTZ-O_jxuujC1oOJfsFkS8Di97YBzJ2TySx8OgN0OCEBZn7O15-rXY94rdZQwOEEiSscQlhihOhwW4RDQvqobQDtYwOP0RZkBXWkMfG5l4yLmf8gheq49ICGk6NmFYvd1kD38JvaMX9kANDJRsTJU',
+        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1000&q=80',
         specs: 'Titanium Build • ECG & GPS',
         href: 'product.html?id=chrono-watch',
         seller: 'ChronoTech',
@@ -151,23 +151,61 @@ const PRODUCTS = [
     }
 ];
 
-// Initial empty cart for real testing
-const DEFAULT_CART = [];
+// Asynchronously load seller-created products from the live database
+async function loadDynamicProducts() {
+    try {
+        const res = await fetch('/api/products');
+        if (res.ok) {
+            const data = await res.json();
+            if (data && Array.isArray(data.products) && data.products.length > 0) {
+                data.products.forEach(dbProd => {
+                    const exists = PRODUCTS.find(p => p.id === dbProd.id);
+                    const formatted = {
+                        id: dbProd.id,
+                        name: dbProd.name,
+                        category: dbProd.category || 'General',
+                        price: parseFloat(dbProd.price) || 0,
+                        rating: 5.0,
+                        reviewsCount: 1,
+                        tag: dbProd.tag || 'NEW',
+                        description: dbProd.description || '',
+                        image: dbProd.image_url || 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1000&q=80',
+                        specs: dbProd.specs || 'Standard Configuration',
+                        href: `product.html?id=${dbProd.id}`,
+                        seller: dbProd.seller_name || 'Byte Tech Partner',
+                        sellerId: dbProd.seller_id,
+                        commissionRate: parseFloat(dbProd.commission_rate) || 0.12
+                    };
+                    if (!exists) {
+                        PRODUCTS.unshift(formatted);
+                    } else {
+                        Object.assign(exists, formatted);
+                    }
+                });
+            }
+        }
+    } catch (e) {
+        console.log('[Products] Static catalog active');
+    }
+}
+
+// Trigger dynamic product sync
+loadDynamicProducts();
 
 // Cart State Helpers
 const CartManager = {
-    STORAGE_KEY: 'bitetechltd_cart',
+    STORAGE_KEY: 'bytetechltd_cart',
 
     getCart() {
         try {
-            const data = localStorage.getItem(this.STORAGE_KEY) || localStorage.getItem('tn_cart');
+            const data = localStorage.getItem(this.STORAGE_KEY) || localStorage.getItem('bitetechltd_cart') || localStorage.getItem('tn_cart');
             if (data) {
                 const parsed = JSON.parse(data);
                 return parsed.map(item => ({
                     ...item,
                     qty: item.qty || item.quantity || 1,
                     quantity: item.quantity || item.qty || 1,
-                    seller: item.seller || 'Bite Tech Ltd Official',
+                    seller: item.seller || 'Byte Tech Ltd Official',
                     sellerId: item.sellerId || null,
                     commissionRate: item.commissionRate || 0.10
                 }));
@@ -187,6 +225,7 @@ const CartManager = {
                 quantity: item.quantity || item.qty || 1
             }));
             localStorage.setItem(this.STORAGE_KEY, JSON.stringify(normalized));
+            localStorage.setItem('bitetechltd_cart', JSON.stringify(normalized));
             localStorage.setItem('tn_cart', JSON.stringify(normalized));
             this.updateBadge();
         } catch (e) {
@@ -209,7 +248,7 @@ const CartManager = {
                 quantity: qty,
                 image: product.image,
                 specs: product.specs || 'Standard Configuration',
-                seller: product.seller || 'Bite Tech Ltd Official',
+                seller: product.seller || 'Byte Tech Ltd Official',
                 sellerId: product.sellerId || null,
                 commissionRate: product.commissionRate || 0.10
             });
@@ -243,6 +282,7 @@ const CartManager = {
 
     clearCart() {
         localStorage.removeItem(this.STORAGE_KEY);
+        localStorage.removeItem('bitetechltd_cart');
         localStorage.removeItem('tn_cart');
         this.saveCart([]);
     },
@@ -335,11 +375,13 @@ function formatKES(amount) {
     });
 }
 
-// Expose globals for other scripts
+// Expose globals for all scripts
 window.formatKES = formatKES;
 window.CartManager = CartManager;
 window.PRODUCTS = PRODUCTS;
-window.BiteTechLtd = { showToast, CartManager, PRODUCTS, calcCommission, formatKES };
+window.loadDynamicProducts = loadDynamicProducts;
+window.ByteTechLtd = { showToast, CartManager, PRODUCTS, calcCommission, formatKES, loadDynamicProducts };
+window.BiteTechLtd = window.ByteTechLtd; // Backward compatibility alias
 
 // Setup Global Navbar and Badges
 document.addEventListener('DOMContentLoaded', () => {

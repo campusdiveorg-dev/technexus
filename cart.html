@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Shopping Cart — Bite Tech Ltd</title>
+    <title>Shopping Cart — Byte Tech Ltd</title>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -106,7 +106,7 @@
             <!-- Brand Logo -->
             <a class="brand-logo" href="index.html">
                 <span class="material-symbols-outlined brand-icon">bolt</span>
-                <span>Bite Tech</span>
+                <span>Byte Tech</span>
             </a>
 
             <!-- Checkout Security Indicator -->
@@ -166,37 +166,24 @@
                 <div class="summary-card">
                     <h2 class="summary-title">Order Summary</h2>
 
-                    <!-- Voucher Box -->
-                    <div class="voucher-box">
-                        <div class="voucher-input-wrap">
-                            <input id="voucher-input" class="voucher-input" placeholder="Promo code (e.g. TECH2026)" type="text"/>
-                            <button id="apply-voucher-btn" class="btn-voucher-apply">Apply</button>
-                        </div>
-                        <div id="voucher-message" class="voucher-msg"></div>
-                    </div>
-
                     <div class="summary-row">
                         <span>Items Subtotal</span>
-                        <strong id="summary-subtotal">$0.00</strong>
-                    </div>
-                    <div id="summary-discount-row" class="summary-row" style="display: none; color: var(--accent-success);">
-                        <span id="summary-discount-label">Discount</span>
-                        <strong id="summary-discount">-$0.00</strong>
+                        <strong id="summary-subtotal">KSh 0.00</strong>
                     </div>
                     <div class="summary-row">
                         <span>Kenya Express Delivery</span>
                         <strong style="color: var(--accent-success);">FREE</strong>
                     </div>
                     <div class="summary-row">
-                        <span>Estimated Sales Tax (8%)</span>
-                        <strong id="summary-tax">$0.00</strong>
+                        <span>Estimated VAT (16%)</span>
+                        <strong id="summary-tax">KSh 0.00</strong>
                     </div>
 
                     <div class="summary-divider"></div>
 
                     <div class="summary-total-row">
                         <span class="summary-total-label">Total Amount</span>
-                        <span id="summary-total" class="summary-total-val">$0.00</span>
+                        <span id="summary-total" class="summary-total-val">KSh 0.00</span>
                     </div>
 
                     <button id="checkout-btn" class="btn-primary" style="width: 100%; padding: 16px; font-size: 0.85rem; margin-bottom: 20px;">
@@ -212,7 +199,7 @@
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span class="material-symbols-outlined" style="color: var(--electric-blue); font-size: 16px; font-variation-settings: 'FILL' 1;">workspace_premium</span>
-                            <span>3-Year Bite Tech Warranty Included</span>
+                            <span>3-Year Byte Tech Warranty Included</span>
                         </div>
                         <div style="margin-top: 8px; text-align: center;">
                             <span style="display:block; text-align: center">
@@ -237,7 +224,7 @@
                 <div class="footer-brand">
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
                         <span class="material-symbols-outlined" style="color: var(--electric-blue); font-size: 28px;">bolt</span>
-                        <h3 style="margin-bottom: 0;">Bite Tech Ltd</h3>
+                        <h3 style="margin-bottom: 0;">Byte Tech Ltd</h3>
                     </div>
                     <p>High-performance industrial grade hardware, displays, and mobile computing crafted with obsessive attention to detail.</p>
                 </div>
@@ -268,7 +255,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>© 2026 Bite Tech Ltd. All rights reserved.</span>
+                <span>© 2026 Byte Tech Ltd. All rights reserved.</span>
                 <span>Engineered for Peak Performance</span>
             </div>
         </div>
@@ -282,17 +269,9 @@
             const emptyNotice = document.getElementById('cart-empty-notice');
             const summaryCountEl = document.getElementById('cart-item-summary');
             const subtotalEl = document.getElementById('summary-subtotal');
-            const discountRow = document.getElementById('discount-row');
-            const discountEl = document.getElementById('summary-discount');
             const taxEl = document.getElementById('summary-tax');
             const totalEl = document.getElementById('summary-total');
-            const modalTotalDisplay = document.getElementById('modal-total-display');
-            const promoInput = document.getElementById('promo-input');
-            const applyPromoBtn = document.getElementById('apply-promo-btn');
-            const promoStatus = document.getElementById('promo-status');
             const clearCartBtn = document.getElementById('clear-cart-btn');
-
-            let discountMultiplier = 0;
 
             function renderCart() {
                 const cart = CartManager.getCart();
@@ -317,7 +296,7 @@
                     listEl.innerHTML = cart.map(item => `
                         <div class="cart-item-card">
                             <div class="cart-item-img">
-                                <img src="${item.image}" alt="${item.name}"/>
+                                <img src="${item.image}" alt="${item.name}" onerror="this.src='https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80';"/>
                             </div>
                             <div class="cart-item-info">
                                 <h3>${item.name}</h3>
@@ -344,20 +323,10 @@
                 }
 
                 const subtotal = CartManager.getSubtotal();
-                const discount = subtotal * discountMultiplier;
-                const taxableAmount = Math.max(0, subtotal - discount);
-                const vat = taxableAmount * 0.16;
-                const total = taxableAmount + vat;
+                const vat = subtotal * 0.16;
+                const total = subtotal + vat;
 
                 subtotalEl.textContent = formatKES(subtotal);
-                
-                if (discountMultiplier > 0 && subtotal > 0) {
-                    discountRow.style.display = 'flex';
-                    discountEl.textContent = `-${formatKES(discount)}`;
-                } else {
-                    discountRow.style.display = 'none';
-                }
-
                 taxEl.textContent = formatKES(vat);
                 totalEl.textContent = formatKES(total);
             }
@@ -387,22 +356,6 @@
                 if (confirm('Are you sure you want to clear your cart?')) {
                     CartManager.clearCart();
                     renderCart();
-                }
-            });
-
-            applyPromoBtn.addEventListener('click', () => {
-                const code = promoInput.value.trim().toUpperCase();
-                if (code === 'TECH2026') {
-                    discountMultiplier = 0.10;
-                    promoStatus.textContent = '✓ Voucher TECH2026 Applied (10% Off)';
-                    promoStatus.style.color = 'var(--accent-success)';
-                    promoStatus.style.display = 'block';
-                    renderCart();
-                    showToast('10% Promo Code applied successfully!');
-                } else {
-                    promoStatus.textContent = '✕ Invalid promo code. Try TECH2026';
-                    promoStatus.style.color = 'var(--accent-error)';
-                    promoStatus.style.display = 'block';
                 }
             });
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Product Catalog — Bite Tech Ltd</title>
+    <title>Product Catalog — Byte Tech Ltd</title>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -20,7 +20,7 @@
             <!-- Brand Logo -->
             <a class="brand-logo" href="index.html">
                 <span class="material-symbols-outlined brand-icon">bolt</span>
-                <span>Bite Tech</span>
+                <span>Byte Tech</span>
             </a>
 
             <!-- Desktop Navigation Links -->
@@ -146,22 +146,15 @@
                                     </span>
                                 </label>
                             </li>
-                            <li>
-                                <label class="filter-label">
+                            <li                                <label class="filter-label">
                                     <input class="rating-radio" name="rating" type="radio" value="4.5"/>
                                     <span style="display: flex; align-items: center; gap: 4px;">
                                         <span class="material-symbols-outlined" style="font-size: 16px; color: var(--accent-amber); font-variation-settings: 'FILL' 1;">star</span>
                                         4.5 &amp; Up
                                     </span>
-                                </label>
+                                 </label>
                             </li>
                         </ul>
-                    </div>
-
-                    <div style="background: var(--surface-muted); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--surface-border);">
-                        <span style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 800; color: var(--primary-blue); text-transform: uppercase;">SPECIAL OFFER</span>
-                        <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 4px 0;">10% Promo Code</h4>
-                        <p style="font-size: 0.8rem; color: var(--text-muted);">Use voucher <strong style="color: var(--midnight-navy); background: rgba(0, 209, 255, 0.2); padding: 2px 6px; border-radius: 4px;">TECH2026</strong> in cart.</p>
                     </div>
                 </aside>
 
@@ -205,7 +198,7 @@
                 <div class="footer-brand">
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
                         <span class="material-symbols-outlined" style="color: var(--electric-blue); font-size: 28px;">bolt</span>
-                        <h3 style="margin-bottom: 0;">Bite Tech Ltd</h3>
+                        <h3 style="margin-bottom: 0;">Byte Tech Ltd</h3>
                     </div>
                     <p>High-performance industrial grade hardware, displays, and mobile computing crafted with obsessive attention to detail.</p>
                 </div>
@@ -244,7 +237,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>© 2026 Bite Tech Ltd. All rights reserved.</span>
+                <span>© 2026 Byte Tech Ltd. All rights reserved.</span>
                 <span>Engineered for Peak Performance</span>
             </div>
         </div>
@@ -325,7 +318,7 @@
                             <div class="product-thumb">
                                 ${product.tag ? `<span class="product-badge">${product.tag}</span>` : ''}
                                 <a href="${product.href}">
-                                    <img src="${product.image}" alt="${product.name}"/>
+                                    <img src="${product.image}" alt="${product.name}" onerror="this.src='https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80';"/>
                                 </a>
                             </div>
                             <div class="product-body">

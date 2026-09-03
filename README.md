@@ -1,4 +1,4 @@
-# ⚡ Bite Tech Ltd (Kenya Edition)
+# ⚡ Byte Tech Ltd (Kenya Edition)
 
 A high-performance, full-stack multi-vendor electronics & hardware marketplace built specifically for the Kenyan ecosystem with **Kenyan Shilling (KES / KSh)** pricing, **IntaSend (M-Pesa, Airtel Money, Visa/Mastercard, Bank Transfer)** payment processing, **TiDB Serverless (MySQL)** relational storage, and **Cloudinary** media CDN.
 
@@ -10,7 +10,7 @@ A high-performance, full-stack multi-vendor electronics & hardware marketplace b
 - **Modern Industrial Design**: Midnight & Electric Blue theme (`#0058bc`, `#00D1FF`, `#0A192F`, `#F8FAFC`).
 - **Product Catalog (`catalog.html`)**: Dynamic category filter, real-time KSh price slider (up to KSh 350,000), search bar, and rating filters.
 - **Product Detail (`product.html`)**: Hardware configurator (RAM/SSD upgrades in KES), stock indicators, and instant cart integration.
-- **Dynamic Cart (`cart.html`)**: Cart quantity controls, voucher system (`TECH2026` for 10% off), 16% Kenyan VAT computation, and clear cart actions.
+- **Dynamic Cart (`cart.html`)**: Cart quantity controls, 16% Kenyan VAT computation, and clear cart actions.
 - **Kenyan Payment Flow (`js/checkout.js`)**: 2-step checkout modal with customer contact details and IntaSend payment modal supporting **M-Pesa STK Push**, **Airtel Money**, and **Cards**.
 - **Tax Receipt & Invoice (`receipt.html`)**: Branded tax invoice with itemized line items, VAT breakdown, transaction reference, and 1-click **jsPDF client-side PDF download**.
 

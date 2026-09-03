@@ -1,4 +1,4 @@
-﻿/**
+/**
  * POST /api/orders/create
  * Verifies an IntaSend transaction (M-Pesa, Card, Bank), then saves the order + commission breakdown to TiDB.
  * Body: { transaction_id, invoice_id, tx_ref, cartItems, customer, payment_method }
@@ -111,7 +111,7 @@ module.exports = async (req, res) => {
                 item.sellerId   || null,
                 item.name,
                 item.image      || null,
-                item.seller     || 'Bite Tech Ltd Official',
+                item.seller     || 'Byte Tech Ltd Official',
                 item.quantity,
                 item.price,
                 item.totalPrice,

@@ -205,10 +205,10 @@ function renderModalSummary(cart) {
         const formattedPrice = window.formatKES ? window.formatKES(lineTotal) : `KSh ${lineTotal.toLocaleString('en-KE')}`;
         return `
             <div class="modal-item-row">
-                <img src="${item.image}" alt="${item.name}" class="modal-item-img" onerror="this.src='https://via.placeholder.com/48'"/>
+                <img src="${item.image}" alt="${item.name}" class="modal-item-img" onerror="this.src='https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=100&q=80'"/>
                 <div class="modal-item-info">
                     <span class="modal-item-name">${item.name}</span>
-                    <span class="modal-item-qty">Qty: ${qty} • ${item.seller || 'Bite Tech Ltd'}</span>
+                    <span class="modal-item-qty">Qty: ${qty} • ${item.seller || 'Byte Tech Ltd'}</span>
                 </div>
                 <span class="modal-item-price" style="font-weight: 700; color: var(--primary-blue);">${formattedPrice}</span>
             </div>`;
@@ -261,7 +261,7 @@ async function processOrderCreation(transactionId, txRef, cart, intasendData = {
             platformFee,
             sellerEarning,
             image: item.image,
-            seller: item.seller || 'Bite Tech Ltd Official',
+            seller: item.seller || 'Byte Tech Ltd Official',
             sellerId: item.sellerId || null,
             commissionRate
         };
