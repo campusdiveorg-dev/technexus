@@ -6,8 +6,8 @@
  */
 
 // ── Config ─────────────────────────────────────────────────────
-const INTASEND_PUBLIC_KEY = window.INTASEND_PUBLISHABLE_KEY || window.INTASEND_PUBLIC_KEY || window.FLW_PUBLIC_KEY || '716d0110-8d16-4004-9d5d-55b0f5f4eb41';
-const INTASEND_IS_LIVE    = window.INTASEND_IS_LIVE === true || window.INTASEND_IS_LIVE === 'true' || false;
+const INTASEND_PUBLIC_KEY = window.INTASEND_PUBLISHABLE_KEY || window.INTASEND_PUBLIC_KEY || window.FLW_PUBLIC_KEY || 'ISPubKey_live_b2d03669-6c40-4c41-a476-deb849f6a2f2';
+const INTASEND_IS_LIVE    = window.INTASEND_IS_LIVE !== undefined ? (window.INTASEND_IS_LIVE === true || window.INTASEND_IS_LIVE === 'true') : true;
 
 // ── State ──────────────────────────────────────────────────────
 let checkoutCustomer = {};
