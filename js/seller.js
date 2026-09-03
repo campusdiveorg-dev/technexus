@@ -204,7 +204,7 @@ function initSellerRegister() {
 
         showToast('Store registered successfully! Redirecting…', 'success');
         setTimeout(() => {
-            window.location.href = '/seller-dashboard.html';
+            window.location.href = 'seller-dashboard.html';
         }, 800);
     });
 }
@@ -235,25 +235,6 @@ function showSellerLoginGate() {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             performSellerLogin();
-        });
-    }
-
-    const demoBtn = document.getElementById('btn-demo-partner-login');
-    if (demoBtn && !demoBtn.dataset.bound) {
-        demoBtn.dataset.bound = 'true';
-        demoBtn.addEventListener('click', () => {
-            const demoPartner = {
-                id: 'seller-apex-demo',
-                store_name: 'Apex Hardware Nairobi',
-                full_name: 'David Mwangi',
-                email: 'partner@apex.co.ke',
-                category: 'Laptops',
-                commission_rate: 0.12,
-                created_at: new Date().toISOString()
-            };
-            SellerSession.save('demo-token-apex', demoPartner);
-            showToast('Logged in as Demo Partner!', 'success');
-            loadSellerDashboard();
         });
     }
 }
@@ -406,10 +387,9 @@ function getLocalSellerDashboardData(seller) {
 
     allOrders.forEach(o => {
         (o.items || []).forEach(item => {
-            const isMatch = (!item.sellerId && !seller.id) ||
-                            (item.sellerId === seller.id) ||
+            const isMatch = (item.sellerId && item.sellerId === seller.id) ||
                             (item.seller && item.seller.toLowerCase() === seller.store_name?.toLowerCase()) ||
-                            allOrders.length <= 3; // Show test orders in demo
+                            (item.sellerEmail && item.sellerEmail.toLowerCase() === seller.email?.toLowerCase());
 
             if (isMatch) {
                 const qty = item.quantity || item.qty || 1;
@@ -452,8 +432,8 @@ function getLocalSellerDashboardData(seller) {
         const curMonth = new Date().toISOString().slice(0, 7);
         monthlyArray.push({
             month: curMonth,
-            earnings: netEarnings || 145000,
-            fees: commissionPaid || 19800
+            earnings: netEarnings || 0,
+            fees: commissionPaid || 0
         });
     }
 

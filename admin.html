@@ -494,11 +494,11 @@
                 </button>
 
                 <div class="sidebar-section-label" style="margin-top:20px">Shortcuts</div>
-                <a class="sidebar-nav-item" href="/seller-dashboard.html">
+                <a class="sidebar-nav-item" href="seller-dashboard.html">
                     <span class="material-symbols-outlined">manage_accounts</span>
                     Seller Portal
                 </a>
-                <a class="sidebar-nav-item" href="/index.html">
+                <a class="sidebar-nav-item" href="index.html">
                     <span class="material-symbols-outlined">store</span>
                     Public Catalog
                 </a>
@@ -775,24 +775,7 @@
         return `<span class="badge ${map[s] || 'badge-gray'}">${s || 'completed'}</span>`;
     }
 
-    // ── DATA SOURCES & FALLBACKS ───────────────────────────────────────────
-    const MOCK_SELLERS = [
-        { store_name: 'Bite Tech Flagship', email: 'official@bitetechltd.co.ke', category: 'Laptops',  orders: 58, gmv: 8450000, rate: 0.10 },
-        { store_name: 'TechCore Nairobi',    email: 'tc@partner.ke',            category: 'Laptops',  orders: 42, gmv: 4200000, rate: 0.10 },
-        { store_name: 'AudioMax Kenya',      email: 'am@audiomax.co.ke',        category: 'Audio',    orders: 31, gmv: 1150000, rate: 0.08 },
-        { store_name: 'GameZone East Africa',email: 'gz@gamers.ke',             category: 'Gaming',   orders: 39, gmv: 2340000, rate: 0.12 },
-        { store_name: 'MobileTech Hub',      email: 'mt@mobiletech.ke',         category: 'Phones',   orders: 22, gmv: 890000,  rate: 0.09 },
-    ];
-
-    const MOCK_ORDERS = [
-        { order_id: 'BTL-2026-9812', customer_name: 'Alice Wanjiku',   total: 285000, commission: 28500, payment_method: 'IntaSend M-Pesa', status: 'completed', created_at: '2026-09-01' },
-        { order_id: 'BTL-2026-9811', customer_name: 'Brian Otieno',    total: 45000,  commission: 3600,  payment_method: 'IntaSend Card',   status: 'completed', created_at: '2026-08-31' },
-        { order_id: 'BTL-2026-9810', customer_name: 'Carol Muthoni',   total: 120000, commission: 14400, payment_method: 'IntaSend M-Pesa', status: 'pending',   created_at: '2026-08-30' },
-        { order_id: 'BTL-2026-9809', customer_name: 'David Kamau',     total: 75000,  commission: 7500,  payment_method: 'Airtel Money',    status: 'completed', created_at: '2026-08-29' },
-        { order_id: 'BTL-2026-9808', customer_name: 'Esther Njeri',    total: 320000, commission: 32000, payment_method: 'Bank Transfer',   status: 'completed', created_at: '2026-08-28' },
-        { order_id: 'BTL-2026-9807', customer_name: 'Francis Mwangi',  total: 18000,  commission: 1440,  payment_method: 'IntaSend M-Pesa', status: 'completed', created_at: '2026-08-27' },
-    ];
-
+    // ── DATA SOURCES & SYNCHRONIZATION ─────────────────────────────────────
     const DEFAULT_COMMISSIONS = [
         { cat: 'Laptops & Computers', desc: 'Workstations, ultrabooks, servers', rate: 10 },
         { cat: 'Smartphones & Tablets', desc: 'Flagships, rugged phones, pads',   rate: 9  },
@@ -814,6 +797,7 @@
     function renderCommissionMatrix() {
         const comms = getCommissions();
         const el = document.getElementById('commission-matrix');
+        if (!el) return;
         el.innerHTML = comms.map((c, i) => `
             <div class="rate-editor-grid">
                 <div><div class="rate-cat">${c.cat}</div></div>
@@ -843,39 +827,124 @@
     async function loadAdminData() {
         renderCommissionMatrix();
 
-        let sellers = [], orders = [];
+        let sellers = [];
+        let orders = [];
+        let platformTotals = null;
+        let monthlyData = null;
 
+        // 1. Fetch from Real Admin API Endpoints with x-admin-pin header
         try {
-            const [sRes, oRes] = await Promise.all([
-                fetch('/api/sellers/dashboard').catch(() => null),
-                fetch('/api/orders/list').catch(() => null)
+            const [sumRes, ordRes] = await Promise.all([
+                fetch('/api/admin/summary', {
+                    headers: { 'x-admin-pin': ADMIN_PIN }
+                }).catch(() => null),
+                fetch('/api/admin/orders', {
+                    headers: { 'x-admin-pin': ADMIN_PIN }
+                }).catch(() => null)
             ]);
-            if (sRes && sRes.ok) {
-                const sData = await sRes.json();
-                if (sData.sellers && sData.sellers.length) sellers = sData.sellers;
+
+            if (sumRes && sumRes.ok) {
+                const sData = await sumRes.json();
+                if (Array.isArray(sData.sellers)) {
+                    sellers = sData.sellers;
+                }
+                if (sData.platformTotals) {
+                    platformTotals = sData.platformTotals;
+                }
+                if (Array.isArray(sData.monthly)) {
+                    monthlyData = sData.monthly;
+                }
             }
-            if (oRes && oRes.ok) {
-                const oData = await oRes.json();
-                if (oData.orders && oData.orders.length) orders = oData.orders;
+
+            if (ordRes && ordRes.ok) {
+                const oData = await ordRes.json();
+                if (Array.isArray(oData.orders)) {
+                    orders = oData.orders;
+                }
             }
+        } catch(err) {
+            console.warn('[Admin Data Load Warning]', err);
+        }
+
+        // 2. Seamless local storage synchronization (for offline / client-registered accounts)
+        try {
+            const localSellers = JSON.parse(localStorage.getItem('tn_sellers') || '[]');
+            const localOrders = JSON.parse(localStorage.getItem('tn_orders') || '[]');
+
+            // Merge local sellers if not already in list
+            localSellers.forEach(ls => {
+                const exists = sellers.some(s => 
+                    (s.id && ls.id && s.id === ls.id) || 
+                    (s.email && ls.email && s.email.toLowerCase() === ls.email.toLowerCase())
+                );
+                if (!exists) {
+                    let sellerOrdersCount = 0;
+                    let sellerGmv = 0;
+                    let sellerFee = 0;
+                    let sellerPayout = 0;
+
+                    localOrders.forEach(o => {
+                        (o.items || []).forEach(item => {
+                            if (item.sellerId === ls.id || (item.seller && item.seller.toLowerCase() === ls.store_name?.toLowerCase())) {
+                                const qty = item.quantity || item.qty || 1;
+                                const itemTotal = item.totalPrice || (item.price * qty);
+                                const fee = item.platformFee || (itemTotal * (ls.commission_rate || 0.10));
+                                const payout = itemTotal - fee;
+                                sellerOrdersCount++;
+                                sellerGmv += itemTotal;
+                                sellerFee += fee;
+                                sellerPayout += payout;
+                            }
+                        });
+                    });
+
+                    sellers.push({
+                        id: ls.id,
+                        store_name: ls.store_name,
+                        full_name: ls.full_name,
+                        email: ls.email,
+                        category: ls.category || 'Hardware',
+                        commission_rate: ls.commission_rate || 0.10,
+                        orders_count: sellerOrdersCount,
+                        gmv: sellerGmv,
+                        platform_fee_earned: sellerFee,
+                        payout_due: sellerPayout
+                    });
+                }
+            });
+
+            // Merge local orders if not already in list
+            localOrders.forEach(lo => {
+                const exists = orders.some(o => o.id === lo.id || o.order_id === lo.id);
+                if (!exists) {
+                    orders.push({
+                        order_id: lo.id,
+                        customer_name: lo.customer?.name || lo.customer_name || 'Customer',
+                        customer_email: lo.customer?.email || lo.customer_email || '',
+                        total: lo.total || lo.total_amount || 0,
+                        commission: lo.commission || (lo.total * 0.10) || 0,
+                        payment_method: lo.payment_method || 'M-Pesa (IntaSend)',
+                        status: lo.status || 'paid',
+                        created_at: lo.created_at || new Date().toISOString()
+                    });
+                }
+            });
         } catch(_) {}
 
-        if (!sellers.length) sellers = MOCK_SELLERS;
-        if (!orders.length)  orders  = MOCK_ORDERS;
-
-        renderStats(sellers, orders);
+        renderStats(sellers, orders, platformTotals);
         renderSellers(sellers);
         renderOrders(orders);
         renderRecentOrders(orders.slice(0, 5));
-        renderChart(orders);
+        renderChart(orders, monthlyData);
     }
 
-    function renderStats(sellers, orders) {
-        const gmv     = orders.reduce((s, o) => s + (Number(o.total) || 0), 0);
-        const revenue = orders.reduce((s, o) => s + (Number(o.commission) || Number(o.total) * 0.10 || 0), 0);
-        const payouts = gmv - revenue;
+    function renderStats(sellers, orders, platformTotals) {
+        const gmv     = platformTotals?.total_gmv != null ? Number(platformTotals.total_gmv) : orders.reduce((s, o) => s + (Number(o.total || o.total_amount) || 0), 0);
+        const revenue = platformTotals?.total_platform_revenue != null ? Number(platformTotals.total_platform_revenue) : orders.reduce((s, o) => s + (Number(o.commission || o.platform_fee) || Number(o.total || o.total_amount) * 0.10 || 0), 0);
+        const payouts = platformTotals?.total_seller_payouts != null ? Number(platformTotals.total_seller_payouts) : (gmv - revenue);
+        const totalOrdersCount = platformTotals?.total_orders != null ? Number(platformTotals.total_orders) : orders.length;
 
-        document.getElementById('s-orders').textContent  = orders.length;
+        document.getElementById('s-orders').textContent  = totalOrdersCount;
         document.getElementById('s-sellers').textContent = sellers.length;
         document.getElementById('s-gmv').textContent     = fmtKES(gmv);
         document.getElementById('s-revenue').textContent = fmtKES(revenue);
@@ -885,20 +954,24 @@
     function renderSellers(sellers) {
         const tbody = document.getElementById('sellers-tbody');
         if (!sellers.length) {
-            tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><span class="material-symbols-outlined">storefront</span><p>No seller accounts found</p></div></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state" style="padding:36px 20px;text-align:center;"><span class="material-symbols-outlined" style="font-size:36px;color:var(--muted);">storefront</span><p style="margin-top:8px;font-weight:600;color:var(--muted);">No seller accounts registered yet</p><span style="font-size:0.75rem;color:var(--muted);">New merchant storefront registrations will appear here</span></div></td></tr>`;
             return;
         }
         tbody.innerHTML = sellers.map(s => {
-            const fee    = (s.gmv || 0) * (s.rate || 0.10);
-            const payout = (s.gmv || 0) - fee;
+            const ordersCount = s.orders_count != null ? s.orders_count : (s.orders || 0);
+            const gmvVal = Number(s.gmv || 0);
+            const rateVal = Number(s.commission_rate || s.rate || 0.10);
+            const feeVal = s.platform_fee_earned != null ? Number(s.platform_fee_earned) : (gmvVal * rateVal);
+            const payoutVal = s.payout_due != null ? Number(s.payout_due) : (gmvVal - feeVal);
+
             return `<tr>
                 <td><strong>${s.store_name || '—'}</strong></td>
                 <td style="color:var(--muted);font-size:0.82rem">${s.email || '—'}</td>
                 <td><span class="badge badge-blue">${s.category || 'Hardware'}</span></td>
-                <td><strong>${s.orders || 0}</strong></td>
-                <td>${fmtKES(s.gmv)}</td>
-                <td style="color:var(--blue);font-weight:700">${fmtKES(fee)}</td>
-                <td style="color:var(--green);font-weight:700">${fmtKES(payout)}</td>
+                <td><strong>${ordersCount}</strong></td>
+                <td>${fmtKES(gmvVal)}</td>
+                <td style="color:var(--blue);font-weight:700">${fmtKES(feeVal)}</td>
+                <td style="color:var(--green);font-weight:700">${fmtKES(payoutVal)}</td>
                 <td><span class="badge badge-green">Active</span></td>
             </tr>`;
         }).join('');
@@ -907,50 +980,84 @@
     function renderOrders(orders) {
         const tbody = document.getElementById('orders-tbody');
         if (!orders.length) {
-            tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><span class="material-symbols-outlined">receipt_long</span><p>No transactions recorded yet</p></div></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state" style="padding:36px 20px;text-align:center;"><span class="material-symbols-outlined" style="font-size:36px;color:var(--muted);">receipt_long</span><p style="margin-top:8px;font-weight:600;color:var(--muted);">No customer transactions recorded yet</p><span style="font-size:0.75rem;color:var(--muted);">Real orders processed via checkout will appear in this ledger</span></div></td></tr>`;
             return;
         }
-        tbody.innerHTML = orders.map(o => `<tr>
-            <td><code style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--blue);font-weight:700">${o.order_id || '—'}</code></td>
-            <td>${o.customer_name || o.customer_email || 'Walk-in'}</td>
-            <td><strong>${fmtKES(o.total)}</strong></td>
-            <td style="color:var(--blue);font-weight:700">${fmtKES(o.commission || o.total * 0.10)}</td>
-            <td><span class="badge badge-gray">${o.payment_method || 'IntaSend M-Pesa'}</span></td>
-            <td>${statusBadge(o.status)}</td>
-            <td style="color:var(--muted);font-size:0.82rem">${fmtDate(o.created_at)}</td>
-        </tr>`).join('');
+        tbody.innerHTML = orders.map(o => {
+            const orderTotal = Number(o.total || o.total_amount || 0);
+            const orderCommission = Number(o.commission || o.platform_fee || orderTotal * 0.10);
+            return `<tr>
+                <td><code style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--blue);font-weight:700">${o.order_id || o.id || '—'}</code></td>
+                <td>${o.customer_name || o.customer_email || 'Customer'}</td>
+                <td><strong>${fmtKES(orderTotal)}</strong></td>
+                <td style="color:var(--blue);font-weight:700">${fmtKES(orderCommission)}</td>
+                <td><span class="badge badge-gray">${o.payment_method || 'IntaSend M-Pesa'}</span></td>
+                <td>${statusBadge(o.status)}</td>
+                <td style="color:var(--muted);font-size:0.82rem">${fmtDate(o.created_at)}</td>
+            </tr>`;
+        }).join('');
     }
 
     function renderRecentOrders(orders) {
         const tbody = document.getElementById('recent-orders-tbody');
-        tbody.innerHTML = orders.map(o => `<tr>
-            <td><code style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--blue);font-weight:700">${o.order_id || '—'}</code></td>
-            <td>${o.customer_name || 'Walk-in'}</td>
-            <td><strong>${fmtKES(o.total)}</strong></td>
-            <td><span class="badge badge-gray">${o.payment_method || 'IntaSend M-Pesa'}</span></td>
-            <td>${statusBadge(o.status)}</td>
-            <td style="color:var(--muted);font-size:0.82rem">${fmtDate(o.created_at)}</td>
-        </tr>`).join('');
+        if (!tbody) return;
+        if (!orders.length) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted);">No recent order activity</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = orders.map(o => {
+            const orderTotal = Number(o.total || o.total_amount || 0);
+            return `<tr>
+                <td><code style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--blue);font-weight:700">${o.order_id || o.id || '—'}</code></td>
+                <td>${o.customer_name || 'Customer'}</td>
+                <td><strong>${fmtKES(orderTotal)}</strong></td>
+                <td><span class="badge badge-gray">${o.payment_method || 'IntaSend M-Pesa'}</span></td>
+                <td>${statusBadge(o.status)}</td>
+                <td style="color:var(--muted);font-size:0.82rem">${fmtDate(o.created_at)}</td>
+            </tr>`;
+        }).join('');
     }
 
-    function renderChart(orders) {
+    function renderChart(orders, monthlyData) {
         const canvas = document.getElementById('revenue-chart');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (chartInstance) chartInstance.destroy();
 
-        const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
-        const currentTotal = orders.reduce((s,o) => s + (Number(o.total) || 0), 0);
-        const gmvData = [1100000, 1450000, 1850000, 2400000, 3100000, currentTotal || 4500000];
-        const revData = gmvData.map(v => Math.round(v * 0.10));
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const now = new Date();
+        const labels = [];
+        const gmvData = [];
+        const revData = [];
+
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const key = d.toISOString().slice(0, 7);
+            const label = monthNames[d.getMonth()] + ' ' + d.getFullYear().toString().slice(2);
+            labels.push(label);
+
+            const matchServer = monthlyData?.find(m => m.month === key);
+            if (matchServer) {
+                const gmv = Number(matchServer.gmv || 0);
+                const rev = Number(matchServer.platform_revenue || 0);
+                gmvData.push(gmv);
+                revData.push(rev);
+            } else {
+                const monthOrders = orders.filter(o => (o.created_at || '').slice(0, 7) === key);
+                const gmv = monthOrders.reduce((acc, o) => acc + (Number(o.total || o.total_amount) || 0), 0);
+                const rev = monthOrders.reduce((acc, o) => acc + (Number(o.commission || o.platform_fee) || Number(o.total || o.total_amount) * 0.10 || 0), 0);
+                gmvData.push(gmv);
+                revData.push(rev);
+            }
+        }
 
         chartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: months,
+                labels: labels,
                 datasets: [
-                    { label: 'Gross Volume (GMV)', data: gmvData, backgroundColor: 'rgba(0,88,188,0.15)', borderColor: '#0058bc', borderWidth: 2, borderRadius: 6 },
-                    { label: 'Platform Revenue (10%)', data: revData, backgroundColor: 'rgba(0,209,255,0.22)', borderColor: '#00d1ff', borderWidth: 2, borderRadius: 6 }
+                    { label: 'Gross Volume (GMV)', data: gmvData, backgroundColor: 'rgba(0,88,188,0.20)', borderColor: '#0058bc', borderWidth: 2, borderRadius: 6 },
+                    { label: 'Platform Revenue', data: revData, backgroundColor: 'rgba(0,209,255,0.30)', borderColor: '#00d1ff', borderWidth: 2, borderRadius: 6 }
                 ]
             },
             options: {
@@ -959,7 +1066,11 @@
                     legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', weight: '600', size: 12 }, boxWidth: 12, padding: 16 } }
                 },
                 scales: {
-                    y: { grid: { color: '#f1f5f9' }, ticks: { callback: v => 'KSh ' + (v/1000).toFixed(0) + 'k', font: { family: 'JetBrains Mono', size: 11 } } },
+                    y: { 
+                        beginAtZero: true,
+                        grid: { color: '#f1f5f9' }, 
+                        ticks: { callback: v => 'KSh ' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v), font: { family: 'JetBrains Mono', size: 11 } } 
+                    },
                     x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', weight: '600', size: 12 } } }
                 }
             }
