@@ -596,7 +596,6 @@ function initAddProductForm(token, seller) {
     const form = document.getElementById('add-product-form');
     const imgBtn = document.getElementById('product-image-upload-btn');
 
-    // Product Image Upload (Cloudinary Signed API + Local File Reader + Direct URL Fallback)
     // Product Image Upload (Cloudinary Signed API + Local File Reader + Camera + Direct URL)
     const prodUrlInput   = document.getElementById('product-image-url');
     const prodFileInput  = document.getElementById('product-local-file-input');
@@ -655,10 +654,114 @@ function initAddProductForm(token, seller) {
     if (prodCamInput) {
         prodCamInput.addEventListener('change', (e) => processProductPhoto(e.target.files?.[0]));
     }
+
+    // ── Camera: getUserMedia modal on desktop; native capture on mobile ──────
     if (btnCamera) {
-        btnCamera.addEventListener('click', (e) => {
+        btnCamera.addEventListener('click', async (e) => {
             e.stopPropagation();
-            if (prodCamInput) prodCamInput.click();
+
+            // Mobile: native camera via capture attribute is most reliable
+            const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+            if (isMobile && prodCamInput) {
+                prodCamInput.click();
+                return;
+            }
+
+            // Desktop: use getUserMedia live camera modal
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showToast('Camera access is not supported by this browser.', 'error');
+                return;
+            }
+
+            // Build camera modal once, reuse on subsequent clicks
+            let modal = document.getElementById('camera-capture-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'camera-capture-modal';
+                modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.88);display:none;align-items:center;justify-content:center;';
+                modal.innerHTML = `
+                  <div style="background:#0a192f;border-radius:16px;padding:24px;max-width:520px;width:95%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.6);">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                      <span style="font-weight:800;font-size:1rem;color:#fff;display:flex;align-items:center;gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:20px;color:#00d1ff;">photo_camera</span>
+                        Take Product Photo
+                      </span>
+                      <button id="cam-modal-close" style="background:rgba(255,255,255,0.12);border:none;color:#fff;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:20px;line-height:1;">&times;</button>
+                    </div>
+                    <video id="cam-live-feed" autoplay playsinline muted style="width:100%;border-radius:10px;background:#000;max-height:320px;object-fit:cover;display:block;"></video>
+                    <canvas id="cam-snapshot-canvas" style="display:none;"></canvas>
+                    <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+                      <button id="cam-capture-btn" style="background:linear-gradient(135deg,#00d1ff,#0058bc);color:#fff;border:none;border-radius:50px;padding:10px 24px;font-weight:700;cursor:pointer;font-size:0.9rem;display:inline-flex;align-items:center;gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">camera</span> Capture
+                      </button>
+                      <button id="cam-flip-btn" style="background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:50px;padding:10px 16px;font-weight:600;cursor:pointer;font-size:0.85rem;display:inline-flex;align-items:center;gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:16px;">flip_camera_ios</span> Flip
+                      </button>
+                    </div>
+                    <p id="cam-error-msg" style="color:#f87171;font-size:0.8rem;margin-top:10px;display:none;"></p>
+                  </div>`;
+                document.body.appendChild(modal);
+            }
+
+            modal.style.display = 'flex';
+
+            const vid      = document.getElementById('cam-live-feed');
+            const canv     = document.getElementById('cam-snapshot-canvas');
+            const capBtn   = document.getElementById('cam-capture-btn');
+            const clsBtn   = document.getElementById('cam-modal-close');
+            const flpBtn   = document.getElementById('cam-flip-btn');
+            const errP     = document.getElementById('cam-error-msg');
+
+            let camStream = null;
+            let facing = 'environment';
+
+            async function startCam(facingMode) {
+                if (camStream) camStream.getTracks().forEach(t => t.stop());
+                try {
+                    camStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } },
+                        audio: false
+                    });
+                    vid.srcObject = camStream;
+                    errP.style.display = 'none';
+                } catch (err) {
+                    errP.textContent = 'Camera error: ' + (err.message || 'Permission denied. Check browser settings.');
+                    errP.style.display = 'block';
+                    console.warn('[Camera]', err);
+                }
+            }
+
+            function closeCam() {
+                if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+                vid.srcObject = null;
+                modal.style.display = 'none';
+            }
+
+            await startCam(facing);
+
+            flpBtn.onclick = async () => {
+                facing = facing === 'environment' ? 'user' : 'environment';
+                await startCam(facing);
+            };
+
+            capBtn.onclick = () => {
+                if (!camStream) return;
+                canv.width  = vid.videoWidth  || 640;
+                canv.height = vid.videoHeight || 480;
+                canv.getContext('2d').drawImage(vid, 0, 0, canv.width, canv.height);
+                const dataUrl = canv.toDataURL('image/jpeg', 0.92);
+                if (prodPrev)     { prodPrev.src = dataUrl; prodPrev.style.display = 'block'; }
+                if (prodUrlInput) prodUrlInput.value = dataUrl;
+                closeCam();
+                showToast('Photo captured! Uploading to CDN...', 'success');
+                canv.toBlob(async (blob) => {
+                    const file = new File([blob], 'product-' + Date.now() + '.jpg', { type: 'image/jpeg' });
+                    await processProductPhoto(file);
+                }, 'image/jpeg', 0.92);
+            };
+
+            clsBtn.onclick = closeCam;
+            modal.onclick  = (ev) => { if (ev.target === modal) closeCam(); };
         });
     }
     if (btnBrowse) {
