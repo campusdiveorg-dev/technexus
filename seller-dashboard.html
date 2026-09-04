@@ -508,7 +508,100 @@
             font-size: 1.25rem;
             font-weight: 800;
             color: #15803d;
-            margin-top: 2px;
+        }
+
+        /* ── Edit Product Modal ── */
+        .edit-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: rgba(10, 25, 47, 0.75);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .edit-modal-overlay.active {
+            display: flex;
+        }
+        .edit-modal-card {
+            background: #ffffff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+            animation: modalFadeIn 0.22s ease;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(12px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .edit-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--seller-border);
+            background: #f8fafc;
+        }
+        .edit-modal-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--seller-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .edit-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: var(--seller-muted);
+            line-height: 1;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .edit-modal-close:hover {
+            color: var(--seller-danger);
+            background: #fee2e2;
+        }
+        .edit-modal-body {
+            padding: 24px;
+        }
+        .btn-action-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 11px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+            font-family: inherit;
+        }
+        .btn-action-edit {
+            background: #eff6ff;
+            color: var(--seller-primary);
+            border-color: #bfdbfe;
+        }
+        .btn-action-edit:hover {
+            background: var(--seller-primary);
+            color: #ffffff;
+        }
+        .btn-action-delete {
+            background: #fef2f2;
+            color: #ef4444;
+            border-color: #fecaca;
+        }
+        .btn-action-delete:hover {
+            background: #ef4444;
+            color: #ffffff;
         }
 
         .hidden {
@@ -764,10 +857,11 @@
                                             <th>Category</th>
                                             <th>Unit Price (KES)</th>
                                             <th>Status</th>
+                                            <th style="text-align: right;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="seller-products-tbody">
-                                        <tr><td colspan="5" style="text-align: center; padding: 28px; color: var(--seller-muted);">Loading catalog...</td></tr>
+                                        <tr><td colspan="6" style="text-align: center; padding: 28px; color: var(--seller-muted);">Loading catalog...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -876,6 +970,103 @@
             </div>
         </div>
     </main>
+
+    <!-- ── Edit Product Modal ── -->
+    <div id="edit-product-modal-overlay" class="edit-modal-overlay">
+        <div class="edit-modal-card">
+            <div class="edit-modal-header">
+                <div class="edit-modal-title">
+                    <span class="material-symbols-outlined" style="font-size:22px; color:var(--seller-primary);">edit_note</span>
+                    <span>Edit Hardware Listing</span>
+                </div>
+                <button type="button" class="edit-modal-close" onclick="closeEditProductModal()">&times;</button>
+            </div>
+            <div class="edit-modal-body">
+                <form id="edit-product-form" onsubmit="return false;">
+                    <input type="hidden" id="edit-prod-id"/>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+                        <div style="grid-column: 1 / -1;">
+                            <label class="input-label" for="edit-prod-name">Product Hardware Name</label>
+                            <input id="edit-prod-name" class="input-control" type="text" required/>
+                        </div>
+                        <div>
+                            <label class="input-label" for="edit-prod-category">Category</label>
+                            <select id="edit-prod-category" class="input-control">
+                                <option value="Laptops">Laptops &amp; Workstations (12% Fee)</option>
+                                <option value="Audio">Lossless Audio &amp; ANC (8% Fee)</option>
+                                <option value="Gaming">Displays &amp; Gaming Rigs (15% Fee)</option>
+                                <option value="Phones">Smartphones &amp; Tablets (10% Fee)</option>
+                                <option value="Monitors">Monitors &amp; Vision (10% Fee)</option>
+                                <option value="Accessories">Accessories &amp; Peripherals (8% Fee)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="input-label" for="edit-prod-price">Retail Price (KSh)</label>
+                            <input id="edit-prod-price" class="input-control" type="number" min="1" step="1" required/>
+                        </div>
+
+                        <!-- Live Calculator -->
+                        <div style="grid-column: 1 / -1;">
+                            <div class="calculator-preview" style="margin: 4px 0; padding: 12px;">
+                                <div>
+                                    <div class="calc-col-label">Price</div>
+                                    <div class="calc-col-val" id="edit-calc-price-disp" style="font-size: 1.05rem;">KSh 0</div>
+                                </div>
+                                <div>
+                                    <div class="calc-col-label" style="color:#991b1b;">Platform Fee</div>
+                                    <div class="calc-col-val" id="edit-calc-fee-disp" style="color:#dc2626; font-size: 1.05rem;">-KSh 0</div>
+                                </div>
+                                <div>
+                                    <div class="calc-col-label">Net Earning</div>
+                                    <div class="calc-col-val" id="edit-calc-net-disp" style="font-size: 1.05rem;">+KSh 0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="grid-column: 1 / -1;">
+                            <label class="input-label" for="edit-prod-desc">Description</label>
+                            <textarea id="edit-prod-desc" class="input-control" rows="2"></textarea>
+                        </div>
+                        <div>
+                            <label class="input-label" for="edit-prod-specs">Specs Pill / Features</label>
+                            <input id="edit-prod-specs" class="input-control" type="text" placeholder="e.g. 144Hz • 4K OLED"/>
+                        </div>
+                        <div>
+                            <label class="input-label" for="edit-prod-tag">Merchandising Tag</label>
+                            <input id="edit-prod-tag" class="input-control" type="text" placeholder="e.g. PRO, FLAGSHIP"/>
+                        </div>
+                        <div>
+                            <label class="input-label" for="edit-prod-status">Listing Status</label>
+                            <select id="edit-prod-status" class="input-control">
+                                <option value="true">Live &amp; Selling</option>
+                                <option value="false">Draft / Hidden</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="input-label" for="edit-prod-stock">Stock Available</label>
+                            <input id="edit-prod-stock" class="input-control" type="number" min="0" value="50"/>
+                        </div>
+
+                        <div style="grid-column: 1 / -1;">
+                            <label class="input-label" for="edit-prod-image-url">Image URL</label>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <img id="edit-prod-img-preview" src="" style="width:42px; height:42px; border-radius:6px; object-fit:cover; border:1px solid var(--seller-border); display:none;" alt="Preview"/>
+                                <input id="edit-prod-image-url" class="input-control" type="url" placeholder="https://images.unsplash.com/..."/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px;">
+                        <button type="button" class="btn-secondary" onclick="closeEditProductModal()" style="padding: 9px 18px;">Cancel</button>
+                        <button type="submit" id="btn-save-edit-product" class="btn-seller-submit" style="width: auto; padding: 9px 24px;">
+                            <span class="material-symbols-outlined" style="font-size:18px;">save</span>
+                            <span>Save Changes</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="footer" style="background:#ffffff; border-top:1px solid var(--seller-border); margin-top:auto;">

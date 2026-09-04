@@ -66,7 +66,7 @@ module.exports = async (req, res) => {
 
         // Seller's listed products
         const products = await query(`
-            SELECT id, name, category, price, commission_rate, image_url, stock, is_active, created_at
+            SELECT id, name, category, price, commission_rate, image_url, description, specs, tag, stock, is_active, created_at
             FROM products
             WHERE seller_id = ?
             ORDER BY created_at DESC

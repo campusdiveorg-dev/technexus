@@ -409,6 +409,7 @@ async function loadSellerDashboard() {
 
     // Init Product Listing Form
     initAddProductForm(token, seller);
+    initEditProductForm(token, seller);
 
     // Wire statement download
     const statementBtn = document.getElementById('download-statement-btn');
@@ -537,12 +538,17 @@ function renderSellerProductsTable(products, seller) {
     const tbody = document.getElementById('seller-products-tbody');
     if (!tbody) return;
 
+    window._currentSellerProducts = products || [];
+
     if (!products.length) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 28px; color: var(--seller-muted);">No products listed yet. Use the "List Hardware" tab to publish your first hardware item!</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 28px; color: var(--seller-muted);">No products listed yet. Use the "List Hardware" tab to publish your first hardware item!</td></tr>';
         return;
     }
 
-    tbody.innerHTML = products.map(p => `
+    tbody.innerHTML = products.map(p => {
+        const isActive = (p.is_active === true || p.is_active === 1 || p.is_active === 'true' || p.is_active === undefined);
+        const safeId = (p.id || '').replace(/'/g, "\\'");
+        return `
         <tr>
             <td>
                 <img src="${p.image_url || p.image || 'https://via.placeholder.com/44'}" 
@@ -553,9 +559,20 @@ function renderSellerProductsTable(products, seller) {
             <td><strong>${p.name}</strong></td>
             <td><span class="badge-chip blue">${p.category}</span></td>
             <td><strong>${formatKSh(p.price)}</strong></td>
-            <td><span class="badge-chip green">${p.is_active !== false ? 'Live & Selling' : 'Draft'}</span></td>
+            <td><span class="badge-chip ${isActive ? 'green' : 'red'}">${isActive ? 'Live & Selling' : 'Draft / Hidden'}</span></td>
+            <td style="text-align: right; white-space: nowrap;">
+                <button type="button" class="btn-action-icon btn-action-edit" onclick="openEditProductModal('${safeId}')" title="Edit Listing">
+                    <span class="material-symbols-outlined" style="font-size:15px;">edit</span>
+                    <span>Edit</span>
+                </button>
+                <button type="button" class="btn-action-icon btn-action-delete" onclick="deleteSellerProduct('${safeId}')" title="Delete Listing" style="margin-left: 6px;">
+                    <span class="material-symbols-outlined" style="font-size:15px;">delete</span>
+                    <span>Delete</span>
+                </button>
+            </td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function renderSellerChart(monthly) {
@@ -887,6 +904,267 @@ function initAddProductForm(token, seller) {
         }
     });
 }
+
+// ══════════════════════════════════════════════════════════════
+// 3.5 EDIT & DELETE PRODUCTS
+// ══════════════════════════════════════════════════════════════
+function updateEditCalcPreview() {
+    const price = parseFloat(document.getElementById('edit-prod-price')?.value) || 0;
+    const cat = document.getElementById('edit-prod-category')?.value || 'Laptops';
+    const rates = { 'Laptops': 0.12, 'Audio': 0.08, 'Gaming': 0.15, 'Phones': 0.10, 'Monitors': 0.10, 'Accessories': 0.08 };
+    const rate = rates[cat] || 0.10;
+    const fee = price * rate;
+    const net = price - fee;
+
+    const priceDisp = document.getElementById('edit-calc-price-disp');
+    const feeDisp = document.getElementById('edit-calc-fee-disp');
+    const netDisp = document.getElementById('edit-calc-net-disp');
+
+    if (priceDisp) priceDisp.textContent = `KSh ${price.toLocaleString('en-KE')}`;
+    if (feeDisp) feeDisp.textContent = `-KSh ${fee.toLocaleString('en-KE')} (${(rate*100).toFixed(0)}%)`;
+    if (netDisp) netDisp.textContent = `+KSh ${net.toLocaleString('en-KE')}`;
+}
+
+function openEditProductModal(productId) {
+    const products = window._currentSellerProducts || [];
+    const custom = JSON.parse(localStorage.getItem('tn_custom_products') || '[]');
+    let product = products.find(p => String(p.id) === String(productId));
+    if (!product) {
+        product = custom.find(p => String(p.id) === String(productId));
+    }
+    if (!product && window.PRODUCTS) {
+        product = window.PRODUCTS.find(p => String(p.id) === String(productId));
+    }
+    if (!product) {
+        showToast('Product listing not found.', 'error');
+        return;
+    }
+
+    const idInput = document.getElementById('edit-prod-id');
+    const nameInput = document.getElementById('edit-prod-name');
+    const catInput = document.getElementById('edit-prod-category');
+    const priceInput = document.getElementById('edit-prod-price');
+    const descInput = document.getElementById('edit-prod-desc');
+    const specsInput = document.getElementById('edit-prod-specs');
+    const tagInput = document.getElementById('edit-prod-tag');
+    const statusInput = document.getElementById('edit-prod-status');
+    const stockInput = document.getElementById('edit-prod-stock');
+    const imgUrlInput = document.getElementById('edit-prod-image-url');
+    const imgPrev = document.getElementById('edit-prod-img-preview');
+
+    if (idInput) idInput.value = product.id;
+    if (nameInput) nameInput.value = product.name || '';
+    if (catInput) catInput.value = product.category || 'Laptops';
+    if (priceInput) priceInput.value = product.price || '';
+    if (descInput) descInput.value = product.description || '';
+    if (specsInput) specsInput.value = product.specs || '';
+    if (tagInput) tagInput.value = product.tag || '';
+    if (statusInput) statusInput.value = String(product.is_active !== false);
+    if (stockInput) stockInput.value = product.stock ?? 50;
+
+    const imgUrl = product.image_url || product.image || '';
+    if (imgUrlInput) imgUrlInput.value = imgUrl;
+    if (imgPrev) {
+        if (imgUrl) {
+            imgPrev.src = imgUrl;
+            imgPrev.style.display = 'block';
+        } else {
+            imgPrev.style.display = 'none';
+        }
+    }
+
+    updateEditCalcPreview();
+
+    const overlay = document.getElementById('edit-product-modal-overlay');
+    if (overlay) {
+        overlay.classList.add('active');
+    }
+}
+
+function closeEditProductModal() {
+    const overlay = document.getElementById('edit-product-modal-overlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+}
+
+async function deleteSellerProduct(productId) {
+    if (!confirm('Are you sure you want to permanently delete this product listing? This action cannot be undone.')) {
+        return;
+    }
+
+    const token = SellerSession.getToken();
+
+    // 1. Delete from Backend API
+    try {
+        await fetch(`/api/sellers/products?id=${encodeURIComponent(productId)}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+    } catch (e) {
+        console.warn('API /api/sellers/products DELETE offline:', e);
+    }
+
+    // 2. Remove from LocalStorage
+    const custom = JSON.parse(localStorage.getItem('tn_custom_products') || '[]');
+    const filtered = custom.filter(p => String(p.id) !== String(productId));
+    localStorage.setItem('tn_custom_products', JSON.stringify(filtered));
+
+    // 3. Sync window.PRODUCTS and trigger catalog update
+    if (typeof window.loadLocalSellerProducts === 'function') {
+        window.loadLocalSellerProducts();
+    }
+    if (window.PRODUCTS) {
+        window.PRODUCTS = window.PRODUCTS.filter(p => String(p.id) !== String(productId));
+    }
+    window.dispatchEvent(new CustomEvent('products-updated'));
+
+    showToast('Product successfully deleted from catalog.', 'info');
+
+    // 4. Reload seller dashboard
+    loadSellerDashboard();
+}
+
+function initEditProductForm(token, seller) {
+    const form = document.getElementById('edit-product-form');
+    const priceInput = document.getElementById('edit-prod-price');
+    const catInput = document.getElementById('edit-prod-category');
+    const imgInput = document.getElementById('edit-prod-image-url');
+    const imgPrev = document.getElementById('edit-prod-img-preview');
+    const overlay = document.getElementById('edit-product-modal-overlay');
+
+    if (overlay && !overlay.dataset.bound) {
+        overlay.dataset.bound = 'true';
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeEditProductModal();
+        });
+    }
+
+    if (priceInput && !priceInput.dataset.bound) {
+        priceInput.dataset.bound = 'true';
+        priceInput.addEventListener('input', updateEditCalcPreview);
+    }
+    if (catInput && !catInput.dataset.bound) {
+        catInput.dataset.bound = 'true';
+        catInput.addEventListener('change', updateEditCalcPreview);
+    }
+    if (imgInput && !imgInput.dataset.bound) {
+        imgInput.dataset.bound = 'true';
+        imgInput.addEventListener('input', () => {
+            const url = imgInput.value.trim();
+            if (imgPrev) {
+                if (url) {
+                    imgPrev.src = url;
+                    imgPrev.style.display = 'block';
+                } else {
+                    imgPrev.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = 'true';
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('edit-prod-id')?.value;
+        const name = document.getElementById('edit-prod-name')?.value.trim();
+        const price = parseFloat(document.getElementById('edit-prod-price')?.value);
+        const category = document.getElementById('edit-prod-category')?.value || 'Laptops';
+        const description = document.getElementById('edit-prod-desc')?.value.trim() || '';
+        const specs = document.getElementById('edit-prod-specs')?.value.trim() || '';
+        const tag = document.getElementById('edit-prod-tag')?.value.trim() || '';
+        const isActive = document.getElementById('edit-prod-status')?.value === 'true';
+        const stock = parseInt(document.getElementById('edit-prod-stock')?.value, 10) || 0;
+        const imageUrl = document.getElementById('edit-prod-image-url')?.value.trim() || '';
+
+        if (!id || !name || isNaN(price) || price <= 0) {
+            showToast('Please enter a valid product name and retail price.', 'error');
+            return;
+        }
+
+        const categoryRates = {
+            'Laptops': 0.12, 'Audio': 0.08, 'Gaming': 0.15,
+            'Phones': 0.10, 'Monitors': 0.10, 'Accessories': 0.08
+        };
+        const commissionRate = categoryRates[category] || 0.10;
+
+        const btnSave = document.getElementById('btn-save-edit-product');
+        if (btnSave) {
+            btnSave.disabled = true;
+            btnSave.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:18px;">sync</span> <span>Saving…</span>';
+        }
+
+        const updateData = {
+            id,
+            name,
+            category,
+            price,
+            commission_rate: commissionRate,
+            description,
+            image_url: imageUrl || 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=600&q=80',
+            image: imageUrl || 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=600&q=80',
+            specs,
+            tag,
+            stock,
+            is_active: isActive
+        };
+
+        // 1. Try Backend API PUT
+        try {
+            await fetch('/api/sellers/products', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(updateData)
+            });
+        } catch (err) {
+            console.warn('API /api/sellers/products PUT offline, saving locally...', err);
+        }
+
+        // 2. Persist locally to custom products repository
+        const custom = JSON.parse(localStorage.getItem('tn_custom_products') || '[]');
+        const idx = custom.findIndex(p => String(p.id) === String(id));
+        if (idx !== -1) {
+            custom[idx] = { ...custom[idx], ...updateData };
+        } else {
+            custom.unshift({
+                ...updateData,
+                seller_id: seller?.id || 'seller-custom',
+                sellerId: seller?.id || 'seller-custom',
+                seller: seller?.store_name || 'Apex Hardware Nairobi',
+                created_at: new Date().toISOString()
+            });
+        }
+        localStorage.setItem('tn_custom_products', JSON.stringify(custom));
+
+        // 3. Sync window.PRODUCTS and trigger catalog update
+        if (typeof window.loadLocalSellerProducts === 'function') {
+            window.loadLocalSellerProducts();
+        }
+        window.dispatchEvent(new CustomEvent('products-updated'));
+
+        showToast(`"${name}" updated successfully!`, 'success');
+
+        if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">save</span> <span>Save Changes</span>';
+        }
+
+        closeEditProductModal();
+        loadSellerDashboard();
+    });
+}
+
+window.openEditProductModal = openEditProductModal;
+window.closeEditProductModal = closeEditProductModal;
+window.deleteSellerProduct = deleteSellerProduct;
+window.updateEditCalcPreview = updateEditCalcPreview;
 
 // ══════════════════════════════════════════════════════════════
 // 4. COMMISSION STATEMENT PDF GENERATION
