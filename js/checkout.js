@@ -118,6 +118,21 @@ function initIntaSendSDK() {
                 const cart = getNormalizedCart();
                 const invoiceId = results.invoice_id || results.tracking_id || `IS-${Date.now()}`;
                 const txRef = results.api_ref || currentTxRef || `TN-${Date.now()}`;
+
+                // Enrich customer data from IntaSend's response if fields were left blank
+                if (results.customer) {
+                    const c = results.customer;
+                    if (!checkoutCustomer.name || checkoutCustomer.name === 'Byte Tech Customer') {
+                        checkoutCustomer.name = [c.first_name, c.last_name].filter(Boolean).join(' ') || checkoutCustomer.name;
+                    }
+                    if (!checkoutCustomer.email || checkoutCustomer.email.endsWith('@bytetech.co.ke')) {
+                        checkoutCustomer.email = c.email || checkoutCustomer.email;
+                    }
+                    if (!checkoutCustomer.phone) {
+                        checkoutCustomer.phone = c.phone_number || checkoutCustomer.phone;
+                    }
+                }
+
                 await processOrderCreation(invoiceId, txRef, cart, results);
             })
             .on("FAILED", (results) => {
@@ -305,57 +320,27 @@ function resetPayButton() {
 
 // ── Capturing Click Validation Handler ─────────────────────────
 function handlePayButtonClick(e) {
-    const nameInput    = document.getElementById('cust-name');
-    const emailInput   = document.getElementById('cust-email');
     const phoneInput   = document.getElementById('cust-phone');
-    const addressInput = document.getElementById('cust-address');
     const phoneWrap    = document.getElementById('cust-phone-wrap');
 
-    const name    = nameInput?.value.trim() || '';
-    const email   = emailInput?.value.trim() || '';
-    const phoneRaw = phoneInput?.value.trim() || '';
-    const address = addressInput?.value.trim() || '';
+    const phoneRaw   = phoneInput?.value.trim() || '';
+    const cleanPhone = normalizeKenyanPhone(phoneRaw);
 
-    let hasError = false;
-
-    // Reset visual errors
-    nameInput?.classList.remove('field-error');
-    emailInput?.classList.remove('field-error');
-    addressInput?.classList.remove('field-error');
+    // Only phone is strictly required for M-Pesa STK push
     phoneWrap?.classList.remove('field-error');
 
-    if (!name) {
-        nameInput?.classList.add('field-error');
-        hasError = true;
-    }
-
-    const cleanPhone = normalizeKenyanPhone(phoneRaw);
     if (!cleanPhone || cleanPhone.length !== 12 || !cleanPhone.startsWith('254')) {
         phoneWrap?.classList.add('field-error');
-        hasError = true;
-    }
-
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        emailInput?.classList.add('field-error');
-        hasError = true;
-    }
-
-    if (!address) {
-        addressInput?.classList.add('field-error');
-        hasError = true;
-    }
-
-    if (hasError) {
         e.preventDefault();
         e.stopImmediatePropagation();
-
-        if (!cleanPhone || cleanPhone.length !== 12 || !cleanPhone.startsWith('254')) {
-            showToast('Please enter a valid 9-digit or 10-digit Kenyan phone number (e.g. 712 345 678).', 'error');
-        } else {
-            showToast('Please fill in all delivery details to complete checkout.', 'error');
-        }
+        showToast('Please enter a valid Kenyan phone number (e.g. 0712 345 678).', 'error');
         return false;
     }
+
+    // Optional fields — fall back to defaults if blank
+    const name    = document.getElementById('cust-name')?.value.trim()    || 'Byte Tech Customer';
+    const email   = document.getElementById('cust-email')?.value.trim()   || `${cleanPhone}@bytetech.co.ke`;
+    const address = document.getElementById('cust-address')?.value.trim() || 'Kenya';
 
     // Save validated details for 1-click repeat checkout
     checkoutCustomer = { name, email, phone: cleanPhone, address };
