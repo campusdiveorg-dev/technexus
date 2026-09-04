@@ -92,8 +92,15 @@ document.addEventListener('DOMContentLoaded', () => {
         payBtn.addEventListener('click', handlePayButtonClick, true);
     }
 
-    // Initialize IntaSend SDK
-    initIntaSendSDK();
+    // Initialize IntaSend SDK if already loaded; otherwise wait for async load callback
+    if (typeof window.IntaSend === 'function') {
+        initIntaSendSDK();
+    } else {
+        // Called by the dynamic loader in cart.html once SDK arrives
+        window.__intaSendReadyCallback = function() {
+            initIntaSendSDK();
+        };
+    }
 });
 
 // ── Initialize IntaSend SDK ────────────────────────────────────
@@ -363,17 +370,43 @@ function handlePayButtonClick(e) {
     // Prepare live attributes right before IntaSend reads them
     updatePayButtonAttributes();
 
-    // Fallback simulation if IntaSend SDK is not active
-    if (!intasendInstance && typeof window.IntaSend !== 'function') {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        const cart  = getNormalizedCart();
-        const total = cart.reduce((s, i) => s + i.price * (i.qty || i.quantity || 1), 0);
-        simulateSandboxPayment(currentTxRef, cart, total);
-        return false;
+    // If IntaSend SDK is live, let it handle the button click natively
+    if (intasendInstance) {
+        // SDK is initialized — let the event bubble through to IntaSend's handler
+        return true;
     }
 
-    return true;
+    // IntaSend SDK not yet loaded or unavailable → run fallback
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    if (typeof window.IntaSend === 'function') {
+        // SDK loaded but our instance wasn't initialized yet — init now and trigger
+        initIntaSendSDK();
+        const cart  = getNormalizedCart();
+        const total = Math.max(cart.reduce((s, i) => s + i.price * (i.qty || i.quantity || 1), 0), 10);
+        if (intasendInstance) {
+            intasendInstance.run({
+                method: selectedPaymentMethod || 'M-PESA',
+                phone_number: cleanPhone,
+                amount: total.toFixed(2),
+                currency: 'KES',
+                email: email || 'checkout@bytetech.co.ke',
+                first_name: name.split(' ')[0],
+                last_name: name.split(' ').slice(1).join(' ') || name.split(' ')[0],
+                api_ref: currentTxRef
+            });
+        } else {
+            simulateSandboxPayment(currentTxRef, getNormalizedCart(), total);
+        }
+    } else {
+        // SDK fully unavailable — use sandbox simulation
+        const cart  = getNormalizedCart();
+        const total = Math.max(cart.reduce((s, i) => s + i.price * (i.qty || i.quantity || 1), 0), 10);
+        simulateSandboxPayment(currentTxRef, cart, total);
+    }
+
+    return false;
 }
 
 // ── Sandbox Demo Payment Simulation (Offline Fallback) ──────────
