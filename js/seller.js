@@ -360,18 +360,7 @@ async function loadSellerDashboard() {
         return;
     }
 
-    // Check account active/suspended status from registry
-    try {
-        const sellers = JSON.parse(localStorage.getItem('tn_sellers') || '[]');
-        const current = sellers.find(s => (s.id && s.id === seller.id) || (s.email && seller.email && s.email.toLowerCase() === seller.email.toLowerCase()));
-        if (current && current.is_active === false) {
-            SellerSession.clear();
-            showToast('Your partner account has been suspended by administrator.', 'error');
-            showSellerLoginGate();
-            return;
-        }
-    } catch (_) {}
-
+    // Immediately switch DOM to dashboard view!
     const loginGate = document.getElementById('seller-login-gate');
     const dashContent = document.getElementById('seller-dashboard-content');
     const authControls = document.getElementById('seller-auth-controls');
@@ -379,6 +368,16 @@ async function loadSellerDashboard() {
     if (loginGate) loginGate.classList.add('hidden');
     if (dashContent) dashContent.classList.remove('hidden');
     if (authControls) authControls.classList.remove('hidden');
+
+    // Heal local storage entry to active
+    try {
+        const sellers = JSON.parse(localStorage.getItem('tn_sellers') || '[]');
+        const current = sellers.find(s => (s.id && s.id === seller.id) || (s.email && seller.email && s.email.toLowerCase() === seller.email.toLowerCase()));
+        if (current) {
+            current.is_active = true;
+            localStorage.setItem('tn_sellers', JSON.stringify(sellers));
+        }
+    } catch (_) {}
 
     const token = SellerSession.getToken();
 
@@ -397,6 +396,12 @@ async function loadSellerDashboard() {
         });
         if (res.ok) {
             dashboardData = await res.json();
+        } else if (res.status === 403) {
+            // Only server-enforced suspension kicks the user out
+            SellerSession.clear();
+            showToast('Your partner account has been suspended by administrator.', 'error');
+            showSellerLoginGate();
+            return;
         }
     } catch (err) {
         console.warn('API /api/sellers/dashboard offline, calculating live stats...', err);
@@ -404,26 +409,36 @@ async function loadSellerDashboard() {
 
     // Local Storage Live Orders Calculation
     if (!dashboardData || !dashboardData.totals) {
-        dashboardData = getLocalSellerDashboardData(seller);
+        try {
+            dashboardData = getLocalSellerDashboardData(seller);
+        } catch (e) {
+            dashboardData = { totals: { total_orders: 0, gross_sales: 0, total_commission_paid: 0, net_earnings: 0 }, orders: [], products: [], monthly: [] };
+        }
     }
 
     // Render Stats
-    const t = dashboardData.totals || {};
-    setText('dash-total-orders', t.total_orders || 0);
-    setText('dash-gross-sales', formatKSh(t.gross_sales || 0));
-    setText('dash-commission-paid', formatKSh(t.total_commission_paid || 0));
-    setText('dash-net-earnings', formatKSh(t.net_earnings || 0));
+    try {
+        const t = dashboardData.totals || {};
+        setText('dash-total-orders', t.total_orders || 0);
+        setText('dash-gross-sales', formatKSh(t.gross_sales || 0));
+        setText('dash-commission-paid', formatKSh(t.total_commission_paid || 0));
+        setText('dash-net-earnings', formatKSh(t.net_earnings || 0));
+    } catch (err) {
+        console.warn('Error rendering stats:', err);
+    }
 
     // Render Tables
-    renderSellerOrdersTable(dashboardData.orders || []);
-    renderSellerProductsTable(dashboardData.products || [], seller);
+    try { renderSellerOrdersTable(dashboardData.orders || []); } catch (e) { console.warn(e); }
+    try { renderSellerProductsTable(dashboardData.products || [], seller); } catch (e) { console.warn(e); }
 
     // Render Chart
-    renderSellerChart(dashboardData.monthly || []);
+    try { renderSellerChart(dashboardData.monthly || []); } catch (e) { console.warn(e); }
 
     // Init Product Listing Form
-    initAddProductForm(token, seller);
-    initEditProductForm(token, seller);
+    try {
+        initAddProductForm(token, seller);
+        initEditProductForm(token, seller);
+    } catch (e) { console.warn(e); }
 
     // Wire statement download
     const statementBtn = document.getElementById('download-statement-btn');
