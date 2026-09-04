@@ -27,7 +27,7 @@
             <nav class="nav-links">
                 <a href="index.html">Home</a>
                 <a href="catalog.html">Catalog</a>
-                <a class="active" href="product.html">Flagship</a>
+                <a class="active" href="product.html?id=pro-x1-carbon">Flagship</a>
                 <a href="catalog.html?category=Laptops">Laptops</a>
                 <a href="catalog.html?category=Audio">Audio</a>
                 <a href="catalog.html?category=Gaming">Gaming</a>
@@ -62,7 +62,7 @@
             </div>
             <a href="index.html">Home</a>
             <a href="catalog.html">Product Catalog</a>
-            <a href="product.html" style="color: var(--primary-blue); font-weight: 800;">Pro-X1 Flagship</a>
+            <a href="product.html?id=pro-x1-carbon" style="color: var(--primary-blue); font-weight: 800;">Pro-X1 Flagship</a>
             <a href="catalog.html?category=Laptops">Laptops</a>
             <a href="catalog.html?category=Audio">Audio</a>
             <a href="catalog.html?category=Gaming">Gaming</a>
@@ -235,8 +235,11 @@
                     <ul class="footer-links">
                         <li><a href="index.html">Home</a></li>
                         <li><a href="catalog.html">Product Catalog</a></li>
-                        <li><a href="product.html">Flagship Laptop</a></li>
+                        <li><a href="product.html?id=pro-x1-carbon">Flagship Laptop</a></li>
                         <li><a href="cart.html">Shopping Cart</a></li>
+                        <li><a href="seller-dashboard.html">Seller Portal</a></li>
+                        <li><a href="seller-register.html">Become a Partner</a></li>
+                        <li><a href="admin.html">Admin Control Center</a></li>
                     </ul>
                 </div>
                 <div class="footer-col">
@@ -297,6 +300,15 @@
             let selectedRam = '32GB';
             let selectedSsd = '1TB';
 
+            const isLaptop = currentProduct.category === 'Laptops';
+            if (!isLaptop) {
+                document.querySelectorAll('.config-group').forEach(el => el.style.display = 'none');
+                selectedRam = '';
+                selectedSsd = '';
+            } else {
+                document.querySelectorAll('.config-group').forEach(el => el.style.display = 'block');
+            }
+
             const priceEl = document.getElementById('product-price');
 
             function updatePriceDisplay() {
@@ -342,7 +354,10 @@
                     name: `${currentProduct.name}`,
                     price: basePrice + ramExtra + ssdExtra,
                     image: currentProduct.image,
-                    specs: `${selectedRam} RAM • ${selectedSsd} SSD`
+                    specs: `${selectedRam} RAM • ${selectedSsd} SSD`,
+                    seller: currentProduct.seller || 'Byte Tech Ltd Official',
+                    sellerId: currentProduct.sellerId || null,
+                    commissionRate: currentProduct.commissionRate || 0.10
                 };
                 CartManager.addItem(configuredProduct, 1);
             });
@@ -353,7 +368,10 @@
                     name: `${currentProduct.name}`,
                     price: basePrice + ramExtra + ssdExtra,
                     image: currentProduct.image,
-                    specs: `${selectedRam} RAM • ${selectedSsd} SSD`
+                    specs: `${selectedRam} RAM • ${selectedSsd} SSD`,
+                    seller: currentProduct.seller || 'Byte Tech Ltd Official',
+                    sellerId: currentProduct.sellerId || null,
+                    commissionRate: currentProduct.commissionRate || 0.10
                 };
                 CartManager.addItem(configuredProduct, 1);
                 window.location.href = 'cart.html';

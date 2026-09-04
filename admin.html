@@ -414,7 +414,7 @@
 
     <!-- TOP NAV -->
     <nav class="admin-nav">
-        <a class="admin-nav-brand" href="/index.html">
+        <a class="admin-nav-brand" href="index.html">
             <span class="material-symbols-outlined bolt-icon">bolt</span>
             <span>Byte Tech</span>
             <span class="admin-badge">ADMIN</span>
@@ -494,11 +494,11 @@
                 </button>
 
                 <div class="sidebar-section-label" style="margin-top:20px">Shortcuts</div>
-                <a class="sidebar-nav-item" href="/seller-dashboard.html">
+                <a class="sidebar-nav-item" href="seller-dashboard.html">
                     <span class="material-symbols-outlined">manage_accounts</span>
                     Seller Portal
                 </a>
-                <a class="sidebar-nav-item" href="/index.html">
+                <a class="sidebar-nav-item" href="index.html">
                     <span class="material-symbols-outlined">store</span>
                     Public Catalog
                 </a>
@@ -963,18 +963,66 @@
             const rateVal = Number(s.commission_rate || s.rate || 0.10);
             const feeVal = s.platform_fee_earned != null ? Number(s.platform_fee_earned) : (gmvVal * rateVal);
             const payoutVal = s.payout_due != null ? Number(s.payout_due) : (gmvVal - feeVal);
+            const isActive = s.is_active !== false;
 
             return `<tr>
-                <td><strong>${s.store_name || '—'}</strong></td>
+                <td><strong>${s.store_name || '—'}</strong><br><small style="color:var(--muted);font-size:0.75rem">${s.full_name || ''}</small></td>
                 <td style="color:var(--muted);font-size:0.82rem">${s.email || '—'}</td>
-                <td><span class="badge badge-blue">${s.category || 'Hardware'}</span></td>
+                <td><span class="badge ${isActive ? 'badge-blue' : 'badge-gray'}">${s.category || 'Hardware'}</span></td>
                 <td><strong>${ordersCount}</strong></td>
                 <td>${fmtKES(gmvVal)}</td>
                 <td style="color:var(--blue);font-weight:700">${fmtKES(feeVal)}</td>
                 <td style="color:var(--green);font-weight:700">${fmtKES(payoutVal)}</td>
-                <td><span class="badge badge-green">Active</span></td>
+                <td>
+                    <span class="badge ${isActive ? 'badge-green' : 'badge-red'}" style="display:inline-block;margin-bottom:4px;">${isActive ? 'Active' : 'Suspended'}</span><br>
+                    <button onclick="toggleSellerStatus('${(s.id || '').replace(/'/g,"\\'")}', '${(s.email || '').replace(/'/g,"\\'")}', ${!isActive})"
+                        style="font-size:0.72rem;padding:3px 10px;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:600;
+                               background:${isActive ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)'};
+                               color:${isActive ? 'var(--red)' : 'var(--green)'};
+                               border:1px solid ${isActive ? 'rgba(239,68,68,0.25)' : 'rgba(16,185,129,0.25)'};">
+                        ${isActive ? '🔒 Suspend' : '✅ Approve'}
+                    </button>
+                </td>
             </tr>`;
         }).join('');
+    }
+
+    async function toggleSellerStatus(sellerId, email, newStatus) {
+        // Try backend API update
+        try {
+            await fetch('/api/admin/seller-status', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-pin': ADMIN_PIN
+                },
+                body: JSON.stringify({ seller_id: sellerId, email: email, is_active: newStatus })
+            });
+        } catch (_) {}
+
+        // Update in localStorage
+        const sellers = JSON.parse(localStorage.getItem('tn_sellers') || '[]');
+        let updated = false;
+        sellers.forEach(s => {
+            if ((s.id && s.id === sellerId) || (s.email && email && s.email.toLowerCase() === email.toLowerCase())) {
+                s.is_active = newStatus;
+                updated = true;
+            }
+        });
+        if (updated) localStorage.setItem('tn_sellers', JSON.stringify(sellers));
+
+        // Show feedback
+        const msg = newStatus ? 'Partner account approved and activated!' : 'Partner account suspended.';
+        const type = newStatus ? 'success' : 'info';
+        const container = document.getElementById('toast-container') || document.body;
+        const t = document.createElement('div');
+        t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;background:${newStatus ? '#10b981' : '#64748b'};color:#fff;padding:12px 20px;border-radius:8px;font-weight:600;font-size:0.88rem;box-shadow:0 8px 24px rgba(0,0,0,0.2);`;
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+
+        // Reload admin data to refresh table
+        loadAdminData();
     }
 
     function renderOrders(orders) {

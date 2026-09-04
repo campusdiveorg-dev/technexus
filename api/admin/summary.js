@@ -33,7 +33,7 @@ module.exports = async (req, res) => {
         // Per-seller breakdown
         const sellers = await query(`
             SELECT
-                s.id, s.store_name, s.full_name, s.email, s.category, s.commission_rate,
+                s.id, s.store_name, s.full_name, s.email, s.category, s.commission_rate, s.is_active,
                 COUNT(DISTINCT oi.order_id)              AS orders_count,
                 COALESCE(SUM(oi.total_price), 0)        AS gmv,
                 COALESCE(SUM(oi.platform_fee), 0)       AS platform_fee_earned,

@@ -151,8 +151,57 @@ const PRODUCTS = [
     }
 ];
 
+// Load locally-stored seller products from localStorage into PRODUCTS
+function loadLocalSellerProducts() {
+    try {
+        const localProds = JSON.parse(localStorage.getItem('tn_custom_products') || '[]');
+        const sellers = JSON.parse(localStorage.getItem('tn_sellers') || '[]');
+
+        localProds.forEach(lp => {
+            if (!lp.id || !lp.name || !lp.price || lp.is_active === false) return;
+
+            // Hide products from suspended sellers
+            const sellerObj = sellers.find(s => 
+                (s.id && (s.id === lp.seller_id || s.id === lp.sellerId)) || 
+                (s.store_name && lp.seller && s.store_name.toLowerCase() === lp.seller.toLowerCase())
+            );
+            if (sellerObj && sellerObj.is_active === false) return;
+
+            const exists = PRODUCTS.find(p => p.id === lp.id);
+            const formatted = {
+                id: lp.id,
+                name: lp.name,
+                category: lp.category || 'Accessories',
+                price: parseFloat(lp.price) || 0,
+                rating: 5.0,
+                reviewsCount: 1,
+                tag: lp.tag || 'PARTNER',
+                description: lp.description || '',
+                image: lp.image_url || lp.image || 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=600&q=80',
+                specs: lp.specs || 'Standard Configuration',
+                href: `product.html?id=${lp.id}`,
+                seller: lp.seller || lp.seller_name || 'Byte Tech Partner',
+                sellerId: lp.seller_id || lp.sellerId || null,
+                commissionRate: parseFloat(lp.commission_rate) || 0.10,
+                is_active: true
+            };
+            if (!exists) {
+                PRODUCTS.unshift(formatted);
+            } else {
+                Object.assign(exists, formatted);
+            }
+        });
+    } catch (e) {
+        console.log('[Products] No local seller products');
+    }
+}
+
 // Asynchronously load seller-created products from the live database
 async function loadDynamicProducts() {
+    // First: merge any locally stored seller products immediately
+    loadLocalSellerProducts();
+
+    // Then: try live API for DB-backed products
     try {
         const res = await fetch('/api/products');
         if (res.ok) {
@@ -187,10 +236,14 @@ async function loadDynamicProducts() {
     } catch (e) {
         console.log('[Products] Static catalog active');
     }
+
+    // Notify catalog page to re-render if it is listening
+    window.dispatchEvent(new CustomEvent('products-updated'));
 }
 
 // Trigger dynamic product sync
 loadDynamicProducts();
+window.loadLocalSellerProducts = loadLocalSellerProducts;
 
 // Cart State Helpers
 const CartManager = {

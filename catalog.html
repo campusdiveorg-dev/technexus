@@ -27,7 +27,7 @@
             <nav class="nav-links">
                 <a href="index.html">Home</a>
                 <a class="active" href="catalog.html">Catalog</a>
-                <a href="product.html">Flagship</a>
+                <a href="product.html?id=pro-x1-carbon">Flagship</a>
                 <a href="catalog.html?category=Laptops">Laptops</a>
                 <a href="catalog.html?category=Audio">Audio</a>
                 <a href="catalog.html?category=Gaming">Gaming</a>
@@ -62,7 +62,7 @@
             </div>
             <a href="index.html">Home</a>
             <a href="catalog.html" style="color: var(--primary-blue); font-weight: 800;">Product Catalog</a>
-            <a href="product.html">Pro-X1 Flagship</a>
+            <a href="product.html?id=pro-x1-carbon">Pro-X1 Flagship</a>
             <a href="catalog.html?category=Laptops">Laptops</a>
             <a href="catalog.html?category=Audio">Audio</a>
             <a href="catalog.html?category=Gaming">Gaming</a>
@@ -207,8 +207,11 @@
                     <ul class="footer-links">
                         <li><a href="index.html">Home</a></li>
                         <li><a href="catalog.html">Product Catalog</a></li>
-                        <li><a href="product.html">Flagship Laptop</a></li>
+                        <li><a href="product.html?id=pro-x1-carbon">Flagship Laptop</a></li>
                         <li><a href="cart.html">Shopping Cart</a></li>
+                        <li><a href="seller-dashboard.html">Seller Portal</a></li>
+                        <li><a href="seller-register.html">Become a Partner</a></li>
+                        <li><a href="admin.html">Admin Control Center</a></li>
                     </ul>
                 </div>
                 <div class="footer-col">
@@ -363,13 +366,18 @@
             if (resetBtn) {
                 resetBtn.addEventListener('click', () => {
                     categoryBoxes.forEach(b => b.checked = (b.value === 'All'));
-                    priceRange.value = 3000;
+                    priceRange.value = priceRange.max || 350000;
                     ratingRadios.forEach(r => r.checked = (r.value === '0'));
                     if (searchInput) searchInput.value = '';
                     sortSelect.value = 'featured';
                     renderCatalog();
                 });
             }
+
+            // Re-render catalog when seller products are asynchronously loaded
+            window.addEventListener('products-updated', () => {
+                renderCatalog();
+            });
 
             renderCatalog();
         });

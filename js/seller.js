@@ -284,6 +284,14 @@ async function performSellerLogin() {
             const data = await res.json();
             SellerSession.save(data.token, data.seller);
             loggedIn = true;
+        } else if (res.status === 403) {
+            const data = await res.json().catch(() => ({}));
+            showToast(data.error || 'Your partner account has been suspended by the administrator.', 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">lock_open</span> <span>Unlock Partner Dashboard</span>';
+            }
+            return;
         }
     } catch (err) {
         console.warn('API /api/sellers/login unreachable, verifying against local repository...', err);
@@ -298,6 +306,14 @@ async function performSellerLogin() {
         );
 
         if (found) {
+            if (found.is_active === false) {
+                showToast('Your account has been suspended. Please contact the platform administrator.', 'error');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">lock_open</span> <span>Unlock Partner Dashboard</span>';
+                }
+                return;
+            }
             SellerSession.save(`token-${found.id}`, found);
             loggedIn = true;
         }
@@ -329,6 +345,18 @@ async function loadSellerDashboard() {
         showSellerLoginGate();
         return;
     }
+
+    // Check account active/suspended status from registry
+    try {
+        const sellers = JSON.parse(localStorage.getItem('tn_sellers') || '[]');
+        const current = sellers.find(s => (s.id && s.id === seller.id) || (s.email && seller.email && s.email.toLowerCase() === seller.email.toLowerCase()));
+        if (current && current.is_active === false) {
+            SellerSession.clear();
+            showToast('Your partner account has been suspended by administrator.', 'error');
+            showSellerLoginGate();
+            return;
+        }
+    } catch (_) {}
 
     const loginGate = document.getElementById('seller-login-gate');
     const dashContent = document.getElementById('seller-dashboard-content');
@@ -838,6 +866,10 @@ function initAddProductForm(token, seller) {
         const customProducts = JSON.parse(localStorage.getItem('tn_custom_products') || '[]');
         customProducts.unshift(body);
         localStorage.setItem('tn_custom_products', JSON.stringify(customProducts));
+        if (typeof window.loadLocalSellerProducts === 'function') {
+            window.loadLocalSellerProducts();
+        }
+        window.dispatchEvent(new CustomEvent('products-updated'));
 
         showToast(`"${name}" published to Byte Tech Ltd catalog!`, 'success');
         form.reset();
@@ -1037,37 +1069,72 @@ function getLocalAdminDashboardData() {
     let rev = 0;
     orders.forEach(o => {
         (o.items || []).forEach(i => {
-            gmv += (i.totalPrice || i.price * (i.quantity || 1));
+            const itemTotal = i.totalPrice || (i.price * (i.quantity || i.qty || 1));
+            gmv += itemTotal || 0;
             rev += (i.platformFee || 0);
         });
     });
+
+    // Build accurate per-seller stats from local orders
+    const sellerStats = {};
+    orders.forEach(o => {
+        (o.items || []).forEach(item => {
+            const sid = item.sellerId || item.seller;
+            if (!sid) return;
+            if (!sellerStats[sid]) {
+                sellerStats[sid] = { orders_count: 0, gmv: 0, platform_fee_earned: 0, payout_due: 0 };
+            }
+            const qty = item.quantity || item.qty || 1;
+            const itemTotal = item.totalPrice || (item.price * qty);
+            const fee = item.platformFee || 0;
+            sellerStats[sid].orders_count += 1;
+            sellerStats[sid].gmv += itemTotal || 0;
+            sellerStats[sid].platform_fee_earned += fee;
+            sellerStats[sid].payout_due += (itemTotal - fee) || 0;
+        });
+    });
+
+    const sellerList = sellers.map(s => ({
+        ...s,
+        orders_count: sellerStats[s.id]?.orders_count || sellerStats[s.store_name]?.orders_count || 0,
+        gmv: sellerStats[s.id]?.gmv || sellerStats[s.store_name]?.gmv || 0,
+        platform_fee_earned: sellerStats[s.id]?.platform_fee_earned || sellerStats[s.store_name]?.platform_fee_earned || 0,
+        payout_due: sellerStats[s.id]?.payout_due || sellerStats[s.store_name]?.payout_due || 0,
+        is_active: s.is_active !== false
+    }));
+
+    const rates = [
+        { category: 'Laptops', rate: 0.12, label: 'Laptops (12%)' },
+        { category: 'Audio', rate: 0.08, label: 'Audio & Acoustics (8%)' },
+        { category: 'Gaming', rate: 0.15, label: 'Gaming Rigs (15%)' },
+        { category: 'Phones', rate: 0.10, label: 'Smartphones (10%)' },
+        { category: 'Monitors', rate: 0.10, label: 'Displays (10%)' },
+        { category: 'Accessories', rate: 0.08, label: 'Accessories (8%)' }
+    ];
+
+    // Derive monthly data from local orders
+    const monthlyMap = {};
+    orders.forEach(o => {
+        const key = (o.created_at || new Date().toISOString()).slice(0, 7);
+        if (!monthlyMap[key]) monthlyMap[key] = { month: key, gmv: 0, platform_revenue: 0 };
+        (o.items || []).forEach(i => {
+            const itemTotal = i.totalPrice || (i.price * (i.quantity || i.qty || 1));
+            monthlyMap[key].gmv += itemTotal || 0;
+            monthlyMap[key].platform_revenue += (i.platformFee || 0);
+        });
+    });
+    const monthly = Object.values(monthlyMap).sort((a, b) => a.month.localeCompare(b.month));
 
     return {
         financials: {
             gmv,
             platform_revenue: rev,
             seller_payout_due: gmv - rev,
-            active_sellers: Math.max(sellers.length, 3)
+            active_sellers: sellers.filter(s => s.is_active !== false).length
         },
-        sellers: sellers.map(s => ({
-            ...s,
-            orders_count: 5,
-            gmv: 450000,
-            platform_fee_earned: 54000,
-            payout_due: 396000
-        })),
-        rates: [
-            { category: 'Laptops', rate: 0.12, label: 'Laptops (12%)' },
-            { category: 'Audio', rate: 0.08, label: 'Audio & Acoustics (8%)' },
-            { category: 'Gaming', rate: 0.15, label: 'Gaming Rigs (15%)' },
-            { category: 'Phones', rate: 0.10, label: 'Smartphones (10%)' },
-            { category: 'Monitors', rate: 0.10, label: 'Displays (10%)' },
-            { category: 'Accessories', rate: 0.08, label: 'Accessories (8%)' }
-        ],
-        monthly: [
-            { month: '2026-08', gmv: 850000, platform_revenue: 102000 },
-            { month: '2026-09', gmv: 1200000, platform_revenue: 144000 }
-        ],
+        sellers: sellerList,
+        rates,
+        monthly,
         allOrders: orders
     };
 }
@@ -1077,21 +1144,64 @@ function renderAdminSellersTable(sellers) {
     if (!tbody) return;
 
     if (!sellers.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--seller-muted);">No sellers registered yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 24px; color: var(--seller-muted);">No sellers registered yet. New partner registrations will appear here.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = sellers.map(s => `
+    tbody.innerHTML = sellers.map(s => {
+        const isActive = s.is_active !== false;
+        return `
         <tr>
-            <td><strong>${s.store_name}</strong></td>
-            <td>${s.email}</td>
-            <td><span class="badge-chip blue">${s.category || 'General'}</span></td>
+            <td><strong>${s.store_name || '—'}</strong><br><small style="color:var(--seller-muted);font-size:0.75rem">${s.full_name || ''}</small></td>
+            <td style="font-size:0.82rem">${s.email || '—'}</td>
+            <td><span class="badge-chip ${isActive ? 'blue' : 'red'}">${s.category || 'General'}</span></td>
             <td>${s.orders_count || 0}</td>
             <td><strong>${formatKSh(s.gmv || 0)}</strong></td>
             <td><span class="badge-chip red">+${formatKSh(s.platform_fee_earned || 0)}</span></td>
-            <td><span class="badge-chip green">${formatKSh(s.payout_due || 0)}</span></td>
-        </tr>
-    `).join('');
+            <td><span class="badge-chip ${isActive ? 'green' : 'red'}">${formatKSh(s.payout_due || 0)}</span></td>
+            <td>
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;">
+                    <span class="badge-chip ${isActive ? 'green' : 'red'}">${isActive ? 'Active' : 'Suspended'}</span>
+                    <button class="btn-primary" style="padding:3px 10px;font-size:0.72rem;background:${isActive ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'};color:${isActive ? '#ef4444' : '#10b981'};border:1px solid ${isActive ? '#ef4444' : '#10b981'};"
+                        onclick="toggleAdminSellerStatus('${(s.id || '').replace(/'/g,"\\'")}', '${(s.email || '').replace(/'/g,"\\'")}', ${!isActive})">
+                        ${isActive ? '🔒 Suspend' : '✅ Approve'}
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+async function toggleAdminSellerStatus(sellerId, email, newStatus) {
+    const session = AdminSession.get();
+    const pin = session?.pin || 'TN2026';
+
+    try {
+        await fetch('/api/admin/seller-status', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-admin-pin': pin
+            },
+            body: JSON.stringify({ seller_id: sellerId, email: email, is_active: newStatus })
+        });
+    } catch (_) {}
+
+    const sellers = JSON.parse(localStorage.getItem('tn_sellers') || '[]');
+    let updated = false;
+    sellers.forEach(s => {
+        if ((s.id && s.id === sellerId) || (s.email && email && s.email.toLowerCase() === email.toLowerCase())) {
+            s.is_active = newStatus;
+            updated = true;
+        }
+    });
+    if (updated) {
+        localStorage.setItem('tn_sellers', JSON.stringify(sellers));
+        showToast(newStatus ? 'Partner account approved and unlocked!' : 'Partner account suspended.', 'success');
+        if (session && session.pin) {
+            loadAdminDashboard(session.pin);
+        }
+    }
 }
 
 function renderAdminRatesTable(rates, pin) {

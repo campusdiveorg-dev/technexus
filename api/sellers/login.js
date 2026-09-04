@@ -22,11 +22,15 @@ module.exports = async (req, res) => {
 
     try {
         const seller = await queryOne(
-            'SELECT * FROM sellers WHERE LOWER(email) = LOWER(?) AND is_active = TRUE', [cleanEmail]
+            'SELECT * FROM sellers WHERE LOWER(email) = LOWER(?)', [cleanEmail]
         );
 
         if (!seller) {
             return res.status(401).json({ error: 'Invalid email or password' });
+        }
+
+        if (seller.is_active === false || seller.is_active === 0) {
+            return res.status(403).json({ error: 'Your partner account has been suspended by the administrator.' });
         }
 
         const valid = await bcrypt.compare(cleanPassword, seller.password_hash);

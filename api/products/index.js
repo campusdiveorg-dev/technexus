@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
                 s.store_name AS seller_name, s.id AS seller_id
             FROM products p
             LEFT JOIN sellers s ON p.seller_id = s.id
-            WHERE p.is_active = TRUE
+            WHERE p.is_active = TRUE AND (s.is_active IS NULL OR s.is_active = TRUE)
             ORDER BY p.created_at DESC
         `);
         res.status(200).json({ products });
