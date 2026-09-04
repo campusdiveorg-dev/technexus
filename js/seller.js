@@ -38,7 +38,7 @@ const AdminSession = {
 };
 
 // ── Auto Initialization on Load ────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+function autoInitSeller() {
     if (document.getElementById('seller-register-form')) {
         initSellerRegister();
     }
@@ -48,7 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('admin-pin-gate') || document.getElementById('admin-dashboard-content')) {
         initAdminPanel();
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoInitSeller);
+} else {
+    autoInitSeller();
+}
 
 // ══════════════════════════════════════════════════════════════
 // 1. SELLER REGISTRATION
@@ -230,12 +236,20 @@ function showSellerLoginGate() {
     if (authControls) authControls.classList.add('hidden');
 
     const form = document.getElementById('seller-login-form');
-    if (form && !form.dataset.bound) {
-        form.dataset.bound = 'true';
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+    const btn = document.getElementById('login-submit-btn');
+
+    if (form) {
+        form.onsubmit = (e) => {
+            if (e) e.preventDefault();
             performSellerLogin();
-        });
+            return false;
+        };
+    }
+    if (btn) {
+        btn.onclick = (e) => {
+            if (e) e.preventDefault();
+            performSellerLogin();
+        };
     }
 }
 

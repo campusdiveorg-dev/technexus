@@ -561,7 +561,7 @@
                 <h1 class="merchant-login-title">Partner Login</h1>
                 <p class="merchant-login-sub">Access your store sales, live order stream, and catalog distribution.</p>
 
-                <form id="seller-login-form" novalidate onsubmit="return false;">
+                <form id="seller-login-form" novalidate>
                     <div class="input-group">
                         <label class="input-label" for="login-email">Partner Email Address</label>
                         <input id="login-email" class="input-control" type="email" placeholder="partner@yourstore.co.ke" required autocomplete="email"/>
@@ -625,7 +625,7 @@
                     </ul>
 
                     <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--seller-border); text-align: center;">
-                        <a href="catalog.html" target="_blank" style="font-size: 0.78rem; color: var(--seller-primary); font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                        <a href="/catalog.html" target="_blank" style="font-size: 0.78rem; color: var(--seller-primary); font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 4px;">
                             <span>View Public Catalog</span>
                             <span class="material-symbols-outlined" style="font-size: 14px;">open_in_new</span>
                         </a>
@@ -897,6 +897,8 @@
     <script src="js/seller.js"></script>
 
     <script>
+        initSellerDashboard();
+
         function switchDashTab(tabName) {
             document.querySelectorAll('.dash-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.dash-nav-link').forEach(a => a.classList.remove('active'));
