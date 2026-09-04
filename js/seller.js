@@ -226,6 +226,23 @@ function initSellerDashboard() {
     loadSellerDashboard();
 }
 
+function showLoginError(msg) {
+    const alertBox = document.getElementById('login-error-alert');
+    const alertText = document.getElementById('login-error-text');
+    if (alertBox && alertText) {
+        alertText.textContent = msg;
+        alertBox.style.display = 'flex';
+    }
+    showToast(msg, 'error');
+}
+
+function hideLoginError() {
+    const alertBox = document.getElementById('login-error-alert');
+    if (alertBox) {
+        alertBox.style.display = 'none';
+    }
+}
+
 function showSellerLoginGate() {
     const loginGate = document.getElementById('seller-login-gate');
     const dashContent = document.getElementById('seller-dashboard-content');
@@ -236,7 +253,11 @@ function showSellerLoginGate() {
     if (authControls) authControls.classList.add('hidden');
 
     const form = document.getElementById('seller-login-form');
-    const btn = document.getElementById('login-submit-btn');
+    const emailInput = document.getElementById('login-email');
+    const passwordInput = document.getElementById('login-password');
+
+    if (emailInput) emailInput.oninput = hideLoginError;
+    if (passwordInput) passwordInput.oninput = hideLoginError;
 
     if (form) {
         form.onsubmit = (e) => {
@@ -245,15 +266,10 @@ function showSellerLoginGate() {
             return false;
         };
     }
-    if (btn) {
-        btn.onclick = (e) => {
-            if (e) e.preventDefault();
-            performSellerLogin();
-        };
-    }
 }
 
 async function performSellerLogin() {
+    hideLoginError();
     const emailInput = document.getElementById('login-email');
     const passwordInput = document.getElementById('login-password');
     const btn = document.getElementById('login-submit-btn');
@@ -262,7 +278,7 @@ async function performSellerLogin() {
     const password = passwordInput?.value || '';
 
     if (!email || !password) {
-        showToast('Please enter your partner email and password.', 'error');
+        showLoginError('Please enter your partner email and password.');
         return;
     }
 
@@ -272,6 +288,7 @@ async function performSellerLogin() {
     }
 
     let loggedIn = false;
+    let serverErrorMessage = '';
 
     // 1. Try Backend API
     try {
@@ -280,25 +297,24 @@ async function performSellerLogin() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
+        const data = await res.json().catch(() => ({}));
+
         if (res.ok) {
-            const data = await res.json();
             SellerSession.save(data.token, data.seller);
             loggedIn = true;
         } else if (res.status === 403) {
-            const data = await res.json().catch(() => ({}));
-            showToast(data.error || 'Your partner account has been suspended by the administrator.', 'error');
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">lock_open</span> <span>Unlock Partner Dashboard</span>';
-            }
-            return;
+            serverErrorMessage = data.error || 'Your partner account has been suspended by the administrator.';
+        } else if (res.status === 401) {
+            serverErrorMessage = data.error || 'Invalid partner email or password.';
+        } else {
+            serverErrorMessage = data.error || data.detail || 'Partner authentication failed. Please try again.';
         }
     } catch (err) {
         console.warn('API /api/sellers/login unreachable, verifying against local repository...', err);
     }
 
-    // 2. Check Local Registry Fallback
-    if (!loggedIn) {
+    // 2. Check Local Registry Fallback if backend didn't log in
+    if (!loggedIn && !serverErrorMessage.includes('suspended')) {
         const sellers = JSON.parse(localStorage.getItem('tn_sellers') || '[]');
         const found = sellers.find(s => 
             s.email && s.email.toLowerCase() === email.toLowerCase() && 
@@ -307,20 +323,17 @@ async function performSellerLogin() {
 
         if (found) {
             if (found.is_active === false) {
-                showToast('Your account has been suspended. Please contact the platform administrator.', 'error');
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">lock_open</span> <span>Unlock Partner Dashboard</span>';
-                }
-                return;
+                serverErrorMessage = 'Your account has been suspended. Please contact the platform administrator.';
+            } else {
+                SellerSession.save(found.token || `token-${found.id}`, found);
+                loggedIn = true;
+                serverErrorMessage = '';
             }
-            SellerSession.save(`token-${found.id}`, found);
-            loggedIn = true;
         }
     }
 
-    // 3. Direct account fallback if created recently
-    if (!loggedIn) {
+    // 3. Direct account fallback if created in this session
+    if (!loggedIn && !serverErrorMessage) {
         const existingProfile = SellerSession.getProfile();
         if (existingProfile && existingProfile.email?.toLowerCase() === email.toLowerCase()) {
             loggedIn = true;
@@ -329,9 +342,10 @@ async function performSellerLogin() {
 
     if (loggedIn) {
         showToast('Login successful! Welcome back.', 'success');
+        hideLoginError();
         loadSellerDashboard();
     } else {
-        showToast('Invalid partner email or password. Please verify credentials.', 'error');
+        showLoginError(serverErrorMessage || 'Invalid partner email or password. Please verify credentials.');
         if (btn) {
             btn.disabled = false;
             btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">lock_open</span> <span>Unlock Partner Dashboard</span>';

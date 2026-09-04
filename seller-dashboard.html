@@ -664,6 +664,11 @@
                         <input id="login-password" class="input-control" type="password" placeholder="••••••••" required autocomplete="current-password"/>
                     </div>
 
+                    <div id="login-error-alert" style="display: none; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 12px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 18px; align-items: center; gap: 8px;">
+                        <span class="material-symbols-outlined" style="font-size: 18px; color: #ef4444; flex-shrink: 0;">error</span>
+                        <span id="login-error-text" style="font-weight: 500; line-height: 1.4;"></span>
+                    </div>
+
                     <button type="submit" id="login-submit-btn" class="btn-seller-submit">
                         <span class="material-symbols-outlined" style="font-size: 18px;">lock_open</span>
                         <span>Unlock Partner Dashboard</span>
