@@ -94,7 +94,7 @@ module.exports = async (req, res) => {
             if (catRate) commissionRate = catRate.rate;
         }
 
-        const productId = `prd-${seller.sub.slice(-6)}-${Date.now()}`;
+        const productId = (req.body && req.body.id) ? req.body.id : `prd-${seller.sub.slice(-6)}-${Date.now()}`;
 
         await query(`
             INSERT INTO products (id, seller_id, name, category, price, commission_rate, description, image_url, specs, tag, stock)

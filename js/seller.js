@@ -867,7 +867,7 @@ function initAddProductForm(token, seller) {
 
         // 1. Try Backend API
         try {
-            await fetch('/api/sellers/products', {
+            const res = await fetch('/api/sellers/products', {
                 method:  'POST',
                 headers: {
                     'Content-Type':  'application/json',
@@ -875,13 +875,26 @@ function initAddProductForm(token, seller) {
                 },
                 body: JSON.stringify(body)
             });
+            if (res.ok) {
+                const data = await res.json();
+                if (data?.product?.id) {
+                    body.id = data.product.id;
+                }
+            } else {
+                console.warn('API /api/sellers/products responded with status:', res.status);
+            }
         } catch (e) {
             console.warn('API /api/sellers/products offline, storing in local repository...', e);
         }
 
-        // 2. Persist locally to custom products repository
+        // 2. Persist locally to custom products repository (deduplicating by ID)
         const customProducts = JSON.parse(localStorage.getItem('tn_custom_products') || '[]');
-        customProducts.unshift(body);
+        const existingIdx = customProducts.findIndex(p => p.id === body.id);
+        if (existingIdx >= 0) {
+            customProducts[existingIdx] = body;
+        } else {
+            customProducts.unshift(body);
+        }
         localStorage.setItem('tn_custom_products', JSON.stringify(customProducts));
         if (typeof window.loadLocalSellerProducts === 'function') {
             window.loadLocalSellerProducts();
