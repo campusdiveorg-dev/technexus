@@ -105,40 +105,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── Initialize IntaSend SDK ────────────────────────────────────
 function initIntaSendSDK() {
-    if (typeof window.IntaSend === 'function') {
-        try {
-            intasendInstance = new window.IntaSend({
-                publicAPIKey: INTASEND_PUBLIC_KEY,
-                live: INTASEND_IS_LIVE
+    if (typeof window.IntaSend !== 'function') return;
+    try {
+        intasendInstance = new window.IntaSend({
+            publicAPIKey: INTASEND_PUBLIC_KEY,
+            live: INTASEND_IS_LIVE
+        });
+
+        intasendInstance
+            .on("COMPLETE", async (results) => {
+                console.log("[IntaSend] Payment Successful:", results);
+                const cart = getNormalizedCart();
+                const invoiceId = results.invoice_id || results.tracking_id || `IS-${Date.now()}`;
+                const txRef = results.api_ref || currentTxRef || `TN-${Date.now()}`;
+                await processOrderCreation(invoiceId, txRef, cart, results);
+            })
+            .on("FAILED", (results) => {
+                console.error("[IntaSend] Payment Failed:", results);
+                const msg = results?.message || 'Payment was not completed. Please try again or switch method.';
+                showToast(msg, 'error');
+            })
+            .on("IN-PROGRESS", () => {
+                console.log("[IntaSend] STK Push sent — awaiting customer PIN.");
             });
 
-            intasendInstance
-                .on("COMPLETE", async (results) => {
-                    console.log("[IntaSend] Payment Successful:", results);
-                    const cart = getNormalizedCart();
-                    const invoiceId = results.invoice_id || results.tracking_id || `IS-${Date.now()}`;
-                    const txRef = results.api_ref || currentTxRef || `TN-${Date.now()}`;
-                    await processOrderCreation(invoiceId, txRef, cart, results);
-                })
-                .on("FAILED", (results) => {
-                    console.error("[IntaSend] Payment Failed:", results);
-                    const msg = results?.message || 'Payment was not completed. Please try again or switch method.';
-                    showToast(msg, 'error');
-                    resetPayButton();
-                })
-                .on("IN-PROGRESS", (results) => {
-                    console.log("[IntaSend] Payment In Progress:", results);
-                    const payBtn = document.getElementById('pay-btn');
-                    if (payBtn) {
-                        payBtn.disabled = true;
-                        payBtn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:1.15rem; vertical-align:middle;">sync</span> <span>Awaiting PIN prompt on phone…</span>';
-                    }
-                });
-
-            console.log('[Checkout] IntaSend SDK initialized in ' + (INTASEND_IS_LIVE ? 'LIVE' : 'SANDBOX') + ' mode.');
-        } catch (e) {
-            console.warn('[Checkout] IntaSend initialization warning:', e);
-        }
+        console.log('[Checkout] IntaSend SDK initialized in ' + (INTASEND_IS_LIVE ? 'LIVE' : 'SANDBOX') + ' mode.');
+    } catch (e) {
+        console.warn('[Checkout] IntaSend initialization warning:', e);
+        intasendInstance = null;
     }
 }
 
@@ -367,25 +361,29 @@ function handlePayButtonClick(e) {
     checkoutCustomer = { name, email, phone: cleanPhone, address };
     localStorage.setItem('tn_saved_customer', JSON.stringify({ name, email, phone: phoneRaw, address }));
 
-    // Prepare live attributes right before IntaSend reads them
-    updatePayButtonAttributes();
-
-    // If IntaSend SDK is live, let it handle the button click natively
-    if (intasendInstance) {
-        // SDK is initialized — let the event bubble through to IntaSend's handler
-        return true;
-    }
-
-    // IntaSend SDK not yet loaded or unavailable → run fallback
+    // Always prevent the default IntaSend class-based trigger — we drive it manually
+    // so we can close OUR modal first (avoiding z-index overlap)
     e.preventDefault();
     e.stopImmediatePropagation();
 
+    // Prepare final data attributes
+    updatePayButtonAttributes();
+
+    const cart  = getNormalizedCart();
+    const total = Math.max(cart.reduce((s, i) => s + i.price * (i.qty || i.quantity || 1), 0), 10);
+
+    // ── Close OUR modal FIRST so IntaSend popup renders on top ──
+    closeCheckoutModal();
+
+    // ── Trigger payment ─────────────────────────────────────────
     if (typeof window.IntaSend === 'function') {
-        // SDK loaded but our instance wasn't initialized yet — init now and trigger
-        initIntaSendSDK();
-        const cart  = getNormalizedCart();
-        const total = Math.max(cart.reduce((s, i) => s + i.price * (i.qty || i.quantity || 1), 0), 10);
-        if (intasendInstance) {
+        if (!intasendInstance) initIntaSendSDK();
+    }
+
+    if (intasendInstance) {
+        // Drive IntaSend directly — skips IntaSend's own method picker
+        // since the customer already chose their method in our UI
+        try {
             intasendInstance.run({
                 method: selectedPaymentMethod || 'M-PESA',
                 phone_number: cleanPhone,
@@ -396,13 +394,29 @@ function handlePayButtonClick(e) {
                 last_name: name.split(' ').slice(1).join(' ') || name.split(' ')[0],
                 api_ref: currentTxRef
             });
-        } else {
-            simulateSandboxPayment(currentTxRef, getNormalizedCart(), total);
+        } catch (runErr) {
+            console.warn('[Checkout] .run() not supported, falling back to button click.', runErr);
+            // Fallback: re-add class and click the button for the SDK to pick up
+            const payBtn = document.getElementById('pay-btn');
+            if (payBtn) {
+                payBtn.setAttribute('data-amount', total.toFixed(2));
+                payBtn.setAttribute('data-currency', 'KES');
+                payBtn.setAttribute('data-email', email || 'checkout@bytetech.co.ke');
+                payBtn.setAttribute('data-first_name', name.split(' ')[0]);
+                payBtn.setAttribute('data-last_name', name.split(' ').slice(1).join(' ') || name.split(' ')[0]);
+                payBtn.setAttribute('data-phone_number', cleanPhone);
+                payBtn.setAttribute('data-api_ref', currentTxRef);
+                if (selectedPaymentMethod) payBtn.setAttribute('data-method', selectedPaymentMethod);
+                // Small delay lets modal close animation finish before IntaSend pops
+                setTimeout(() => {
+                    payBtn.removeEventListener('click', handlePayButtonClick, true);
+                    payBtn.click();
+                    payBtn.addEventListener('click', handlePayButtonClick, true);
+                }, 180);
+            }
         }
     } else {
-        // SDK fully unavailable — use sandbox simulation
-        const cart  = getNormalizedCart();
-        const total = Math.max(cart.reduce((s, i) => s + i.price * (i.qty || i.quantity || 1), 0), 10);
+        // SDK unavailable — use sandbox simulation
         simulateSandboxPayment(currentTxRef, cart, total);
     }
 
