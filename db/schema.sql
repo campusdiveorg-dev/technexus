@@ -76,6 +76,9 @@ CREATE TABLE IF NOT EXISTS orders (
     flw_transaction_id  VARCHAR(100),
     flw_tx_ref          VARCHAR(100),
     status              VARCHAR(20)  DEFAULT 'pending', -- pending / paid / failed
+    kra_cu_number       VARCHAR(100),              -- KRA Control Unit Serial (e.g. KRA-VSCU-XXXX)
+    kra_invoice_number  VARCHAR(100),              -- Official KRA Invoice Number (e.g. KRA-ETIMS-YYYYMMDD-XXXX)
+    kra_qr_url          TEXT,                      -- KRA Verification Portal QR Code URL
     created_at          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
 

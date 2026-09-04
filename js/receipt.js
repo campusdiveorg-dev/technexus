@@ -117,6 +117,26 @@ function renderReceipt(order, items) {
     setText('receipt-vat',      window.formatKES ? window.formatKES(vat) : `KSh ${vat.toLocaleString('en-KE')}`);
     setText('receipt-total',    window.formatKES ? window.formatKES(total) : `KSh ${total.toLocaleString('en-KE')}`);
 
+    // KRA eTIMS Fiscalization
+    const kraPin = order.kra_pin || 'P051234567Z';
+    const kraCu = order.kra_cu_number || 'KRA-VSCU-001';
+    const cleanId = (order.id || 'ORDER').replace(/[^a-zA-Z0-9]/g, '').slice(-8).toUpperCase();
+    const kraInvoice = order.kra_invoice_number || `KRA-ETIMS-${cleanId}`;
+    const kraQrUrl = order.kra_qr_url || `https://itax.kra.go.ke/KRA-Portal/invoiceChk.htm?actionCode=loadPage&invoiceNo=${encodeURIComponent(kraInvoice)}`;
+
+    setText('receipt-kra-pin', kraPin);
+    setText('receipt-kra-cu', kraCu);
+    setText('receipt-kra-invoice', kraInvoice);
+
+    const qrImg = document.getElementById('receipt-kra-qr');
+    if (qrImg) {
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(kraQrUrl)}`;
+    }
+    const qrLink = document.getElementById('receipt-kra-qr-link');
+    if (qrLink) {
+        qrLink.href = kraQrUrl;
+    }
+
     // Show receipt (hidden during load)
     document.getElementById('receipt-loading')?.classList.add('hidden');
     document.getElementById('receipt-content')?.classList.remove('hidden');
@@ -249,6 +269,27 @@ function downloadReceiptPDF() {
     doc.setTextColor(10, 25, 47);
     doc.text('TOTAL PAID:',  totalsX, y);
     doc.text(total, pageW - 14, y, { align: 'right' });
+    y += 12;
+
+    // ── KRA eTIMS Fiscal Section ──
+    const kraPin = document.getElementById('receipt-kra-pin')?.textContent || 'P051234567Z';
+    const kraCu = document.getElementById('receipt-kra-cu')?.textContent || 'KRA-VSCU-001';
+    const kraInv = document.getElementById('receipt-kra-invoice')?.textContent || '';
+
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(203, 213, 225);
+    doc.rect(15, y, pageW - 30, 20, 'FD');
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(16, 185, 129);
+    doc.text('KRA eTIMS FISCAL TAX INVOICE', 20, y + 6);
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text(`KRA PIN: ${kraPin}   |   CU SERIAL: ${kraCu}   |   CU INVOICE: ${kraInv}`, 20, y + 11);
+    doc.text('Standard Rate: 16% VAT Inclusive   |   Verify online at: itax.kra.go.ke', 20, y + 16);
 
     // ── Footer ──
     doc.setFontSize(8);

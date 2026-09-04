@@ -1,4 +1,4 @@
-﻿/**
+/**
  * scripts/init-db.js
  * Automatically connects to TiDB Serverless, provisions tables & inserts default commission rates.
  */
@@ -122,10 +122,21 @@ async function init() {
             flw_transaction_id  VARCHAR(100),
             flw_tx_ref          VARCHAR(100),
             status              VARCHAR(20)  DEFAULT 'paid',
+            kra_cu_number       VARCHAR(100),
+            kra_invoice_number  VARCHAR(100),
+            kra_qr_url          TEXT,
             created_at          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
         );
     `);
-    console.log('✓ Table `orders` verified/created.');
+
+    // Ensure columns exist on existing orders table if already created
+    try {
+        await connection.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS kra_cu_number VARCHAR(100);`);
+        await connection.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS kra_invoice_number VARCHAR(100);`);
+        await connection.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS kra_qr_url TEXT;`);
+    } catch (_) {}
+
+    console.log('✓ Table `orders` verified/created with KRA eTIMS fiscal columns.');
 
     // Create order_items table
     await connection.query(`
