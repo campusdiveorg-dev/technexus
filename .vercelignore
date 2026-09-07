@@ -1,0 +1,18 @@
+# Legacy static HTML site directories (not needed by Vite build or serverless functions)
+js/
+css/
+db/
+docs/
+scripts/
+
+# Development and local tools
+.env
+.env.local
+.env.*.local
+
+# Source maps and build artifacts (Vite handles dist/ itself)
+*.map
+
+# OS junk
+.DS_Store
+Thumbs.db
