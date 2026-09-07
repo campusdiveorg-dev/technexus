@@ -7,8 +7,9 @@ package-lock.json
 .env.local
 .env.*.local
 
-# Vercel
+# Vercel & Build Outputs
 .vercel/
+dist/
 
 # Logs & Temporary Files
 npm-debug.log*
