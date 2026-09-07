@@ -5,6 +5,7 @@ import {
   FileText, ShieldCheck, QrCode, ExternalLink 
 } from 'lucide-react';
 import { formatKES } from '../data/products';
+import { apiUrl } from '../lib/api';
 
 export default function ReceiptPage() {
   const [searchParams] = useSearchParams();
@@ -25,7 +26,7 @@ export default function ReceiptPage() {
 
     if (orderId && (!saved || saved.id !== orderId)) {
       // Fetch from API
-      fetch(`/api/orders/get?id=${orderId}`)
+      fetch(apiUrl(`/orders/get?id=${orderId}`))
         .then((r) => r.ok ? r.json() : null)
         .then((data) => {
           if (data && data.order) {

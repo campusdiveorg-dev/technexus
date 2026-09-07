@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Store, ShieldCheck, ArrowRight, Lock, Mail, Phone, User, Building, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ShimmerButton from '../components/magicui/ShimmerButton';
+import { apiUrl } from '../lib/api';
 
 export default function SellerRegisterPage() {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ export default function SellerRegisterPage() {
     setLoading(true);
     setError('');
 
-    const endpoint = isLogin ? '/api/sellers/login' : '/api/sellers/register';
+    const endpoint = isLogin ? apiUrl('/sellers/login') : apiUrl('/sellers/register');
     const payload = isLogin 
       ? { email: formData.email, password: formData.password }
       : formData;

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { formatKES } from '../data/products';
+import { apiUrl } from '../lib/api';
 
 /* ─── Design tokens ─────────────────────────────────────── */
 const C = {
@@ -297,7 +298,7 @@ export default function SellerDashboardPage() {
     if (!sellerToken) return;
     try {
       setLoading(true);
-      const res = await fetch('/api/sellers/dashboard', {
+      const res = await fetch(apiUrl('/sellers/dashboard'), {
         headers: { 'Authorization': `Bearer ${sellerToken}` }
       });
       if (res.ok) {
@@ -344,7 +345,7 @@ export default function SellerDashboardPage() {
     setAddOpen(false);
     if (sellerToken) {
       try {
-        await fetch('/api/sellers/products', {
+        await fetch(apiUrl('/sellers/products'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -371,7 +372,7 @@ export default function SellerDashboardPage() {
     setProducts(p => p.filter(x => x.id !== id));
     if (sellerToken) {
       try {
-        await fetch(`/api/sellers/products?id=${encodeURIComponent(id)}`, {
+        await fetch(`${apiUrl('/sellers/products')}?id=${encodeURIComponent(id)}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${sellerToken}` }
         });

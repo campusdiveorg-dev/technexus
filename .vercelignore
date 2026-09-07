@@ -1,21 +1,10 @@
-# Legacy directories no longer in project (entries kept as safety net)
-js/
-css/
-docs/
-
-# DB schema — not a serverless function, exclude from function bundler
-db/
-
-# Local dev scripts — not serverless functions
-scripts/
-
-# Secrets — never deploy
+# Local secrets — never deploy
 .env
 .env.local
 .env.*.local
 
-# Source maps
-*.map
+# DB reference files — not needed on Vercel
+db/
 
 # OS junk
 .DS_Store

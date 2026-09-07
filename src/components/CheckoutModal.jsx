@@ -5,6 +5,7 @@ import { formatKES } from '../data/products';
 import { X, Smartphone, CreditCard, ShieldCheck, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 import { ShimmerButton } from './magicui/ShimmerButton';
 import confetti from 'canvas-confetti';
+import { apiUrl } from '../lib/api';
 
 const INTASEND_PUB_KEY = 'ISPubKey_live_b2d03669-6c40-4c41-a476-deb849f6a2f2';
 const INTASEND_IS_LIVE = true;
@@ -125,7 +126,7 @@ export function CheckoutModal() {
     const finalizeOrder = async (orderId, customer, transactionId) => {
         try {
             // 1. Create order record
-            await fetch('/api/orders/create', {
+            await fetch(apiUrl('/orders/create'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -139,7 +140,7 @@ export function CheckoutModal() {
             }).catch(() => null);
 
             // 2. Fiscalize with KRA eTIMS
-            await fetch('/api/orders/fiscalize', {
+            await fetch(apiUrl('/orders/fiscalize'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

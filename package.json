@@ -2,23 +2,14 @@
   "name": "bytetech-marketplace",
   "version": "1.0.0",
   "description": "Byte Tech Ltd Electronics E-Commerce Marketplace",
-  "type": "commonjs",
   "scripts": {
-    "start": "vite preview",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "dev:api": "vercel dev",
-    "deploy": "vercel --prod",
-    "db:init": "node scripts/init-db.js"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
     "canvas-confetti": "^1.9.4",
-    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^1.42.0",
-    "mysql2": "^3.9.7",
-    "node-fetch": "^2.7.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.3",

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { formatKES } from '../data/products';
+import { apiUrl } from '../lib/api';
 
 /* ─── Design tokens ────────────────────────────────────── */
 const C = {
@@ -151,8 +152,8 @@ export default function AdminDashboardPage() {
       setLoading(true);
       const pin = sessionStorage.getItem('tn_admin_pin') || 'TN2026';
       const [sumRes, ordRes] = await Promise.all([
-        fetch('/api/admin/summary', { headers: { 'x-admin-pin': pin } }).catch(() => null),
-        fetch('/api/admin/orders', { headers: { 'x-admin-pin': pin } }).catch(() => null)
+        fetch(apiUrl('/admin/summary'), { headers: { 'x-admin-pin': pin } }).catch(() => null),
+        fetch(apiUrl('/admin/orders'), { headers: { 'x-admin-pin': pin } }).catch(() => null)
       ]);
       if (sumRes && sumRes.ok) {
         const sumData = await sumRes.json();
