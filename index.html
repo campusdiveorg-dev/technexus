@@ -6,6 +6,12 @@
     <title>Byte Tech Ltd — Flagship Electronics Marketplace & KRA eTIMS</title>
     <meta name="description" content="Kenya's premier authorized electronics marketplace. Workstation laptops, smartphones, studio acoustics, and accessories with instant M-Pesa checkout and KRA eTIMS fiscal invoices."/>
     
+    <!-- Official Byte Tech Tab Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png"/>
+    <link rel="shortcut icon" href="/favicon.ico"/>
+    <link rel="apple-touch-icon" sizes="64x64" href="/apple-touch-icon.png"/>
+
     <!-- Mobile App Web Capabilities -->
     <meta name="theme-color" content="#0A192F"/>
     <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -20,6 +26,12 @@
 <body>
     <!-- React Root Mount Point -->
     <div id="root"></div>
+
+    <!-- Client-side High-Fidelity PDF Engine -->
+    <script src="/js/html2pdf.bundle.min.js"></script>
+
+    <!-- IntaSend Inline Payment SDK (M-Pesa STK Push / Card) -->
+    <script src="https://unpkg.com/intasend-inlinejs-sdk@3.0.2/build/intasend-inline.js"></script>
 
     <!-- Vite React Entry Point -->
     <script type="module" src="/src/main.jsx"></script>

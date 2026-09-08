@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <!-- Brand Primary-to-Electric Cyan Gradient -->
+    <linearGradient id="btGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0058BC"/>
+      <stop offset="100%" stop-color="#00D1FF"/>
+    </linearGradient>
+    
+    <!-- Subtle high-tech drop shadow on the bolt -->
+    <filter id="boltGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#00357A" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  
+  <!-- Outer Rounded Square with Gradient -->
+  <rect width="64" height="64" rx="16" fill="url(#btGradient)"/>
+  
+  <!-- Inner Subtle Glassmorphic Highlight Border -->
+  <rect x="1.5" y="1.5" width="61" height="61" rx="14.5" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+  
+  <!-- Centered Byte Tech Electric Zap Icon -->
+  <g transform="translate(10, 10) scale(1.8333)" filter="url(#boltGlow)">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="#FFFFFF"/>
+  </g>
+</svg>

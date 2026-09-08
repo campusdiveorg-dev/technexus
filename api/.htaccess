@@ -1,0 +1,17 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /marketplace_project/api/
+
+    # Forward Authorization header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Forward Admin PIN header
+    RewriteCond %{HTTP:x-admin-pin} .
+    RewriteRule .* - [E=HTTP_X_ADMIN_PIN:%{HTTP:x-admin-pin}]
+
+    # If the requested file or directory does not exist, route to index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>

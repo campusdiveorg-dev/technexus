@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Trash2, Plus, Minus, ArrowRight, ShieldCheck, 
@@ -20,10 +20,9 @@ export default function CartPage() {
     orderTotal, 
     updateQuantity, 
     removeFromCart, 
-    clearCart 
+    clearCart,
+    openCheckout
   } = useCart();
-
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   if (items.length === 0) {
     return (
@@ -286,7 +285,7 @@ export default function CartPage() {
               variant="electric"
               size="lg"
               style={{ width: '100%' }}
-              onClick={() => setIsCheckoutOpen(true)}
+              onClick={openCheckout}
             >
               <span>Pay with M-Pesa STK Push</span>
               <ArrowRight size={18} />
@@ -302,10 +301,7 @@ export default function CartPage() {
       </div>
 
       {/* Checkout Drawer/Modal */}
-      <CheckoutModal 
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-      />
+      <CheckoutModal />
     </div>
   );
 }

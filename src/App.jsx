@@ -13,6 +13,8 @@ import ReceiptPage from './pages/ReceiptPage';
 import SellerRegisterPage from './pages/SellerRegisterPage';
 import SellerDashboardPage from './pages/SellerDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
 
 // Auto scroll-to-top component on route change
 function ScrollToTop() {
@@ -26,12 +28,23 @@ function ScrollToTop() {
 }
 
 export default function App() {
+  const { pathname } = useLocation();
+  const isDashboard = pathname.startsWith('/admin') || pathname.startsWith('/seller/dashboard');
+
+  useEffect(() => {
+    if (isDashboard) {
+      document.body.style.paddingTop = '0px';
+    } else {
+      document.body.style.paddingTop = 'var(--nav-height)';
+    }
+  }, [isDashboard]);
+
   return (
     <div className="app-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <ScrollToTop />
       
-      {/* Universal Desktop & Mobile Header */}
-      <Navbar />
+      {/* Universal Desktop & Mobile Header - Removed on Admin & Seller Dashboards */}
+      {!isDashboard && <Navbar />}
 
       {/* Main Routed Content */}
       <main className="main-content" style={{ flex: '1 0 auto' }}>
@@ -42,6 +55,8 @@ export default function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/receipt" element={<ReceiptPage />} />
           <Route path="/receipt/:id" element={<ReceiptPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsOfServicePage />} />
           <Route path="/seller/register" element={<SellerRegisterPage />} />
           <Route path="/seller/dashboard" element={<SellerDashboardPage />} />
           <Route path="/admin" element={<AdminDashboardPage />} />
@@ -49,11 +64,11 @@ export default function App() {
         </Routes>
       </main>
 
-      {/* Footer */}
-      <Footer />
+      {/* Footer - Removed on Admin & Seller Dashboards */}
+      {!isDashboard && <Footer />}
 
       {/* Docked Mobile App Bottom Navigation Bar */}
-      <BottomNav />
+      {!isDashboard && <BottomNav />}
     </div>
   );
 }

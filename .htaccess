@@ -1,0 +1,24 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Pass Authorization and Admin headers to PHP
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    RewriteCond %{HTTP:x-admin-pin} .
+    RewriteRule .* - [E=HTTP_X_ADMIN_PIN:%{HTTP:x-admin-pin}]
+
+    # Route all /api requests to api/index.php
+    RewriteRule ^api/(.*)$ api/index.php [QSA,L]
+</IfModule>
+
+# Block access to sensitive directories and files
+<FilesMatch "^\.env">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<IfModule mod_authz_core.c>
+    <Directory "backend">
+        Require all denied
+    </Directory>
+</IfModule>

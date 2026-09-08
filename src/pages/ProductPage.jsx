@@ -13,11 +13,10 @@ import ProductCard from '../components/ProductCard';
 export default function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addToCart, openCheckout } = useCart();
 
   const [quantity, setQuantity] = useState(1);
   const [addedAnimation, setAddedAnimation] = useState(false);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   // Find product by id
   const product = useMemo(() => {
@@ -41,7 +40,7 @@ export default function ProductPage() {
 
   const handleBuyNow = () => {
     addToCart(product, quantity);
-    setIsCheckoutOpen(true);
+    openCheckout();
   };
 
   return (
@@ -364,10 +363,7 @@ export default function ProductPage() {
       </div>
 
       {/* IntaSend Checkout Modal */}
-      <CheckoutModal 
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-      />
+      <CheckoutModal />
     </div>
   );
 }

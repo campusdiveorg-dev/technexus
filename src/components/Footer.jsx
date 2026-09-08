@@ -41,7 +41,7 @@ export default function Footer() {
             </div>
             <div>
               <h4>Mombasa Express Dispatch</h4>
-              <p>Same-day courier within Mombasa, 24h countrywide across Kenya</p>
+              <p>Same-day courier within Mombasa</p>
             </div>
           </div>
         </div>
@@ -49,22 +49,42 @@ export default function Footer() {
         {/* Links Grid */}
         <div className="footer-main-grid">
           <div className="footer-brand-col">
-            <div className="brand-logo" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-              <div className="logo-symbol" style={{
+            <div className="brand-logo" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+              <div style={{
                 background: 'linear-gradient(135deg, #0058BC, #00D1FF)',
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#fff',
-                fontWeight: '800',
-                fontSize: '18px'
-              }}>B</div>
-              <span style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--midnight-navy)' }}>
-                Byte<span style={{ color: 'var(--electric-blue)' }}>Tech</span>
-              </span>
+                boxShadow: '0 4px 12px rgba(0, 209, 255, 0.25)'
+              }}>
+                <Zap size={20} color="#FFFFFF" fill="#FFFFFF" />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '1.35rem', fontWeight: '800', color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+                    Byte <span style={{ color: '#00D1FF' }}>Tech</span>
+                  </span>
+                  <span style={{
+                    fontSize: '0.68rem',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    padding: '2px 8px',
+                    borderRadius: '999px',
+                    background: 'rgba(0, 209, 255, 0.15)',
+                    color: '#00D1FF',
+                    border: '1px solid rgba(0, 209, 255, 0.3)'
+                  }}>
+                    Direct
+                  </span>
+                </div>
+                <span style={{ fontSize: '0.74rem', color: '#94A3B8', fontWeight: '500' }}>
+                  Authorized Hardware
+                </span>
+              </div>
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', maxWidth: '320px', lineHeight: '1.6' }}>
               Kenya’s premier hardware & computing ecosystem. High-performance workstations, enterprise accessories, and developer gears with instant fiscal compliance.
@@ -103,8 +123,9 @@ export default function Footer() {
             <ul className="footer-links">
               <li><Link to="/cart">My Shopping Cart</Link></li>
               <li><Link to="/receipt">Order Fiscal Verification</Link></li>
+              <li><Link to="/privacy">Privacy & Data Security</Link></li>
+              <li><Link to="/terms">Terms of Service & Warranty</Link></li>
               <li><Link to="/catalog">All Hardware Collections</Link></li>
-              <li><Link to="/catalog?tag=FLAGSHIP">Featured Flagship Deals</Link></li>
             </ul>
           </div>
 
@@ -115,7 +136,7 @@ export default function Footer() {
               Moi Avenue, Mombasa CBD, Kenya
             </p>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '8px' }}>
-              <strong>Support:</strong> +254 700 000 000<br />
+              <strong>Support:</strong> <a href="tel:+254748189196" style={{ color: 'var(--primary-blue)', textDecoration: 'none', fontWeight: '600' }}>+254 748 189196</a><br />
               <strong>Fiscal PIN:</strong> P051234567Z
             </p>
           </div>
@@ -127,9 +148,9 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} Byte Tech Ltd. All rights reserved. Registered under Laws of Kenya.
           </p>
           <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            <span>Privacy Policy</span>
-            <span>Terms of Service</span>
-            <span>eTIMS Declarations</span>
+            <Link to="/privacy" style={{ color: 'inherit', textDecoration: 'none' }}>Privacy Policy</Link>
+            <Link to="/terms" style={{ color: 'inherit', textDecoration: 'none' }}>Terms of Service</Link>
+            <Link to="/receipt" style={{ color: 'inherit', textDecoration: 'none' }}>eTIMS Declarations</Link>
           </div>
         </div>
       </div>

@@ -1,325 +1,904 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, useParams, useNavigate, Link } from 'react-router-dom';
 import { 
-  CheckCircle2, Printer, ArrowLeft, Store, 
-  FileText, ShieldCheck, QrCode, ExternalLink 
+  Printer, ArrowLeft, FileText, Search, 
+  AlertCircle, Download, FileCode, Check
 } from 'lucide-react';
 import { formatKES } from '../data/products';
 import { apiUrl } from '../lib/api';
 
 export default function ReceiptPage() {
-  const [searchParams] = useSearchParams();
-  const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { id: routeId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
+  const queryId = searchParams.get('order_id') || searchParams.get('id') || searchParams.get('orderId');
+  const targetId = (routeId || queryId || '').trim();
+
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(Boolean(targetId));
+  const [searchQuery, setSearchQuery] = useState(targetId);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [lastLocalOrder, setLastLocalOrder] = useState(null);
+  const [downloadSuccess, setDownloadSuccess] = useState(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  // Check for locally cached recent order on mount
   useEffect(() => {
-    const orderId = searchParams.get('order_id') || searchParams.get('id');
-    
-    // Check localStorage for last order first
-    let saved = null;
     try {
       const stored = localStorage.getItem('bytetechltd_last_order');
-      if (stored) saved = JSON.parse(stored);
+      if (stored) {
+        setLastLocalOrder(JSON.parse(stored));
+      }
     } catch (e) {
-      console.warn(e);
+      console.warn('Failed to parse last local order:', e);
+    }
+  }, []);
+
+  // Fetch or resolve order whenever targetId changes
+  useEffect(() => {
+    if (!targetId) {
+      setOrder(null);
+      setLoading(false);
+      return;
     }
 
-    if (orderId && (!saved || saved.id !== orderId)) {
-      // Fetch from API
-      fetch(apiUrl(`/orders/get?id=${orderId}`))
-        .then((r) => r.ok ? r.json() : null)
-        .then((data) => {
-          if (data && data.order) {
-            setOrder(data.order);
-          } else if (saved) {
-            setOrder(saved);
-          } else {
-            // Mock fallback demonstration receipt
-            setOrder(createFallbackOrder(orderId));
+    setLoading(true);
+    setErrorMsg(null);
+
+    // 1. Check local storage for quick match
+    let localMatch = null;
+    try {
+      const direct = localStorage.getItem(`tn_order_${targetId}`);
+      if (direct) {
+        localMatch = JSON.parse(direct);
+      } else {
+        const last = localStorage.getItem('bytetechltd_last_order');
+        if (last) {
+          const parsed = JSON.parse(last);
+          if (parsed && (parsed.id === targetId || parsed.flw_tx_ref === targetId)) {
+            localMatch = parsed;
           }
-        })
-        .catch(() => {
-          setOrder(saved || createFallbackOrder(orderId));
-        })
-        .finally(() => setLoading(false));
-    } else if (saved) {
-      setOrder(saved);
-      setLoading(false);
-    } else {
-      setOrder(createFallbackOrder('BT-ORD-94821'));
-      setLoading(false);
+        }
+      }
+    } catch (e) {
+      console.warn('Local order read error:', e);
     }
-  }, [searchParams]);
+
+    // 2. Fetch live database record from API
+    fetch(apiUrl(`/orders/get?id=${encodeURIComponent(targetId)}`))
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(res.status === 404 ? 'Order not found' : 'Failed to fetch order');
+        }
+        return res.json();
+      })
+      .then((data) => {
+        const fetchedOrder = data?.data?.order || data?.order;
+        if (fetchedOrder) {
+          setOrder(fetchedOrder);
+        } else if (localMatch) {
+          setOrder(localMatch);
+        } else {
+          setOrder(null);
+          setErrorMsg(`No record found for Order ID "${targetId}". Please verify the reference.`);
+        }
+      })
+      .catch((err) => {
+        if (localMatch) {
+          setOrder(localMatch);
+        } else {
+          setOrder(null);
+          setErrorMsg(
+            err.message === 'Order not found'
+              ? `No active order found with ID "${targetId}". Please verify the reference.`
+              : 'Could not connect to database server. Please check your network and try again.'
+          );
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [targetId]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const clean = (searchQuery || '').trim();
+    if (!clean) return;
+    navigate(`/receipt?orderId=${encodeURIComponent(clean)}`);
+  };
 
   const handlePrint = () => {
     window.print();
   };
 
-  if (loading) {
-    return (
-      <div style={{ padding: '80px 20px', textAlign: 'center', minHeight: '60vh' }}>
-        <div className="receipt-spinner" style={{
-          width: '44px',
-          height: '44px',
-          border: '4px solid rgba(0, 88, 188, 0.2)',
-          borderTopColor: 'var(--primary-blue)',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-          margin: '0 auto 16px'
-        }} />
-        <p style={{ color: 'var(--text-muted)' }}>Retrieving fiscal order details…</p>
-      </div>
-    );
-  }
+  const handleResetSearch = () => {
+    setOrder(null);
+    setErrorMsg(null);
+    setSearchQuery('');
+    navigate('/receipt');
+  };
 
-  const vat = order.vat || Math.round(order.total * (0.16 / 1.16));
-  const subtotal = order.subtotal || (order.total - vat);
-  const qrUrl = order.etimsQr || `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://itax.kra.go.ke/KRA-Portal/invoiceChk.htm?cu=${order.cuInvoice || 'KRA-VSCU-001-INV-8492'}`;
+  /**
+   * Generates a 100% visual-match PDF directly matching the online screen view,
+   * with exact colors, full width header, green status badge with checkmark, item table, and KRA eTIMS QR.
+   */
+  const handleDownloadPdf = async () => {
+    if (!order || isGeneratingPdf) return;
+    setIsGeneratingPdf(true);
+
+    try {
+      const element = document.getElementById('printable-receipt');
+      if (!element) {
+        window.print();
+        setIsGeneratingPdf(false);
+        return;
+      }
+
+      if (window.html2pdf) {
+        const opt = {
+          margin: [8, 8, 8, 8],
+          filename: `ByteTech_Official_Receipt_${order.id}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            allowTaint: true, 
+            logging: false, 
+            scrollX: 0,
+            scrollY: 0 
+          },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: 'avoid-all' }
+        };
+
+        await window.html2pdf().set(opt).from(element).save();
+        setDownloadSuccess('pdf');
+        setTimeout(() => setDownloadSuccess(null), 3000);
+      } else {
+        window.print();
+      }
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      window.print();
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleDownloadJson = () => {
+    if (!order) return;
+    const jsonStr = JSON.stringify(order, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ByteTech_Tax_Invoice_${order.id}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    setDownloadSuccess('json');
+    setTimeout(() => setDownloadSuccess(null), 3000);
+  };
 
   return (
     <div className="receipt-page" style={{ background: '#0A192F', minHeight: '100vh', padding: '40px 16px 80px' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        {/* Navigation row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+      {/* Embedded Print & Export Styling */}
+      <style>{`
+        @media print {
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          @page {
+            size: auto;
+            margin: 8mm;
+          }
+          body {
+            background: #ffffff !important;
+            color: #000000 !important;
+          }
+          .receipt-page {
+            background: #ffffff !important;
+            padding: 0 !important;
+            min-height: auto !important;
+          }
+          .no-print,
+          .receipt-nav-bar,
+          .receipt-download-bar,
+          header,
+          nav,
+          footer,
+          .mobile-bottom-nav {
+            display: none !important;
+          }
+          .receipt-card {
+            box-shadow: none !important;
+            border: 1px solid #CBD5E1 !important;
+            border-radius: 12px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+        }
+        #printable-receipt {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+      `}</style>
+
+      <div style={{ maxWidth: '840px', margin: '0 auto' }}>
+        
+        {/* Navigation & Action Bar */}
+        <div className="receipt-nav-bar no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <Link 
             to="/catalog" 
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#94A3B8', fontSize: '0.9rem' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#94A3B8', fontSize: '0.9rem', textDecoration: 'none' }}
           >
             <ArrowLeft size={16} />
             <span>Back to Byte Tech Catalog</span>
           </Link>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button
-              type="button"
-              onClick={handlePrint}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '10px 18px',
-                borderRadius: '999px',
-                background: 'linear-gradient(135deg, #00D1FF, #0058BC)',
-                color: '#ffffff',
-                fontWeight: '700',
-                fontSize: '0.88rem',
-                cursor: 'pointer'
-              }}
-            >
-              <Printer size={16} />
-              <span>Print / Save PDF</span>
-            </button>
-          </div>
+          {order && (
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={handleResetSearch}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '9px 15px',
+                  borderRadius: '999px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  color: '#CBD5E1',
+                  fontWeight: '600',
+                  fontSize: '0.84rem',
+                  cursor: 'pointer',
+                  border: '1px solid rgba(255, 255, 255, 0.15)'
+                }}
+              >
+                <Search size={14} />
+                <span>Search Order</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                disabled={isGeneratingPdf}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '9px 18px',
+                  borderRadius: '999px',
+                  background: downloadSuccess === 'pdf' ? '#059669' : 'linear-gradient(135deg, #00D1FF, #0058BC)',
+                  color: '#ffffff',
+                  fontWeight: '700',
+                  fontSize: '0.86rem',
+                  cursor: isGeneratingPdf ? 'wait' : 'pointer',
+                  border: 'none',
+                  boxShadow: '0 4px 14px rgba(0, 209, 255, 0.25)',
+                  transition: 'all 0.2s',
+                  opacity: isGeneratingPdf ? 0.8 : 1
+                }}
+              >
+                {isGeneratingPdf ? (
+                  <>
+                    <div style={{
+                      width: '14px',
+                      height: '14px',
+                      border: '2px solid rgba(255,255,255,0.3)',
+                      borderTopColor: '#ffffff',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    <span>Generating PDF…</span>
+                  </>
+                ) : downloadSuccess === 'pdf' ? (
+                  <>
+                    <Check size={16} />
+                    <span>PDF Downloaded!</span>
+                  </>
+                ) : (
+                  <>
+                    <Download size={16} />
+                    <span>Download PDF Receipt</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrint}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '9px 18px',
+                  borderRadius: '999px',
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  color: '#FFFFFF',
+                  fontWeight: '700',
+                  fontSize: '0.86rem',
+                  cursor: 'pointer',
+                  border: '1px solid rgba(255, 255, 255, 0.25)'
+                }}
+              >
+                <Printer size={16} />
+                <span>Save as PDF / Print</span>
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Printable Official Receipt Card */}
-        <div className="receipt-card" style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          overflow: 'hidden',
-          boxShadow: '0 20px 80px rgba(0,0,0,0.4)'
-        }}>
-          {/* Header */}
-          <div style={{
-            background: 'linear-gradient(135deg, #0A192F 0%, #0D2847 100%)',
-            padding: '32px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            color: '#fff',
-            flexWrap: 'wrap',
-            gap: '16px'
+        {/* Loading Spinner */}
+        {loading && (
+          <div style={{ 
+            background: 'rgba(15, 23, 42, 0.7)', 
+            border: '1px solid rgba(255, 255, 255, 0.1)', 
+            borderRadius: '16px', 
+            padding: '60px 20px', 
+            textAlign: 'center' 
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '44px',
+              height: '44px',
+              border: '4px solid rgba(0, 209, 255, 0.2)',
+              borderTopColor: '#00D1FF',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 16px'
+            }} />
+            <p style={{ color: '#94A3B8', fontSize: '0.95rem' }}>
+              Retrieving live fiscal order data from secure database…
+            </p>
+          </div>
+        )}
+
+        {/* Lookup Portal when no order is displayed */}
+        {!loading && !order && (
+          <div style={{
+            background: '#0F2038',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '36px 28px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.4)'
+          }}>
+            <div style={{ textAlign: 'center', maxWidth: '580px', margin: '0 auto 32px' }}>
               <div style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, #0058BC, #00D1FF)',
+                width: '54px',
+                height: '54px',
+                borderRadius: '14px',
+                background: 'linear-gradient(135deg, rgba(0, 209, 255, 0.2), rgba(0, 88, 188, 0.2))',
+                border: '1px solid rgba(0, 209, 255, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '20px',
-                fontWeight: '800'
-              }}>B</div>
+                margin: '0 auto 16px',
+                color: '#00D1FF'
+              }}>
+                <FileText size={26} />
+              </div>
+              <h1 style={{ fontSize: '1.6rem', fontWeight: '800', color: '#FFFFFF', marginBottom: '8px' }}>
+                Order Fiscal Receipt Verification
+              </h1>
+              <p style={{ fontSize: '0.92rem', color: '#94A3B8', lineHeight: 1.5 }}>
+                Enter your Order Reference Number to verify payment clearance, view KRA eTIMS fiscal compliance details, and download your official PDF purchase receipt.
+              </p>
+            </div>
+
+            {/* Error Message if search failed */}
+            {errorMsg && (
+              <div style={{
+                maxWidth: '560px',
+                margin: '0 auto 24px',
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '10px',
+                padding: '12px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                color: '#FCA5A5',
+                fontSize: '0.88rem'
+              }}>
+                <AlertCircle size={18} style={{ flexShrink: 0 }} />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            {/* Search Input Form */}
+            <form onSubmit={handleSearchSubmit} style={{ maxWidth: '560px', margin: '0 auto' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: '#0A1526',
+                border: '1.5px solid rgba(0, 209, 255, 0.3)',
+                borderRadius: '12px',
+                padding: '6px 6px 6px 16px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+              }}>
+                <Search size={18} color="#64748B" style={{ flexShrink: 0, marginRight: '8px' }} />
+                <input
+                  type="text"
+                  placeholder="e.g. BT-TEST-20260907-39AD or TN-..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    flex: 1,
+                    background: 'transparent',
+                    border: 'none',
+                    outline: 'none',
+                    color: '#FFFFFF',
+                    fontSize: '0.95rem',
+                    fontFamily: 'monospace'
+                  }}
+                  required
+                />
+                <button
+                  type="submit"
+                  style={{
+                    background: 'linear-gradient(135deg, #00D1FF, #0058BC)',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '10px 20px',
+                    fontWeight: '700',
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Lookup Receipt
+                </button>
+              </div>
+            </form>
+
+            {/* Quick Access to Last Local Order if Available */}
+            {lastLocalOrder && (
+              <div style={{
+                maxWidth: '560px',
+                margin: '28px auto 0',
+                padding: '14px 18px',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px'
+              }}>
+                <div>
+                  <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748B' }}>
+                    Recent Device Order
+                  </div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#F1F5F9', fontFamily: 'monospace' }}>
+                    {lastLocalOrder.id}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#94A3B8' }}>
+                    {formatKES(lastLocalOrder.total_amount || lastLocalOrder.total || 0)} • {lastLocalOrder.payment_method || 'M-Pesa'}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => navigate(`/receipt?orderId=${encodeURIComponent(lastLocalOrder.id)}`)}
+                  style={{
+                    background: 'rgba(0, 209, 255, 0.15)',
+                    border: '1px solid rgba(0, 209, 255, 0.4)',
+                    color: '#00D1FF',
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    fontSize: '0.82rem',
+                    fontWeight: '700',
+                    cursor: 'pointer'
+                  }}
+                >
+                  View Receipt
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Printable Official Receipt Card (when an order is active) */}
+        {!loading && order && (
+          <>
+            <div 
+              id="printable-receipt" 
+              className="receipt-card" 
+              style={{
+                background: '#ffffff',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow: '0 20px 80px rgba(0,0,0,0.4)',
+                width: '100%',
+                maxWidth: '820px',
+                margin: '0 auto'
+              }}
+            >
+              {/* Header */}
+              <div style={{
+                background: 'linear-gradient(135deg, #0A192F 0%, #0D2847 100%)',
+                padding: '28px 32px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                color: '#ffffff',
+                flexWrap: 'wrap',
+                gap: '16px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, #0058BC, #00D1FF)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                    fontWeight: '800'
+                  }}>B</div>
+                  <div>
+                    <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#ffffff' }}>Byte Tech Ltd</div>
+                    <div style={{ fontSize: '0.8rem', color: '#94A3B8' }}>Electronics Marketplace & Authorized Hardware</div>
+                  </div>
+                </div>
+
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: '700', color: '#00D1FF', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                    Official Tax Receipt
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginTop: '4px', fontFamily: 'monospace' }}>
+                    Order #{order.id}
+                  </div>
+                </div>
+              </div>
+
+              {/* Metadata Block: Customer & Payment */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                gap: '24px',
+                padding: '24px 32px',
+                borderBottom: '1px solid #E2E8F0'
+              }}>
+                <div>
+                  <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#94A3B8', marginBottom: '8px' }}>
+                    Billed Customer
+                  </h4>
+                  <p style={{ fontWeight: '700', color: '#1E293B', fontSize: '1rem' }}>
+                    {order.customer_name || order.customerName || 'Authorized Buyer'}
+                  </p>
+                  <p style={{ color: '#475569', fontSize: '0.88rem', marginTop: '2px' }}>
+                    {order.customer_phone || order.phone || 'Phone on File'}
+                  </p>
+                  {(order.customer_email || order.email) && (
+                    <p style={{ color: '#475569', fontSize: '0.88rem' }}>
+                      {order.customer_email || order.email}
+                    </p>
+                  )}
+                  <p style={{ color: '#475569', fontSize: '0.88rem', marginTop: '2px' }}>
+                    {order.shipping_address || order.address || 'Standard Delivery Hub'}
+                  </p>
+                </div>
+
+                <div style={{ textAlign: 'right' }}>
+                  <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#94A3B8', marginBottom: '8px' }}>
+                    Payment Verification
+                  </h4>
+                  
+                  {/* Robust Non-Flex Verification Badge (100% html2canvas & print compatible) */}
+                  <div style={{ 
+                    display: 'inline-block', 
+                    background: order.status === 'pending' ? '#FEF3C7' : '#DCFCE7', 
+                    padding: '5px 14px', 
+                    borderRadius: '999px',
+                    border: order.status === 'pending' ? '1px solid #FDE68A' : '1px solid #BBF7D0'
+                  }}>
+                    <svg 
+                      width="15" 
+                      height="15" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke={order.status === 'pending' ? '#B45309' : '#15803D'} 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}
+                    >
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <span style={{ 
+                      display: 'inline-block', 
+                      verticalAlign: 'middle', 
+                      color: order.status === 'pending' ? '#B45309' : '#15803D',
+                      fontSize: '0.82rem', 
+                      fontWeight: '700'
+                    }}>
+                      {order.status === 'paid' ? 'Payment Verified & Cleared' : (order.status || 'Verified')}
+                    </span>
+                  </div>
+
+                  <p style={{ color: '#475569', fontSize: '0.85rem', marginTop: '8px' }}>
+                    Method: <strong>{order.payment_method || 'M-Pesa (IntaSend)'}</strong>
+                  </p>
+                  <p style={{ color: '#475569', fontSize: '0.85rem' }}>
+                    Txn Ref: <strong style={{ fontFamily: 'monospace' }}>{order.flw_transaction_id || order.flw_tx_ref || order.txnId || 'IS-TXN-OK'}</strong>
+                  </p>
+                  <p style={{ color: '#94A3B8', fontSize: '0.82rem', marginTop: '4px' }}>
+                    {order.created_at ? new Date(order.created_at).toLocaleString('en-KE', { dateStyle: 'medium', timeStyle: 'short' }) : (order.date || new Date().toLocaleString())}
+                  </p>
+                </div>
+              </div>
+
+              {/* Item Table */}
+              <div style={{ padding: '0 32px', overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', marginTop: '16px' }}>
+                  <thead>
+                    <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                      <th style={{ padding: '12px 14px', textAlign: 'left', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>Hardware Item</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>Qty</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'right', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>Unit Price</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'right', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(order.items && order.items.length > 0) ? (
+                      order.items.map((item, idx) => {
+                        const itemName = item.product_name || item.title || 'Hardware Item';
+                        const itemQty = Number(item.quantity || 1);
+                        const itemPrice = Number(item.unit_price || item.price || 0);
+                        const itemTotal = Number(item.total_price || (itemPrice * itemQty));
+
+                        return (
+                          <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                            <td style={{ padding: '14px', color: '#1E293B', fontWeight: '600' }}>
+                              <div>{itemName}</div>
+                              {item.seller_name && (
+                                <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '3px' }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}>
+                                    <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
+                                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                                    <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4" />
+                                    <path d="M2 7h20" />
+                                  </svg>
+                                  <span style={{ display: 'inline-block', verticalAlign: 'middle' }}>{item.seller_name}</span>
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ padding: '14px', textAlign: 'center', color: '#475569' }}>
+                              {itemQty}
+                            </td>
+                            <td style={{ padding: '14px', textAlign: 'right', color: '#475569' }}>
+                              {formatKES(itemPrice)}
+                            </td>
+                            <td style={{ padding: '14px', textAlign: 'right', color: '#0F172A', fontWeight: '700' }}>
+                              {formatKES(itemTotal)}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                        <td colSpan={4} style={{ padding: '20px', textAlign: 'center', color: '#94A3B8' }}>
+                          No itemized lines recorded for this order.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Totals Calculation */}
+              {(() => {
+                const total = Number(order.total_amount || order.total || 0);
+                const vat = Number(order.vat || (order.vat_breakdown?.vat_amount) || Math.round(total * (0.16 / 1.16)));
+                const subtotal = Number(order.subtotal || (order.vat_breakdown?.subtotal) || (total - vat));
+                const cuSerial = order.kra_cu_number || order.cuSerial || 'KRA-VSCU-001';
+                const cuInvoice = order.kra_invoice_number || order.cuInvoice || `KRA-ETIMS-${order.id}`;
+                const qrUrl = order.kra_qr_url || order.etimsQr || `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://itax.kra.go.ke/KRA-Portal/invoiceConfirmation.htm?cuNumber=${cuSerial}&invoiceNumber=${cuInvoice}&pin=P051234567Z`)}`;
+
+                return (
+                  <>
+                    <div style={{ padding: '20px 32px', display: 'flex', justifyContent: 'flex-end', borderTop: '2px solid #E2E8F0', marginTop: '16px' }}>
+                      <div style={{ minWidth: '280px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: '0.9rem', color: '#475569' }}>
+                          <span>Subtotal (Excl. VAT 16%)</span>
+                          <span>{formatKES(subtotal)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: '0.9rem', color: '#475569' }}>
+                          <span>KRA VAT (16%)</span>
+                          <span style={{ color: '#10B981', fontWeight: '600' }}>{formatKES(vat)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0 4px', fontSize: '1.25rem', fontWeight: '800', color: '#0A192F', borderTop: '2px solid #0A192F', marginTop: '8px' }}>
+                          <span>Total Paid</span>
+                          <span style={{ color: '#0058BC' }}>{formatKES(total)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* KRA eTIMS Fiscal Compliance Block */}
+                    <div style={{
+                      margin: '0 32px 28px',
+                      padding: '18px 24px',
+                      background: '#F8FAFC',
+                      border: '1.5px dashed #CBD5E1',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '16px'
+                    }}>
+                      <div style={{ flex: '1 1 280px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '800', color: '#0A192F', marginBottom: '8px' }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            <path d="m9 12 2 2 4-4" />
+                          </svg>
+                          <span>KRA eTIMS FISCAL TAX INVOICE</span>
+                        </div>
+                        <div style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.6, fontFamily: 'monospace' }}>
+                          <div><strong>KRA PIN:</strong> P051234567Z</div>
+                          <div><strong>CU SERIAL:</strong> {cuSerial}</div>
+                          <div><strong>CU INVOICE NO:</strong> {cuInvoice}</div>
+                          <div><strong>TAX CLASSIFICATION:</strong> Rate A (16% VAT Inclusive)</div>
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: 'center' }}>
+                        <img 
+                          src={qrUrl} 
+                          crossOrigin="anonymous"
+                          alt="KRA eTIMS QR" 
+                          style={{ width: '92px', height: '92px', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '4px', background: '#fff', display: 'block', margin: '0 auto 6px' }}
+                        />
+                        <a 
+                          href={`https://itax.kra.go.ke/KRA-Portal/invoiceChk.htm?cu=${cuInvoice}`}
+                          target="_blank" 
+                          rel="noreferrer"
+                          style={{ fontSize: '0.75rem', color: '#0058BC', fontWeight: '700', textDecoration: 'none' }}
+                        >
+                          <span>Verify on iTax &rarr;</span>
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Footer Note */}
+                    <div style={{ background: '#F8FAFC', padding: '18px 32px', textAlign: 'center', borderTop: '1px solid #E2E8F0', fontSize: '0.82rem', color: '#64748B' }}>
+                      <p>Thank you for shopping with Byte Tech Ltd. Official manufacturer warranty applies across East Africa.</p>
+                      <p style={{ marginTop: '4px' }}>For tax credit reconciliation, quote CU INVOICE: <strong>{cuInvoice}</strong></p>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Dedicated Download & Export Bar below receipt */}
+            <div className="receipt-download-bar no-print" style={{
+              marginTop: '24px',
+              padding: '20px 24px',
+              background: 'rgba(15, 32, 56, 0.9)',
+              border: '1px solid rgba(0, 209, 255, 0.2)',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '16px'
+            }}>
               <div>
-                <div style={{ fontSize: '1.4rem', fontWeight: '800' }}>Byte Tech Ltd</div>
-                <div style={{ fontSize: '0.8rem', color: '#94A3B8' }}>Electronics Marketplace & Authorized Hardware</div>
+                <div style={{ color: '#FFFFFF', fontWeight: '700', fontSize: '0.95rem' }}>
+                  Download & Export Your Official Documents
+                </div>
+                <div style={{ color: '#94A3B8', fontSize: '0.82rem', marginTop: '2px' }}>
+                  Direct PDF document download matching the exact official invoice layout.
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={handleDownloadPdf}
+                  disabled={isGeneratingPdf}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '10px 18px',
+                    borderRadius: '8px',
+                    background: downloadSuccess === 'pdf' ? '#059669' : 'linear-gradient(135deg, #00D1FF, #0058BC)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    fontSize: '0.86rem',
+                    cursor: isGeneratingPdf ? 'wait' : 'pointer',
+                    border: 'none',
+                    boxShadow: '0 4px 12px rgba(0, 209, 255, 0.2)',
+                    opacity: isGeneratingPdf ? 0.8 : 1
+                  }}
+                >
+                  {isGeneratingPdf ? (
+                    <>
+                      <div style={{
+                        width: '14px',
+                        height: '14px',
+                        border: '2px solid rgba(255,255,255,0.3)',
+                        borderTopColor: '#ffffff',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }} />
+                      <span>Generating PDF…</span>
+                    </>
+                  ) : downloadSuccess === 'pdf' ? (
+                    <>
+                      <Check size={16} />
+                      <span>PDF Downloaded!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download size={16} />
+                      <span>Download PDF Receipt</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '10px 18px',
+                    borderRadius: '8px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: '#CBD5E1',
+                    fontWeight: '600',
+                    fontSize: '0.86rem',
+                    cursor: 'pointer',
+                    border: '1px solid rgba(255, 255, 255, 0.18)'
+                  }}
+                >
+                  <Printer size={16} />
+                  <span>Save as PDF / Print</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadJson}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    background: downloadSuccess === 'json' ? '#059669' : 'rgba(255, 255, 255, 0.06)',
+                    color: '#94A3B8',
+                    fontWeight: '600',
+                    fontSize: '0.84rem',
+                    cursor: 'pointer',
+                    border: '1px solid rgba(255, 255, 255, 0.12)'
+                  }}
+                >
+                  {downloadSuccess === 'json' ? <Check size={14} /> : <FileCode size={14} />}
+                  <span>Export JSON</span>
+                </button>
               </div>
             </div>
+          </>
+        )}
 
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.95rem', fontWeight: '700', color: '#00D1FF', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                Official Tax Receipt
-              </div>
-              <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginTop: '4px' }}>
-                Order #{order.id}
-              </div>
-            </div>
-          </div>
-
-          {/* Metadata Block: Customer & Payment */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: '24px',
-            padding: '28px 32px',
-            borderBottom: '1px solid #E2E8F0'
-          }}>
-            <div>
-              <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#94A3B8', marginBottom: '8px' }}>
-                Billed Customer
-              </h4>
-              <p style={{ fontWeight: '700', color: '#1E293B', fontSize: '1rem' }}>
-                {order.customerName || 'Authorized Buyer'}
-              </p>
-              <p style={{ color: '#475569', fontSize: '0.88rem' }}>{order.phone}</p>
-              {order.email && <p style={{ color: '#475569', fontSize: '0.88rem' }}>{order.email}</p>}
-              <p style={{ color: '#475569', fontSize: '0.88rem' }}>{order.address || 'Mombasa Hub Dispatch'}</p>
-            </div>
-
-            <div style={{ textAlign: 'right' }}>
-              <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#94A3B8', marginBottom: '8px' }}>
-                Payment Verification
-              </h4>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#DCFCE7', color: '#15803D', padding: '4px 12px', borderRadius: '999px', fontSize: '0.85rem', fontWeight: '700' }}>
-                <CheckCircle2 size={16} />
-                <span>IntaSend M-Pesa Cleared</span>
-              </div>
-              <p style={{ color: '#475569', fontSize: '0.85rem', marginTop: '8px' }}>
-                Ref / Txn: <strong>{order.txnId || 'IS-MPESA-OK'}</strong>
-              </p>
-              <p style={{ color: '#94A3B8', fontSize: '0.82rem' }}>
-                {order.date || new Date().toLocaleString()}
-              </p>
-            </div>
-          </div>
-
-          {/* Item Table */}
-          <div style={{ padding: '0 32px', overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', marginTop: '20px' }}>
-              <thead>
-                <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                  <th style={{ padding: '12px 14px', textAlign: 'left', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>Item</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>Qty</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'right', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>Unit Price</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'right', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(order.items || []).map((item, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                    <td style={{ padding: '14px', color: '#1E293B', fontWeight: '600' }}>
-                      {item.title}
-                    </td>
-                    <td style={{ padding: '14px', textAlign: 'center', color: '#475569' }}>
-                      {item.quantity}
-                    </td>
-                    <td style={{ padding: '14px', textAlign: 'right', color: '#475569' }}>
-                      {formatKES(item.price)}
-                    </td>
-                    <td style={{ padding: '14px', textAlign: 'right', color: '#0F172A', fontWeight: '700' }}>
-                      {formatKES(item.price * item.quantity)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Totals */}
-          <div style={{ padding: '24px 32px', display: 'flex', justifyContent: 'flex-end', borderTop: '2px solid #E2E8F0', marginTop: '20px' }}>
-            <div style={{ minWidth: '280px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '0.9rem', color: '#475569' }}>
-                <span>Subtotal (Excl. VAT 16%)</span>
-                <span>{formatKES(subtotal)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '0.9rem', color: '#475569' }}>
-                <span>KRA VAT (16%)</span>
-                <span style={{ color: '#10B981', fontWeight: '600' }}>{formatKES(vat)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0 4px', fontSize: '1.25rem', fontWeight: '800', color: '#0A192F', borderTop: '2px solid #0A192F', marginTop: '8px' }}>
-                <span>Total Paid</span>
-                <span style={{ color: 'var(--primary-blue)' }}>{formatKES(order.total)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* KRA eTIMS Fiscal Compliance Block */}
-          <div style={{
-            margin: '0 32px 32px',
-            padding: '20px',
-            background: '#F8FAFC',
-            border: '1.5px dashed #CBD5E1',
-            borderRadius: '12px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '20px'
-          }}>
-            <div style={{ flex: '1 1 280px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '800', color: '#0A192F', marginBottom: '8px' }}>
-                <ShieldCheck size={20} color="#10B981" />
-                <span>KRA eTIMS FISCAL TAX INVOICE</span>
-              </div>
-              <div style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.6, fontFamily: 'monospace' }}>
-                <div><strong>KRA PIN:</strong> P051234567Z</div>
-                <div><strong>CU SERIAL:</strong> {order.cuSerial || 'KRA-VSCU-001'}</div>
-                <div><strong>CU INVOICE NO:</strong> {order.cuInvoice || 'KRA-VSCU-001-INV-8492'}</div>
-                <div><strong>TAX CLASSIFICATION:</strong> Rate A (16% VAT Inclusive)</div>
-              </div>
-            </div>
-
-            <div style={{ textAlign: 'center' }}>
-              <img 
-                src={qrUrl} 
-                alt="KRA eTIMS QR" 
-                style={{ width: '96px', height: '96px', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '4px', background: '#fff', display: 'block', margin: '0 auto 6px' }}
-              />
-              <a 
-                href={`https://itax.kra.go.ke/KRA-Portal/invoiceChk.htm?cu=${order.cuInvoice || 'KRA-VSCU-001-INV-8492'}`}
-                target="_blank" 
-                rel="noreferrer"
-                style={{ fontSize: '0.75rem', color: 'var(--primary-blue)', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-              >
-                <span>Verify on iTax</span>
-                <ExternalLink size={12} />
-              </a>
-            </div>
-          </div>
-
-          {/* Footer Note */}
-          <div style={{ background: '#F8FAFC', padding: '20px 32px', textAlign: 'center', borderTop: '1px solid #E2E8F0', fontSize: '0.82rem', color: '#64748B' }}>
-            <p>Thank you for shopping with Byte Tech Ltd. Official 1-to-2 year East Africa warranty applies.</p>
-            <p style={{ marginTop: '4px' }}>For corporate tax queries, quote CU INVOICE: <strong>{order.cuInvoice || 'KRA-VSCU-001-INV-8492'}</strong></p>
-          </div>
-        </div>
       </div>
     </div>
   );
-}
-
-function createFallbackOrder(orderId) {
-  return {
-    id: orderId || 'BT-ORD-83921',
-    customerName: 'Enterprise Client',
-    phone: '+254 712 345 678',
-    email: 'client@technexus.ke',
-    address: 'Nyali, Mombasa, Kenya',
-    date: new Date().toLocaleString(),
-    total: 310000,
-    subtotal: 267241,
-    vat: 42759,
-    txnId: 'IS-TXN-884923',
-    cuSerial: 'KRA-VSCU-001',
-    cuInvoice: 'KRA-VSCU-001-INV-9932',
-    items: [
-      {
-        title: 'MacBook Pro 16" M3 Pro (36GB / 512GB)',
-        quantity: 1,
-        price: 310000
-      }
-    ]
-  };
 }

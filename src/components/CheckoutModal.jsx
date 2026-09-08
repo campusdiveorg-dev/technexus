@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { formatKES } from '../data/products';
-import { X, Smartphone, CreditCard, ShieldCheck, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
-import { ShimmerButton } from './magicui/ShimmerButton';
+import { X, Smartphone, CreditCard, ShieldCheck, CheckCircle2, AlertCircle, ArrowRight, QrCode } from 'lucide-react';
+import ShimmerButton from './magicui/ShimmerButton';
 import confetti from 'canvas-confetti';
 import { apiUrl } from '../lib/api';
 
@@ -11,33 +11,33 @@ const INTASEND_PUB_KEY = 'ISPubKey_live_b2d03669-6c40-4c41-a476-deb849f6a2f2';
 const INTASEND_IS_LIVE = true;
 
 export function CheckoutModal() {
-    const { 
-        cart, 
-        cartTotal, 
-        cartSubtotal, 
-        cartVAT, 
-        checkoutCustomer, 
-        setCheckoutCustomer, 
-        isCheckoutOpen, 
+    const {
+        cart,
+        cartTotal,
+        cartSubtotal,
+        cartVAT,
+        checkoutCustomer,
+        setCheckoutCustomer,
+        isCheckoutOpen,
         closeCheckout,
-        clearCart 
+        clearCart
     } = useCart();
 
     const navigate = useNavigate();
 
     const [paymentMethod, setPaymentMethod] = useState('M-PESA');
-    const [phone, setPhone] = useState(checkoutCustomer.phone || '');
-    const [name, setName] = useState(checkoutCustomer.name || '');
-    const [email, setEmail] = useState(checkoutCustomer.email || '');
+    const [phone, setPhone]     = useState(checkoutCustomer.phone   || '');
+    const [name, setName]       = useState(checkoutCustomer.name    || '');
+    const [email, setEmail]     = useState(checkoutCustomer.email   || '');
     const [address, setAddress] = useState(checkoutCustomer.address || '');
     const [statusText, setStatusText] = useState('');
-    const [errorText, setErrorText] = useState('');
+    const [errorText,  setErrorText]  = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
-        if (checkoutCustomer.phone) setPhone(checkoutCustomer.phone);
-        if (checkoutCustomer.name) setName(checkoutCustomer.name);
-        if (checkoutCustomer.email) setEmail(checkoutCustomer.email);
+        if (checkoutCustomer.phone)   setPhone(checkoutCustomer.phone);
+        if (checkoutCustomer.name)    setName(checkoutCustomer.name);
+        if (checkoutCustomer.email)   setEmail(checkoutCustomer.email);
         if (checkoutCustomer.address) setAddress(checkoutCustomer.address);
     }, [checkoutCustomer]);
 
@@ -56,14 +56,14 @@ export function CheckoutModal() {
 
         const cleanedPhone = normalizePhone(phone);
         if (!cleanedPhone || cleanedPhone.length !== 12 || !cleanedPhone.startsWith('254')) {
-            setErrorText('Please enter a valid Safaricom/Airtel phone number (e.g. 0712 345 678 or 0110 123 456).');
+            setErrorText('Please enter a valid Safaricom/Airtel phone number (e.g. 0712 345 678).');
             return;
         }
 
         const customerPayload = {
-            phone: cleanedPhone,
-            name: name.trim() || 'Byte Tech Customer',
-            email: email.trim() || `${cleanedPhone}@bytetech.co.ke`,
+            phone:   cleanedPhone,
+            name:    name.trim()    || 'Byte Tech Customer',
+            email:   email.trim()   || `${cleanedPhone}@bytetech.co.ke`,
             address: address.trim() || 'Mombasa, Kenya'
         };
 
@@ -73,7 +73,7 @@ export function CheckoutModal() {
 
         const orderId = `TN-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.random().toString(36).substring(2,6).toUpperCase()}`;
 
-        // Initialize IntaSend if available
+        // ── IntaSend Live SDK ──────────────────────────────────────────────────
         if (window.IntaSend) {
             try {
                 const intasend = new window.IntaSend({
@@ -82,102 +82,92 @@ export function CheckoutModal() {
                 });
 
                 intasend
-                    .on("COMPLETE", async (results) => {
-                        console.log("[IntaSend Complete]:", results);
+                    .on('COMPLETE', async (results) => {
                         setStatusText('Payment confirmed! Generating KRA eTIMS Tax Invoice…');
                         await finalizeOrder(orderId, customerPayload, results.invoice_id || results.tracking_id || `IS-${Date.now()}`);
                     })
-                    .on("FAILED", (results) => {
-                        console.error("[IntaSend Failed]:", results);
+                    .on('FAILED', (results) => {
                         setIsProcessing(false);
                         setErrorText(results?.message || 'Payment prompt was not approved or failed. Please retry.');
                     })
-                    .on("IN-PROGRESS", () => {
-                        setStatusText('STK Push sent to phone! Please enter your M-Pesa PIN on your phone.');
+                    .on('IN-PROGRESS', () => {
+                        setStatusText('STK Push sent! Enter your M-Pesa PIN on your phone.');
                     });
 
-                // Trigger IntaSend STK Push
                 const [firstName, ...lastNameParts] = customerPayload.name.split(' ');
                 intasend.charge({
-                    first_name: firstName || 'Customer',
-                    last_name: lastNameParts.join(' ') || 'Customer',
-                    email: customerPayload.email,
+                    first_name:   firstName || 'Customer',
+                    last_name:    lastNameParts.join(' ') || 'Customer',
+                    email:        customerPayload.email,
                     phone_number: customerPayload.phone,
-                    amount: cartTotal,
-                    currency: 'KES',
-                    api_ref: orderId,
-                    method: paymentMethod === 'CARD' ? 'CARD-PAYMENT' : 'M-PESA'
+                    amount:       cartTotal,
+                    currency:     'KES',
+                    api_ref:      orderId,
+                    method:       paymentMethod === 'CARD' ? 'CARD-PAYMENT' : 'M-PESA'
                 });
                 return;
             } catch (sdkErr) {
-                console.warn('IntaSend SDK error, using fallback pipeline:', sdkErr);
+                console.warn('[IntaSend] SDK error, falling back:', sdkErr);
+                setErrorText('Could not connect to IntaSend. Please refresh and try again.');
+                setIsProcessing(false);
+                return;
             }
+        } else {
+            // SDK not loaded — surface a real error instead of silently simulating
+            console.error('[IntaSend] SDK not available on window.IntaSend');
+            setErrorText('Payment gateway failed to load. Please refresh the page and try again.');
+            setIsProcessing(false);
+            return;
         }
-
-        // Fallback demo simulation
-        setTimeout(async () => {
-            setStatusText('Simulating M-Pesa STK verification…');
-            setTimeout(async () => {
-                await finalizeOrder(orderId, customerPayload, `IS-SIM-${Date.now()}`);
-            }, 1200);
-        }, 1000);
     };
 
     const finalizeOrder = async (orderId, customer, transactionId) => {
         try {
-            // 1. Create order record
             await fetch(apiUrl('/orders/create'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     transaction_id: transactionId,
-                    invoice_id: transactionId,
-                    tx_ref: orderId,
-                    cartItems: cart,
-                    customer: customer,
+                    invoice_id:     transactionId,
+                    tx_ref:         orderId,
+                    cartItems:      cart,
+                    customer:       customer,
                     payment_method: paymentMethod === 'CARD' ? 'Card (IntaSend)' : 'M-Pesa (IntaSend)'
                 })
             }).catch(() => null);
 
-            // 2. Fiscalize with KRA eTIMS
             await fetch(apiUrl('/orders/fiscalize'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    order_id: orderId,
-                    total_amount: cartTotal,
-                    customer_name: customer.name,
+                    order_id:       orderId,
+                    total_amount:   cartTotal,
+                    customer_name:  customer.name,
                     customer_email: customer.email,
                     payment_method: paymentMethod,
-                    items: cart
+                    items:          cart
                 })
             }).catch(() => null);
 
-            // 3. Save local copy for offline resilience
             const localOrder = {
-                id: orderId,
+                id:                 orderId,
                 flw_transaction_id: transactionId,
-                total_amount: cartTotal,
-                total: cartTotal,
-                subtotal: cartSubtotal,
-                vat: cartVAT,
-                customer_name: customer.name,
-                customer_phone: customer.phone,
-                customer_email: customer.email,
-                shipping_address: customer.address,
-                payment_method: paymentMethod === 'CARD' ? 'Card (IntaSend)' : 'M-Pesa (IntaSend)',
-                created_at: new Date().toISOString(),
-                items: cart
+                total_amount:       cartTotal,
+                total:              cartTotal,
+                subtotal:           cartSubtotal,
+                vat:                cartVAT,
+                customer_name:      customer.name,
+                customer_phone:     customer.phone,
+                customer_email:     customer.email,
+                shipping_address:   customer.address,
+                payment_method:     paymentMethod === 'CARD' ? 'Card (IntaSend)' : 'M-Pesa (IntaSend)',
+                created_at:         new Date().toISOString(),
+                items:              cart
             };
             localStorage.setItem(`tn_order_${orderId}`, JSON.stringify(localOrder));
+            localStorage.setItem('bytetechltd_last_order', JSON.stringify(localOrder));
 
-            // Trigger confetti
-            confetti({
-                particleCount: 80,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
-
+            confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
             clearCart();
             closeCheckout();
             navigate(`/receipt?orderId=${encodeURIComponent(orderId)}`);
@@ -187,186 +177,328 @@ export function CheckoutModal() {
         }
     };
 
+    // ── Shared input style following the site's light theme ───────────────────
+    const inputBase = {
+        width:        '100%',
+        background:   'var(--surface-frost)',
+        border:       '1.5px solid var(--surface-border)',
+        borderRadius: 'var(--radius-md)',
+        padding:      '10px 14px',
+        fontSize:     '0.9rem',
+        color:        'var(--text-main)',
+        fontFamily:   'var(--font-body)',
+        outline:      'none',
+        boxSizing:    'border-box',
+        transition:   'border-color 0.2s',
+    };
+
+    const labelStyle = {
+        display:      'block',
+        fontSize:     '0.78rem',
+        fontWeight:   '700',
+        color:        'var(--text-muted)',
+        marginBottom: '5px',
+        textTransform:'uppercase',
+        letterSpacing:'0.04em',
+    };
+
+    const methodBtnStyle = (active, accent = '#0058BC', accentBg = '#EBF3FF') => ({
+        flex:           1,
+        padding:        '10px 12px',
+        borderRadius:   'var(--radius-md)',
+        border:         active ? `1.5px solid ${accent}` : '1.5px solid var(--surface-border)',
+        background:     active ? accentBg : 'var(--surface-frost)',
+        color:          active ? accent : 'var(--text-muted)',
+        fontWeight:     '700',
+        fontSize:       '0.82rem',
+        cursor:         'pointer',
+        display:        'flex',
+        alignItems:     'center',
+        justifyContent: 'center',
+        gap:            '6px',
+        transition:     'all 0.2s',
+    });
+
     return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-            
-            {/* Modal Container */}
-            <div className="checkout-sheet relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col animate-slideUp">
-                
-                {/* Mobile Drag Handle */}
-                <div className="sm:hidden w-12 h-1.5 bg-slate-700 rounded-full mx-auto mt-3 mb-1" />
+        <>
+            {/* ── Backdrop ── */}
+            <div
+                onClick={(e) => { if (e.target === e.currentTarget && !isProcessing) closeCheckout(); }}
+                style={{
+                    position:       'fixed',
+                    inset:          0,
+                    zIndex:         1000,
+                    background:     'rgba(10, 25, 47, 0.55)',
+                    backdropFilter: 'blur(6px)',
+                    display:        'flex',
+                    alignItems:     'flex-end',
+                    justifyContent: 'center',
+                    animation:      'co-fadeIn 0.2s ease',
+                }}
+            >
+                {/* ── Sheet ── */}
+                <div style={{
+                    position:      'relative',
+                    width:         '100%',
+                    maxWidth:      '540px',
+                    background:    'var(--surface-white)',
+                    border:        '1px solid var(--surface-border)',
+                    borderRadius:  'var(--radius-xl) var(--radius-xl) 0 0',
+                    boxShadow:     '0 -12px 48px rgba(10,25,47,0.12)',
+                    maxHeight:     '92vh',
+                    display:       'flex',
+                    flexDirection: 'column',
+                    overflow:      'hidden',
+                    animation:     'co-slideUp 0.3s cubic-bezier(.16,1,.3,1)',
+                }}>
 
-                {/* Header */}
-                <div className="p-5 sm:p-6 border-b border-slate-800 flex items-center justify-between">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                            <h2 className="font-extrabold text-lg sm:text-xl text-white">Instant M-Pesa Checkout</h2>
-                        </div>
-                        <p className="text-xs text-slate-400 mt-0.5">Secure payment powered by IntaSend</p>
-                    </div>
+                    {/* Drag handle */}
+                    <div style={{
+                        width:'44px', height:'5px',
+                        background: 'var(--surface-border)',
+                        borderRadius: '999px',
+                        margin: '12px auto 4px',
+                        flexShrink: 0,
+                    }} />
 
-                    <button 
-                        onClick={closeCheckout}
-                        disabled={isProcessing}
-                        className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-
-                {/* Scrollable Form Body */}
-                <form onSubmit={handleFormSubmit} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
-                    
-                    {/* Amount Highlight */}
-                    <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-950 to-slate-900 border border-slate-800 flex items-center justify-between">
+                    {/* ── Header ── */}
+                    <div style={{
+                        padding:       '14px 24px 16px',
+                        borderBottom:  '1px solid var(--surface-border)',
+                        display:       'flex',
+                        alignItems:    'center',
+                        justifyContent:'space-between',
+                        flexShrink:    0,
+                    }}>
                         <div>
-                            <span className="text-[11px] uppercase font-bold text-slate-400">Total Payable</span>
-                            <div className="text-2xl font-black text-white">{formatKES(cartTotal)}</div>
-                            <span className="text-[10px] text-slate-500 font-mono">Includes 16% VAT ({formatKES(cartVAT)})</span>
+                            <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                                <span style={{
+                                    width:'9px', height:'9px',
+                                    borderRadius:'50%',
+                                    background: 'var(--accent-success)',
+                                    display:'inline-block',
+                                    animation:'co-pulse 2s infinite',
+                                }} />
+                                <h2 style={{ fontSize:'1.1rem', fontWeight:'800', color:'var(--midnight-navy)', margin:0 }}>
+                                    Instant M-Pesa Checkout
+                                </h2>
+                            </div>
+                            <p style={{ fontSize:'0.78rem', color:'var(--text-muted)', margin:'2px 0 0 17px' }}>
+                                Secure payment powered by IntaSend
+                            </p>
                         </div>
-                        <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center gap-1">
-                            <ShieldCheck className="w-4 h-4" /> eTIMS Compliant
-                        </span>
+
+                        <button
+                            type="button"
+                            onClick={closeCheckout}
+                            disabled={isProcessing}
+                            style={{
+                                width:'36px', height:'36px',
+                                borderRadius:'50%',
+                                background:'var(--surface-frost)',
+                                border:'1px solid var(--surface-border)',
+                                color:'var(--text-muted)',
+                                cursor:'pointer',
+                                display:'flex', alignItems:'center', justifyContent:'center',
+                                flexShrink: 0,
+                            }}
+                        >
+                            <X size={17} />
+                        </button>
                     </div>
 
-                    {/* Payment Method Selector */}
-                    <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                            Payment Method
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setPaymentMethod('M-PESA')}
-                                className={`p-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition-all ${
-                                    paymentMethod === 'M-PESA'
-                                        ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-500/10'
-                                        : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white'
-                                }`}
-                            >
-                                <Smartphone className="w-4 h-4" />
-                                <span>M-Pesa STK Push</span>
-                            </button>
+                    {/* ── Scrollable form ── */}
+                    <form
+                        onSubmit={handleFormSubmit}
+                        style={{
+                            padding:       '20px 24px',
+                            overflowY:     'auto',
+                            flex:          1,
+                            display:       'flex',
+                            flexDirection: 'column',
+                            gap:           '18px',
+                        }}
+                    >
 
-                            <button
-                                type="button"
-                                onClick={() => setPaymentMethod('CARD')}
-                                className={`p-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition-all ${
-                                    paymentMethod === 'CARD'
-                                        ? 'bg-cyan-600/20 border-cyan-500 text-cyan-400 shadow-lg shadow-cyan-500/10'
-                                        : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white'
-                                }`}
-                            >
-                                <CreditCard className="w-4 h-4" />
-                                <span>Card (Visa / MC)</span>
-                            </button>
+                        {/* Amount summary card */}
+                        <div style={{
+                            padding:      '16px 18px',
+                            borderRadius: 'var(--radius-lg)',
+                            background:   'linear-gradient(135deg, var(--midnight-navy) 0%, #0D2847 100%)',
+                            display:      'flex',
+                            alignItems:   'center',
+                            justifyContent:'space-between',
+                            gap:          '12px',
+                        }}>
+                            <div>
+                                <div style={{ fontSize:'0.7rem', fontWeight:'700', textTransform:'uppercase', letterSpacing:'0.08em', color:'rgba(255,255,255,0.5)', marginBottom:'2px' }}>
+                                    Total Payable
+                                </div>
+                                <div style={{ fontSize:'1.8rem', fontWeight:'900', color:'#ffffff', lineHeight:1.1 }}>
+                                    {formatKES(cartTotal)}
+                                </div>
+                                <div style={{ fontSize:'0.72rem', color:'rgba(255,255,255,0.45)', marginTop:'3px', fontFamily:'monospace' }}>
+                                    Incl. 16% VAT ({formatKES(cartVAT)})
+                                </div>
+                            </div>
+                            <div style={{
+                                padding:      '8px 12px',
+                                borderRadius: 'var(--radius-md)',
+                                background:   'rgba(16,185,129,0.15)',
+                                border:       '1px solid rgba(16,185,129,0.3)',
+                                color:        '#34D399',
+                                fontWeight:   '700',
+                                fontSize:     '0.75rem',
+                                display:      'flex',
+                                alignItems:   'center',
+                                gap:          '5px',
+                                flexShrink:   0,
+                            }}>
+                                <QrCode size={14} />
+                                <span>eTIMS</span>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* M-Pesa Phone Number (MANDATORY) */}
-                    <div>
-                        <label className="block text-xs font-bold text-slate-200 mb-1">
-                            M-Pesa Phone Number <span className="text-cyan-400 font-bold">*</span>
-                        </label>
-                        <div className="relative">
+                        {/* Payment method */}
+                        <div>
+                            <label style={labelStyle}>Payment Method</label>
+                            <div style={{ display:'flex', gap:'10px' }}>
+                                <button type="button" onClick={() => setPaymentMethod('M-PESA')} style={methodBtnStyle(paymentMethod === 'M-PESA', '#059669', '#ECFDF5')}>
+                                    <Smartphone size={15} />
+                                    <span>M-Pesa STK Push</span>
+                                </button>
+                                <button type="button" onClick={() => setPaymentMethod('CARD')} style={methodBtnStyle(paymentMethod === 'CARD', '#0058BC', '#EBF3FF')}>
+                                    <CreditCard size={15} />
+                                    <span>Card (Visa / MC)</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Phone number */}
+                        <div>
+                            <label style={{ ...labelStyle, textTransform:'none', letterSpacing:0, fontSize:'0.85rem', color:'var(--text-main)' }}>
+                                M-Pesa Phone Number <span style={{ color:'var(--primary-blue)' }}>*</span>
+                            </label>
                             <input
                                 type="tel"
                                 required
                                 placeholder="0712 345 678"
                                 value={phone}
                                 onChange={(e) => setPhone(e.target.value)}
-                                className="w-full bg-slate-950 border border-cyan-500/60 focus:border-cyan-400 rounded-xl px-4 py-3 text-base font-mono font-bold text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                                style={{
+                                    ...inputBase,
+                                    border:       '1.5px solid var(--primary-blue)',
+                                    fontSize:     '1.05rem',
+                                    fontWeight:   '700',
+                                    fontFamily:   'var(--font-mono)',
+                                    padding:      '12px 16px',
+                                }}
                             />
-                        </div>
-                        <p className="text-[11px] text-slate-400 mt-1">
-                            A payment prompt (STK Push) will be sent to this phone.
-                        </p>
-                    </div>
-
-                    {/* Optional Details (Collapsible or Clean Fields) */}
-                    <div className="space-y-3 pt-1 border-t border-slate-800">
-                        <span className="text-[11px] uppercase font-bold text-slate-500 tracking-wider">
-                            Receipt & Delivery Info (Optional)
-                        </span>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-[11px] text-slate-400 mb-1">Full Name</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. John Kamau"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-slate-700"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-[11px] text-slate-400 mb-1">Email (for PDF receipt)</label>
-                                <input
-                                    type="email"
-                                    placeholder="john@example.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-slate-700"
-                                />
-                            </div>
+                            <p style={{ fontSize:'0.75rem', color:'var(--text-muted)', marginTop:'5px' }}>
+                                A payment prompt (STK Push) will be sent to this phone.
+                            </p>
                         </div>
 
+                        {/* Optional fields */}
                         <div>
-                            <label className="block text-[11px] text-slate-400 mb-1">Delivery Address</label>
-                            <input
-                                type="text"
-                                placeholder="e.g. Nyali, Mombasa / Pick-up Station"
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-slate-700"
-                            />
+                            <div style={{
+                                borderTop:  '1px solid var(--surface-border)',
+                                paddingTop: '14px',
+                                marginBottom:'10px',
+                            }}>
+                                <span style={{ ...labelStyle, margin:0 }}>Receipt &amp; Delivery Info (Optional)</span>
+                            </div>
+                            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px' }}>
+                                <div>
+                                    <label style={{ ...labelStyle, textTransform:'none', letterSpacing:0, fontSize:'0.8rem' }}>Full Name</label>
+                                    <input type="text" placeholder="e.g. John Kamau" value={name} onChange={(e) => setName(e.target.value)} style={inputBase} />
+                                </div>
+                                <div>
+                                    <label style={{ ...labelStyle, textTransform:'none', letterSpacing:0, fontSize:'0.8rem' }}>Email (PDF receipt)</label>
+                                    <input type="email" placeholder="john@example.com" value={email} onChange={(e) => setEmail(e.target.value)} style={inputBase} />
+                                </div>
+                            </div>
+                            <div>
+                                <label style={{ ...labelStyle, textTransform:'none', letterSpacing:0, fontSize:'0.8rem' }}>Delivery Address</label>
+                                <input type="text" placeholder="e.g. Nyali, Mombasa / Pick-up Station" value={address} onChange={(e) => setAddress(e.target.value)} style={inputBase} />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Status & Error Alerts */}
-                    {statusText && (
-                        <div className="p-3 rounded-xl bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-xs flex items-center gap-2 animate-pulse">
-                            <CheckCircle2 className="w-4 h-4 shrink-0" />
-                            <span>{statusText}</span>
-                        </div>
-                    )}
+                        {/* Status */}
+                        {statusText && (
+                            <div style={{
+                                padding:      '12px 14px',
+                                borderRadius: 'var(--radius-md)',
+                                background:   '#F0FDF4',
+                                border:       '1px solid #BBF7D0',
+                                color:        '#166534',
+                                fontSize:     '0.84rem',
+                                display:      'flex',
+                                alignItems:   'center',
+                                gap:          '8px',
+                            }}>
+                                <CheckCircle2 size={16} style={{ flexShrink:0, color:'var(--accent-success)' }} />
+                                <span>{statusText}</span>
+                            </div>
+                        )}
 
-                    {errorText && (
-                        <div className="p-3 rounded-xl bg-red-950/60 border border-red-500/40 text-red-300 text-xs flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4 shrink-0" />
-                            <span>{errorText}</span>
-                        </div>
-                    )}
+                        {/* Error */}
+                        {errorText && (
+                            <div style={{
+                                padding:      '12px 14px',
+                                borderRadius: 'var(--radius-md)',
+                                background:   '#FEF2F2',
+                                border:       '1px solid #FCA5A5',
+                                color:        '#991B1B',
+                                fontSize:     '0.84rem',
+                                display:      'flex',
+                                alignItems:   'center',
+                                gap:          '8px',
+                            }}>
+                                <AlertCircle size={16} style={{ flexShrink:0, color:'var(--accent-error)' }} />
+                                <span>{errorText}</span>
+                            </div>
+                        )}
 
-                    {/* Submit CTA */}
-                    <div className="pt-2">
+                        {/* Pay button */}
                         <ShimmerButton
                             type="submit"
+                            variant="electric"
+                            size="lg"
                             disabled={isProcessing}
-                            className="w-full py-3.5 text-slate-950 font-black text-sm flex items-center justify-center gap-2 rounded-xl"
+                            style={{ width:'100%' }}
                         >
-                            {isProcessing ? (
-                                <span>Processing Payment…</span>
-                            ) : (
-                                <>
-                                    <span>Pay {formatKES(cartTotal)} via M-Pesa</span>
-                                    <ArrowRight className="w-4 h-4" />
-                                </>
-                            )}
+                            {isProcessing
+                                ? <span>Processing Payment…</span>
+                                : <><span>Pay {formatKES(cartTotal)} via M-Pesa</span><ArrowRight size={16} /></>
+                            }
                         </ShimmerButton>
-                    </div>
 
-                    <div className="text-center text-[10px] text-slate-500 flex items-center justify-center gap-1 pb-1">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>256-bit TLS Encrypted · Official KRA eTIMS Tax Invoice Generated</span>
-                    </div>
+                        {/* Trust footer */}
+                        <div style={{
+                            display:        'flex',
+                            alignItems:     'center',
+                            justifyContent: 'center',
+                            gap:            '6px',
+                            fontSize:       '0.72rem',
+                            color:          'var(--text-light)',
+                            paddingBottom:  '4px',
+                        }}>
+                            <ShieldCheck size={13} color="var(--accent-success)" />
+                            <span>256-bit TLS Encrypted · Official KRA eTIMS Tax Invoice Generated</span>
+                        </div>
 
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
+
+            {/* Keyframes */}
+            <style>{`
+                @keyframes co-fadeIn  { from { opacity:0 } to { opacity:1 } }
+                @keyframes co-slideUp { from { transform:translateY(48px); opacity:0 } to { transform:translateY(0); opacity:1 } }
+                @keyframes co-pulse   { 0%,100%{opacity:1} 50%{opacity:0.35} }
+            `}</style>
+        </>
     );
 }
 
