@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import { apiUrl } from '../lib/api';
 
 const AuthContext = createContext();
 
@@ -20,12 +21,12 @@ export function AuthProvider({ children }) {
     });
 
     const loginSeller = (profile, token) => {
-        const tok = token || (typeof profile === 'string' ? profile : `token-${profile?.id || Date.now()}`);
-        const prof = typeof profile === 'object' ? profile : { id: 'seller-demo', store_name: 'Merchant' };
-        localStorage.setItem('tn_seller_token', tok);
-        localStorage.setItem('tn_seller_profile', JSON.stringify(prof));
-        setSeller(prof);
-        setSellerToken(tok);
+        if (!token || !profile) return false;
+        localStorage.setItem('tn_seller_token', token);
+        localStorage.setItem('tn_seller_profile', JSON.stringify(profile));
+        setSeller(profile);
+        setSellerToken(token);
+        return true;
     };
 
     const logoutSeller = () => {
@@ -35,13 +36,28 @@ export function AuthProvider({ children }) {
         setSellerToken(null);
     };
 
-    const loginAdmin = (pin) => {
-        if (pin === 'TN2026' || pin === 'admin') {
-            sessionStorage.setItem('tn_admin_pin', pin);
-            setAdminPin(pin);
-            return true;
+    const loginAdmin = async (pin) => {
+        if (!pin || typeof pin !== 'string') {
+            return { success: false, error: 'Please enter a PIN.' };
         }
-        return false;
+        const cleanPin = pin.trim();
+        try {
+            const res = await fetch(apiUrl('/admin/summary'), {
+                headers: { 'x-admin-pin': cleanPin }
+            });
+            if (res.ok) {
+                sessionStorage.setItem('tn_admin_pin', cleanPin);
+                setAdminPin(cleanPin);
+                return { success: true };
+            }
+            if (res.status === 403 || res.status === 401) {
+                return { success: false, error: 'Invalid PIN — Access Denied.' };
+            }
+            return { success: false, error: `Authentication server returned status ${res.status}.` };
+        } catch (err) {
+            console.error('Admin authentication inquiry error:', err);
+            return { success: false, error: 'Unable to reach backend server. Please verify PHP/Apache is running.' };
+        }
     };
 
     const logoutAdmin = () => {

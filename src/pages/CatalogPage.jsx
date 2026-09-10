@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, ArrowUpDown, X, Filter } from 'lucide-react';
+import { Search, SlidersHorizontal, ArrowUpDown, X, Filter, Loader2 } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import FilterDrawer from '../components/FilterDrawer';
-import { PRODUCTS, CATEGORIES } from '../data/products';
+import { CATEGORIES, formatKES } from '../data/products';
+import { apiUrl } from '../lib/api';
 
 export default function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -14,11 +15,43 @@ export default function CatalogPage() {
 
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
-  const [priceLimit, setPriceLimit] = useState(350000);
+  const [priceLimit, setPriceLimit] = useState(15000);
   const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState('featured');
   const [inStockOnly, setInStockOnly] = useState(false);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+
+  // Live products from the API
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [productsError, setProductsError] = useState('');
+
+  useEffect(() => {
+    setLoadingProducts(true);
+    fetch(apiUrl('/products?limit=100'))
+      .then(r => r.json())
+      .then(data => {
+        const list = data.products || data.data?.products || [];
+        // Normalise DB shape → component shape
+        setProducts(list.map(p => ({
+          ...p,
+          title: p.name,
+          image: p.image || p.image_url,
+          price: parseFloat(p.price) || 0,
+          sellerId: p.seller_id,
+          brand: p.store_name || p.seller_name || 'Byte Tech Partner',
+          inStock: (p.stock ?? 1) > 0,
+          specs: typeof p.specs === 'string' ? p.specs.split('|').map(s => s.trim()) : (p.specs || []),
+          seller: p.store_name || p.seller_name || 'Byte Tech',
+          rating: p.rating ?? 4.8,
+          reviews: p.reviews ?? 0,
+          reviewsCount: p.reviews ?? 0,
+        })));
+        setProductsError('');
+      })
+      .catch(() => setProductsError('Unable to load products. Please refresh.'))
+      .finally(() => setLoadingProducts(false));
+  }, []);
 
   // Sync URL params if updated externally
   useEffect(() => {
@@ -43,7 +76,7 @@ export default function CatalogPage() {
   const handleResetFilters = () => {
     setSearchQuery('');
     setSelectedCategory('all');
-    setPriceLimit(350000);
+    setPriceLimit(15000);
     setMinRating(0);
     setSortBy('featured');
     setInStockOnly(false);
@@ -52,42 +85,29 @@ export default function CatalogPage() {
 
   // Filtered & Sorted products computation
   const filteredProducts = useMemo(() => {
-    return PRODUCTS.filter((product) => {
-      // Category match
-      if (selectedCategory !== 'all' && product.category !== selectedCategory) {
-        return false;
-      }
-      // Price match
-      if (product.price > priceLimit) {
-        return false;
-      }
-      // Rating match
-      if (minRating > 0 && product.rating < minRating) {
-        return false;
-      }
-      // In-stock match
-      if (inStockOnly && !product.inStock) {
-        return false;
-      }
-      // Search text match (title, description, specs, brand)
+    return products.filter((product) => {
+      if (selectedCategory !== 'all' && product.category !== selectedCategory) return false;
+      if (product.price > priceLimit) return false;
+      if (minRating > 0 && (product.rating ?? 0) < minRating) return false;
+      if (inStockOnly && !product.inStock) return false;
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
-        const matchesTitle = product.title.toLowerCase().includes(query);
-        const matchesBrand = (product.brand || '').toLowerCase().includes(query);
-        const matchesDesc = (product.description || '').toLowerCase().includes(query);
-        const matchesSpecs = (product.specs || []).some((s) => s.toLowerCase().includes(query));
-        if (!matchesTitle && !matchesBrand && !matchesDesc && !matchesSpecs) {
-          return false;
-        }
+        const title = (product.title || product.name || '').toLowerCase();
+        const brand = (product.brand || '').toLowerCase();
+        const desc  = (product.description || '').toLowerCase();
+        const specs = Array.isArray(product.specs)
+          ? product.specs.join(' ').toLowerCase()
+          : String(product.specs || '').toLowerCase();
+        if (!title.includes(query) && !brand.includes(query) && !desc.includes(query) && !specs.includes(query)) return false;
       }
       return true;
     }).sort((a, b) => {
-      if (sortBy === 'price-asc') return a.price - b.price;
+      if (sortBy === 'price-asc')  return a.price - b.price;
       if (sortBy === 'price-desc') return b.price - a.price;
-      if (sortBy === 'rating') return b.rating - a.rating;
-      return a.id - b.id; // 'featured' default
+      if (sortBy === 'rating')     return (b.rating ?? 0) - (a.rating ?? 0);
+      return 0;
     });
-  }, [selectedCategory, priceLimit, minRating, inStockOnly, searchQuery, sortBy]);
+  }, [products, selectedCategory, priceLimit, minRating, inStockOnly, searchQuery, sortBy]);
 
   return (
     <div className="catalog-page" style={{ padding: '36px 0 60px' }}>
@@ -328,8 +348,19 @@ export default function CatalogPage() {
               </span>
             </div>
 
-            {/* Empty State */}
-            {filteredProducts.length === 0 ? (
+            {/* Loading / Error states */}
+            {loadingProducts ? (
+              <div style={{ textAlign: 'center', padding: '80px 20px', color: 'var(--text-muted)' }}>
+                <Loader2 size={36} style={{ margin: '0 auto 16px', display: 'block', animation: 'spin 1s linear infinite', color: 'var(--primary-blue)' }} />
+                <p style={{ fontWeight: '600' }}>Loading catalog from database…</p>
+              </div>
+            ) : productsError ? (
+              <div style={{ textAlign: 'center', padding: '80px 20px', color: 'var(--error-red)' }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>⚠️</div>
+                <p style={{ fontWeight: '600' }}>{productsError}</p>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+
               <div style={{
                 textAlign: 'center',
                 padding: '64px 20px',

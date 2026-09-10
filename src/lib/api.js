@@ -39,7 +39,7 @@ export async function authFetch(path, options = {}) {
  * Admin fetch — injects admin PIN from sessionStorage.
  */
 export async function adminFetch(path, options = {}) {
-    const pin = sessionStorage.getItem('tn_admin_pin') || 'TN2026';
+    const pin = sessionStorage.getItem('tn_admin_pin') || '';
     return fetch(apiUrl(path), {
         ...options,
         headers: {

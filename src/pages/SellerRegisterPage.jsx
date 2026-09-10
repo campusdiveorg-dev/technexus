@@ -53,23 +53,10 @@ export default function SellerRegisterPage() {
       }
     } catch (err) {
       console.error('Registration/Login error:', err);
-      setError('Unable to reach server. Please ensure the backend is running or use Quick Demo below.');
+      setError('Unable to reach server. Please ensure the backend is active and try again.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDemoLogin = () => {
-    const demoSeller = {
-      id: 'seller-1788219517471',
-      store_name: 'CampusKey Electronics',
-      full_name: 'ONYANGO ELISHA ADERA',
-      email: 'bbit046j2024@students.tum.ac.ke',
-      category: 'Laptops',
-      commission_rate: 0.12
-    };
-    loginSeller(demoSeller, 'demo-jwt-token');
-    navigate('/seller/dashboard');
   };
 
   return (
@@ -271,24 +258,6 @@ export default function SellerRegisterPage() {
                 </button>
               </span>
             )}
-          </div>
-
-          {/* Quick Demo Access */}
-          <div style={{ marginTop: '16px', textAlign: 'center' }}>
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-light)',
-                fontSize: '0.78rem',
-                cursor: 'pointer',
-                textDecoration: 'underline'
-              }}
-            >
-              ⚡ Instant Developer Preview: Test as CampusKey Merchant
-            </button>
           </div>
         </div>
       </div>

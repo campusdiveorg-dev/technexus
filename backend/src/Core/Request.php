@@ -144,6 +144,14 @@ class Request
 
     public function clientIp(): string
     {
-        return $_SERVER['HTTP_X_FORWARDED_FOR'] ?? ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+        $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null;
+        if ($forwarded) {
+            $parts = explode(',', $forwarded);
+            $ip = trim($parts[0]);
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+        return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
     }
 }

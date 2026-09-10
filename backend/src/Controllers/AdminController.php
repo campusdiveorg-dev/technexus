@@ -189,4 +189,29 @@ class AdminController
             Response::error($e->getMessage(), 500);
         }
     }
+
+    public function deleteOrder(Request $request): void
+    {
+        try {
+            $data = $request->body();
+            $orderId = (string)($data['order_id'] ?? $request->query('order_id') ?? $request->query('id') ?? '');
+
+            if (empty($orderId)) {
+                Response::error('Order ID is required for deletion.', 400);
+                return;
+            }
+
+            $deleted = $this->orderRepo->delete($orderId);
+            if (!$deleted) {
+                Response::error('Order not found or could not be removed.', 404);
+                return;
+            }
+
+            \App\Core\Logger::info('Order deleted by Admin', ['order_id' => $orderId]);
+
+            Response::success(['order_id' => $orderId], 'Order deleted permanently from the platform.');
+        } catch (Throwable $e) {
+            Response::error($e->getMessage(), 500);
+        }
+    }
 }

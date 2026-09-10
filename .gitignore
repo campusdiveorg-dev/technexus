@@ -24,3 +24,11 @@ Thumbs.db
 
 # Generated PDFs (serve locally)
 *.pdf
+
+# Dev-only scratch & seed scripts
+scratch_*.php
+backend/seed_products.php
+
+# Backend runtime logs
+backend/logs/*.log
+backend/logs/app*.log

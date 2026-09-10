@@ -21,12 +21,26 @@ class Sanitizer
     }
 
     /**
-     * Generates a branded, unique order ID (e.g. BT-ORD-20260908-A1B2)
+     * Generates a branded, unique receipt/order ID starting with BT01 (e.g. BT01-0712345678-A1B2)
      */
-    public static function generateOrderId(string $prefix = 'BT-ORD'): string
+    public static function generateOrderId(string $prefix = 'BT01', ?string $customerPhone = null): string
     {
-        $date = date('Ymd');
+        $custPart = '';
+        if ($customerPhone) {
+            $digits = preg_replace('/\D/', '', $customerPhone);
+            if (str_starts_with($digits, '254') && strlen($digits) >= 12) {
+                $custPart = '0' . substr($digits, 3);
+            } elseif (!empty($digits)) {
+                $custPart = $digits;
+            }
+        }
+
         $random = strtoupper(bin2hex(random_bytes(2)));
+        if (!empty($custPart)) {
+            return "{$prefix}-{$custPart}-{$random}";
+        }
+
+        $date = date('Ymd');
         return "{$prefix}-{$date}-{$random}";
     }
 

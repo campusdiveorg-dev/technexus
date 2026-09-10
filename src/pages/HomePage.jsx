@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   ArrowRight, ShieldCheck, Truck, Sparkles, 
@@ -9,7 +9,7 @@ import ShimmerButton from '../components/magicui/ShimmerButton';
 import DotPattern from '../components/magicui/DotPattern';
 import Marquee from '../components/magicui/Marquee';
 import ProductCard from '../components/ProductCard';
-import { PRODUCTS } from '../data/products';
+import { apiUrl } from '../lib/api';
 
 const BRAND_PARTNERS = [
   { name: 'Apple Authorized', query: 'Apple' },
@@ -62,8 +62,30 @@ const CATEGORIES = [
 
 export default function HomePage() {
   const navigate = useNavigate();
-  // Spotlight 4 top flagships
-  const featuredProducts = PRODUCTS.slice(0, 4);
+
+  // Fetch 4 featured products from live DB
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  useEffect(() => {
+    fetch(apiUrl('/products?limit=4'))
+      .then(r => r.json())
+      .then(data => {
+        const list = data.products || data.data?.products || [];
+        setFeaturedProducts(list.map(p => ({
+          ...p,
+          title: p.name,
+          image: p.image || p.image_url,
+          price: parseFloat(p.price) || 0,
+          sellerId: p.seller_id,
+          brand: p.store_name || p.seller_name || 'Byte Tech Partner',
+          inStock: (p.stock ?? 1) > 0,
+          specs: typeof p.specs === 'string' ? p.specs.split('|').map(s => s.trim()) : (p.specs || []),
+          seller: p.store_name || p.seller_name || 'Byte Tech',
+          rating: p.rating ?? 4.8,
+          reviews: p.reviews ?? 0,
+        })));
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="home-page" style={{ background: '#F8FAFC', minHeight: '100vh' }}>

@@ -27,15 +27,6 @@ class AuthMiddleware
         $payload = Jwt::decode($token, $secret);
 
         if (!$payload || !isset($payload['sub'])) {
-            if ($token === 'demo-jwt-token' || str_starts_with($token, 'token-')) {
-                $firstSeller = \App\Core\Database::selectOne('SELECT id, store_name, email FROM sellers WHERE is_active = 1 ORDER BY created_at DESC LIMIT 1');
-                if ($firstSeller) {
-                    $request->setAttribute('seller', ['sub' => $firstSeller['id'], 'email' => $firstSeller['email']]);
-                    $request->setAttribute('seller_id', $firstSeller['id']);
-                    return;
-                }
-            }
-
             Response::unauthorized('Invalid or expired authentication session.');
             return;
         }

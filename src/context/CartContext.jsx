@@ -65,9 +65,9 @@ export function CartProvider({ children }) {
                 image: product.image || product.image_url,
                 category: product.category,
                 specs: product.specs,
-                seller: product.seller || 'Byte Tech Partner',
-                sellerId: product.sellerId || null,
-                commissionRate: product.commissionRate || 0.10,
+                seller: product.seller || product.store_name || product.seller_name || 'Byte Tech Partner',
+                sellerId: product.sellerId || product.seller_id || null,
+                commissionRate: product.commissionRate || product.commission_rate || 0.10,
                 quantity: qty
             }];
         });

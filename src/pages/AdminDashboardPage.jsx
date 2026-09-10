@@ -93,13 +93,23 @@ const EmptyState = ({ label, sub }) => (
 /* ─── PIN Gate ──────────────────────────────────────────── */
 function PinGate() {
   const [pin, setPin] = useState('');
-  const [error, setError] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [show, setShow] = useState(false);
   const { loginAdmin } = useAuth();
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    if (!loginAdmin(pin)) { setError(true); setPin(''); }
+    if (!pin.trim() || submitting) return;
+    setSubmitting(true);
+    setErrorMsg('');
+    const result = await loginAdmin(pin.trim());
+    // loginAdmin returns { success: boolean, error?: string }
+    if (!result?.success) {
+      setErrorMsg(result?.error || 'Invalid PIN — Access Denied');
+      setPin('');
+    }
+    setSubmitting(false);
   };
 
   return (
@@ -111,29 +121,28 @@ function PinGate() {
         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: C.text, marginBottom: 8 }}>Admin Console</h2>
         <p style={{ fontSize: '0.875rem', color: C.textSub, marginBottom: 32, lineHeight: 1.6 }}>Byte Tech Operations Hub — Authorized Personnel Only</p>
 
-        {error && (
+        {errorMsg && (
           <div style={{ padding: '12px 16px', borderRadius: 12, marginBottom: 20, background: C.errorBg, border: '1px solid #FECACA', color: C.error, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <AlertCircle size={16} /> Invalid PIN — Access Denied
+            <AlertCircle size={16} /> {errorMsg}
           </div>
         )}
 
         <form onSubmit={submit}>
           <div style={{ position: 'relative', marginBottom: 20 }}>
-            <input type={show ? 'text' : 'password'} maxLength={8} placeholder="Enter Master PIN" value={pin} autoFocus
-              onChange={e => { setPin(e.target.value); setError(false); }}
-              style={{ width: '100%', padding: '14px 48px 14px 20px', borderRadius: 14, fontSize: '1.1rem', fontWeight: 700, letterSpacing: '8px', textAlign: 'center', background: C.bg, border: `1.5px solid ${error ? '#FCA5A5' : C.border}`, color: C.text, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+            <input type={show ? 'text' : 'password'} maxLength={16} placeholder="Enter Master PIN" value={pin} autoFocus
+              onChange={e => { setPin(e.target.value); setErrorMsg(''); }}
+              style={{ width: '100%', padding: '14px 48px 14px 20px', borderRadius: 14, fontSize: '1.1rem', fontWeight: 700, letterSpacing: '8px', textAlign: 'center', background: C.bg, border: `1.5px solid ${errorMsg ? '#FCA5A5' : C.border}`, color: C.text, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
               onFocus={e => e.target.style.borderColor = C.primary}
-              onBlur={e => e.target.style.borderColor = error ? '#FCA5A5' : C.border}
+              onBlur={e => e.target.style.borderColor = errorMsg ? '#FCA5A5' : C.border}
             />
             <button type="button" onClick={() => setShow(!show)} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: C.textLight, background: 'none', border: 'none', cursor: 'pointer' }}>
               {show ? <Eye size={18} /> : <EyeOff size={18} />}
             </button>
           </div>
-          <button type="submit" style={{ width: '100%', padding: '14px', borderRadius: 14, fontSize: '0.95rem', fontWeight: 700, background: 'linear-gradient(135deg,#0058BC,#2563EB)', color: '#fff', cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 6px 20px rgba(0,88,188,0.3)' }}>
-            <KeyRound size={18} /> Unlock Console
+          <button type="submit" disabled={submitting} style={{ width: '100%', padding: '14px', borderRadius: 14, fontSize: '0.95rem', fontWeight: 700, background: 'linear-gradient(135deg,#0058BC,#2563EB)', color: '#fff', cursor: submitting ? 'not-allowed' : 'pointer', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 6px 20px rgba(0,88,188,0.3)', opacity: submitting ? 0.75 : 1 }}>
+            <KeyRound size={18} /> {submitting ? 'Verifying Credentials…' : 'Unlock Console'}
           </button>
         </form>
-        <p style={{ marginTop: 24, fontSize: '0.75rem', color: C.textLight }}>Default Master PIN: <strong style={{ color: C.textSub }}>TN2026</strong></p>
       </div>
     </div>
   );
@@ -175,7 +184,7 @@ export default function AdminDashboardPage() {
   const [testInvoiceId, setTestInvoiceId] = useState('');
   const [verifyStatusResult, setVerifyStatusResult] = useState(null);
 
-  const getAdminPin = () => sessionStorage.getItem('tn_admin_pin') || 'TN2026';
+  const getAdminPin = () => sessionStorage.getItem('tn_admin_pin') || '';
 
   const fetchAdminData = async () => {
     try {

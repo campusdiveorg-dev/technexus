@@ -12,10 +12,11 @@ class Response
     private static array $defaultHeaders = [
         'Content-Type'                 => 'application/json; charset=utf-8',
         'X-Content-Type-Options'       => 'nosniff',
-        'X-Frame-Options'              => 'DENY',
+        'X-Frame-Options'              => 'SAMEORIGIN',
         'X-XSS-Protection'             => '1; mode=block',
         'Strict-Transport-Security'    => 'max-age=31536000; includeSubDomains',
-        'Referrer-Policy'              => 'no-referrer-when-downgrade',
+        'Referrer-Policy'              => 'strict-origin-when-cross-origin',
+        'Permissions-Policy'           => 'camera=(self), microphone=(), geolocation=()',
     ];
 
     public static function json(mixed $data, int $status = 200, array $headers = []): void

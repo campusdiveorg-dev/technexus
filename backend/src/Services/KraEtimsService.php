@@ -23,12 +23,12 @@ class KraEtimsService
     public function fiscalizeOrder(string $orderId, float $totalAmount, array $customer = []): array
     {
         $deviceSerial = Env::getString('KRA_DEVICE_SERIAL', 'KRA-VSCU-001');
-        $branchId = Env::getString('KRA_BRANCH_ID', '00');
+        $branchId = Env::getString('KRA_BRANCH_ID', 'BT01');
         $kraPin = Env::getString('KRA_PIN', 'P051234567Z');
 
         $dateStr = date('Ymd');
         $randomSeq = strtoupper(substr(md5($orderId . time()), 0, 4));
-        $invoiceNumber = "KRA-ETIMS-{$dateStr}-{$randomSeq}";
+        $invoiceNumber = "KRA-BT01-{$dateStr}-{$randomSeq}";
 
         // Official KRA verification link format
         $qrUrl = "https://itax.kra.go.ke/KRA-Portal/invoiceConfirmation.htm?cuNumber={$deviceSerial}&invoiceNumber={$invoiceNumber}&pin={$kraPin}";

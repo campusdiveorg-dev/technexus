@@ -39,17 +39,23 @@ class OrderController
     public function get(Request $request): void
     {
         try {
-            $orderId = (string)($request->query('id') ?? $request->input('id'));
+            $query = (string)(
+                $request->query('id') ?? 
+                ($request->query('order_id') ?? 
+                ($request->query('orderId') ?? 
+                ($request->query('phone') ?? 
+                ($request->query('customer') ?? $request->input('id')))))
+            );
 
-            if (empty($orderId)) {
-                Response::error('Order ID is required.', 400);
+            if (empty($query)) {
+                Response::error('Receipt ID or Customer Number is required.', 400);
                 return;
             }
 
-            $order = $this->orderService->getOrder($orderId);
+            $order = $this->orderService->getOrder($query);
 
             if (!$order) {
-                Response::notFound("Order '{$orderId}' not found.");
+                Response::notFound("No receipt found matching '{$query}'. Please check the reference or phone number.");
                 return;
             }
 
@@ -62,6 +68,33 @@ class OrderController
             Response::success([
                 'order' => $order,
             ]);
+        } catch (Throwable $e) {
+            Response::error($e->getMessage(), 500);
+        }
+    }
+
+    public function delete(Request $request): void
+    {
+        try {
+            $data = $request->body();
+            $orderId = (string)($data['order_id'] ?? $request->query('id') ?? '');
+
+            if (empty($orderId)) {
+                Response::error('Receipt / Order ID is required for deletion.', 400);
+                return;
+            }
+
+            $orderRepo = new \App\Repositories\OrderRepository();
+            $deleted = $orderRepo->delete($orderId);
+
+            if (!$deleted) {
+                Response::notFound("Receipt '{$orderId}' not found or already deleted.");
+                return;
+            }
+
+            \App\Core\Logger::info('Receipt deleted by client', ['order_id' => $orderId]);
+
+            Response::success(['order_id' => $orderId], 'Receipt deleted permanently.');
         } catch (Throwable $e) {
             Response::error($e->getMessage(), 500);
         }

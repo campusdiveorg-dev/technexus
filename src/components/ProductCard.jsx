@@ -33,8 +33,8 @@ export function ProductCard({ product, featured = false }) {
                 )}
                 <Link to={`/product/${product.id}`} className="block w-full h-full">
                     <img 
-                        src={product.image} 
-                        alt={product.name}
+                        src={product.image || product.image_url} 
+                        alt={product.name || product.title}
                         loading="lazy"
                         className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                         onError={(e) => {

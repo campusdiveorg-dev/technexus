@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, Truck, ArrowLeft, Star, Check, ShoppingBag, 
-  Zap, QrCode, Share2, Award, ChevronRight, Plus, Minus
+  Zap, QrCode, Share2, Award, ChevronRight, Plus, Minus, Loader2
 } from 'lucide-react';
-import { PRODUCTS, formatKES } from '../data/products';
+import { formatKES } from '../data/products';
+import { apiUrl } from '../lib/api';
 import { useCart } from '../context/CartContext';
 import CheckoutModal from '../components/CheckoutModal';
 import ShimmerButton from '../components/magicui/ShimmerButton';
@@ -17,16 +18,66 @@ export default function ProductPage() {
 
   const [quantity, setQuantity] = useState(1);
   const [addedAnimation, setAddedAnimation] = useState(false);
+  const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  // Find product by id
-  const product = useMemo(() => {
-    return PRODUCTS.find((p) => String(p.id) === String(id)) || PRODUCTS[0];
+  // Normalise DB product shape
+  const normalise = (p) => ({
+    ...p,
+    title: p.name,
+    image: p.image || p.image_url,
+    price: parseFloat(p.price) || 0,
+    sellerId: p.seller_id,
+    brand: p.store_name || p.seller_name || 'Byte Tech Partner',
+    inStock: (p.stock ?? 1) > 0,
+    specs: typeof p.specs === 'string' ? p.specs.split('|').map(s => s.trim()) : (p.specs || []),
+    seller: p.store_name || p.seller_name || 'Byte Tech',
+    rating: p.rating ?? 4.8,
+    reviews: p.reviews ?? 0,
+  });
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    setNotFound(false);
+    fetch(apiUrl(`/products/detail?id=${encodeURIComponent(id)}`))
+      .then(r => r.json())
+      .then(data => {
+        const p = data.product || data.data?.product;
+        if (!p) { setNotFound(true); return; }
+        const norm = normalise(p);
+        setProduct(norm);
+        // Fetch related products (same category)
+        return fetch(apiUrl(`/products?limit=20`))
+          .then(r2 => r2.json())
+          .then(data2 => {
+            const all = data2.products || data2.data?.products || [];
+            setRelatedProducts(
+              all.filter(rp => rp.category === p.category && rp.id !== p.id)
+                 .slice(0, 3)
+                 .map(normalise)
+            );
+          });
+      })
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false));
   }, [id]);
 
-  // Related products
-  const relatedProducts = useMemo(() => {
-    return PRODUCTS.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 3);
-  }, [product]);
+  if (loading) return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Loader2 size={40} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary-blue)' }} />
+    </div>
+  );
+
+  if (notFound || !product) return (
+    <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+      <div style={{ fontSize: '3rem' }}>🔍</div>
+      <h2 style={{ fontWeight: 800, color: 'var(--midnight-navy)' }}>Product Not Found</h2>
+      <Link to="/catalog" style={{ color: 'var(--primary-blue)', fontWeight: 700 }}>← Back to Catalog</Link>
+    </div>
+  );
 
   // Tax computation
   const vatAmount = Math.round(product.price * (0.16 / 1.16));

@@ -39,7 +39,8 @@ class OrderService
             throw new Exception('Cart is empty. Please add items before checking out.');
         }
 
-        $orderId = $payload['tx_ref'] ?? ($payload['order_id'] ?? Sanitizer::generateOrderId());
+        $customerPhone = $customer['phone'] ?? null;
+        $orderId = $payload['tx_ref'] ?? ($payload['order_id'] ?? Sanitizer::generateOrderId('BT01', $customerPhone));
         $transactionId = $payload['transaction_id'] ?? ($payload['invoice_id'] ?? ('TXN-' . bin2hex(random_bytes(6))));
         $paymentMethod = $payload['payment_method'] ?? 'M-Pesa (IntaSend)';
 
@@ -61,12 +62,29 @@ class OrderService
                 if ($productId) {
                     $dbProd = $this->productRepo->getById($productId);
                     if ($dbProd) {
+                        $productName = $dbProd['name'] ?? $productName;
                         $category = $dbProd['category'] ?? $category;
                         $sellerId = $dbProd['seller_id'] ?? $sellerId;
                         if (!empty($dbProd['store_name'])) {
                             $sellerName = $dbProd['store_name'];
                         }
+                        if (!empty($dbProd['image_url'])) {
+                            $image = $dbProd['image_url'];
+                        }
+
+                        // Check stock availability
+                        $availableStock = (int)($dbProd['stock'] ?? 0);
+                        if ($availableStock < $quantity) {
+                            throw new Exception("Insufficient stock for '{$productName}'. Only {$availableStock} available in inventory.");
+                        }
+
+                        // SECURITY: Authoritative price enforcement from database
+                        $unitPrice = (float)$dbProd['price'];
                     }
+                }
+
+                if ($unitPrice <= 0.0) {
+                    throw new Exception("Invalid item price for product '{$productName}'.");
                 }
 
                 $financials = $this->commService->calculateItemFinancials($category, $unitPrice, $quantity);

@@ -83,13 +83,24 @@ class PaymentService
         Logger::info('IntaSend webhook received', $payload);
 
         $invoiceId = $payload['invoice_id'] ?? null;
-        $state = $payload['state'] ?? null;
+        if (!$invoiceId || !is_string($invoiceId)) {
+            return false;
+        }
 
-        if ($invoiceId && $state === 'COMPLETE') {
+        // Authoritative verification against IntaSend API rather than trusting incoming payload
+        $verified = $this->verifyPayment($invoiceId);
+        $state = $verified['invoice']['state'] ?? ($verified['state'] ?? null);
+
+        if ($state === 'COMPLETE') {
             $this->orderRepo->updateStatus($invoiceId, 'paid', $invoiceId);
+            Logger::info('Payment verified and order updated via webhook', ['invoice_id' => $invoiceId]);
             return true;
         }
 
+        Logger::warning('Webhook received but payment verification did not confirm COMPLETE state', [
+            'invoice_id' => $invoiceId,
+            'verified_state' => $state
+        ]);
         return false;
     }
 }

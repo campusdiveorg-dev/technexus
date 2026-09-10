@@ -7,8 +7,8 @@ import ShimmerButton from './magicui/ShimmerButton';
 import confetti from 'canvas-confetti';
 import { apiUrl } from '../lib/api';
 
-const INTASEND_PUB_KEY = 'ISPubKey_live_b2d03669-6c40-4c41-a476-deb849f6a2f2';
-const INTASEND_IS_LIVE = true;
+const INTASEND_PUB_KEY = import.meta.env.VITE_INTASEND_PUB_KEY || 'ISPubKey_live_b2d03669-6c40-4c41-a476-deb849f6a2f2';
+const INTASEND_IS_LIVE = import.meta.env.VITE_INTASEND_IS_LIVE !== 'false';
 
 export function CheckoutModal() {
     const {
@@ -71,7 +71,9 @@ export function CheckoutModal() {
         setIsProcessing(true);
         setStatusText('Connecting to IntaSend M-Pesa Gateway…');
 
-        const orderId = `TN-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.random().toString(36).substring(2,6).toUpperCase()}`;
+        const custNum = cleanedPhone.startsWith('254') ? '0' + cleanedPhone.substring(3) : (cleanedPhone || 'CUST');
+        const randSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+        const orderId = `BT01-${custNum}-${randSuffix}`;
 
         // ── IntaSend Live SDK ──────────────────────────────────────────────────
         if (window.IntaSend) {

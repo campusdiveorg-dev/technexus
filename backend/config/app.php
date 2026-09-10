@@ -6,8 +6,8 @@ use App\Core\Env;
 return [
     'app' => [
         'name'        => Env::getString('APP_NAME', 'Byte Tech Ltd'),
-        'env'         => Env::getString('APP_ENV', 'development'),
-        'debug'       => Env::getBool('APP_DEBUG', true),
+        'env'         => Env::getString('APP_ENV', 'production'),
+        'debug'       => Env::getBool('APP_DEBUG', false),
         'url'         => Env::getString('APP_URL', 'http://localhost/marketplace_project'),
         'timezone'    => 'Africa/Nairobi',
         'currency'    => 'KES',
@@ -18,14 +18,14 @@ return [
         'jwt_secret'     => Env::getString('JWT_SECRET', 'bitetechltd_production_jwt_secret_2026_super_secure'),
         'jwt_expires_in' => Env::getString('JWT_EXPIRES_IN', '7d'),
         'admin_pin'      => Env::getString('ADMIN_PIN', 'TN2026'),
-        'cors_origins'   => [
+        'cors_origins'   => array_filter(array_unique(array_merge([
             'http://localhost:5173',
             'http://localhost:3000',
             'http://localhost:8000',
             'http://127.0.0.1:5173',
             'http://127.0.0.1:3000',
             'http://localhost',
-        ],
+        ], array_map('trim', explode(',', Env::getString('CORS_ALLOWED_ORIGINS', '')))))),
     ],
 
     'intasend' => [

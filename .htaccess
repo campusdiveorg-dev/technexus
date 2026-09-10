@@ -1,5 +1,17 @@
+# ── Enterprise Security Response Headers ─────────────────────
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "camera=(self), microphone=(), geolocation=()"
+</IfModule>
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # Block direct HTTP access to protected internal directories
+    RewriteRule ^(backend|db|\.git|node_modules)/ - [F,L]
 
     # Pass Authorization and Admin headers to PHP
     RewriteCond %{HTTP:Authorization} .
@@ -11,14 +23,13 @@
     RewriteRule ^api/(.*)$ api/index.php [QSA,L]
 </IfModule>
 
-# Block access to sensitive directories and files
-<FilesMatch "^\.env">
-    Order allow,deny
-    Deny from all
-</FilesMatch>
-
-<IfModule mod_authz_core.c>
-    <Directory "backend">
+# Block access to sensitive configuration, secrets, and environment files
+<FilesMatch "^(\.env|\.git|package\.json|package-lock\.json|vite\.config|\.htaccess|composer\.json)">
+    <IfModule mod_authz_core.c>
         Require all denied
-    </Directory>
-</IfModule>
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>

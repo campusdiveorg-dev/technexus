@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   Printer, ArrowLeft, FileText, Search, 
-  AlertCircle, Download, FileCode, Check
+  AlertCircle, Download, FileCode, Check, Trash2, X
 } from 'lucide-react';
 import { formatKES } from '../data/products';
 import { apiUrl } from '../lib/api';
@@ -22,6 +22,8 @@ export default function ReceiptPage() {
   const [lastLocalOrder, setLastLocalOrder] = useState(null);
   const [downloadSuccess, setDownloadSuccess] = useState(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   // Check for locally cached recent order on mount
   useEffect(() => {
@@ -49,14 +51,20 @@ export default function ReceiptPage() {
     // 1. Check local storage for quick match
     let localMatch = null;
     try {
-      const direct = localStorage.getItem(`tn_order_${targetId}`);
+      const direct = localStorage.getItem(`bt_order_${targetId}`) || localStorage.getItem(`tn_order_${targetId}`);
       if (direct) {
         localMatch = JSON.parse(direct);
       } else {
         const last = localStorage.getItem('bytetechltd_last_order');
         if (last) {
           const parsed = JSON.parse(last);
-          if (parsed && (parsed.id === targetId || parsed.flw_tx_ref === targetId)) {
+          const rawTarget = targetId.replace(/\D/g, '');
+          const orderPhone = (parsed.customer_phone || parsed.phone || '').replace(/\D/g, '');
+          if (parsed && (
+            parsed.id === targetId || 
+            parsed.flw_tx_ref === targetId ||
+            (rawTarget.length >= 7 && (orderPhone.includes(rawTarget) || rawTarget.includes(orderPhone)))
+          )) {
             localMatch = parsed;
           }
         }
@@ -181,6 +189,61 @@ export default function ReceiptPage() {
 
     setDownloadSuccess('json');
     setTimeout(() => setDownloadSuccess(null), 3000);
+  };
+
+  const handleDeleteReceipt = async () => {
+    if (!order) return;
+    setIsDeleting(true);
+    try {
+      const pin = sessionStorage.getItem('tn_admin_pin') || '';
+      await fetch(apiUrl('/orders/delete'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(pin ? { 'x-admin-pin': pin } : {})
+        },
+        body: JSON.stringify({ order_id: order.id })
+      });
+
+      // Purge local storage cached orders
+      try {
+        localStorage.removeItem(`tn_order_${order.id}`);
+        localStorage.removeItem(`bt_order_${order.id}`);
+        const last = localStorage.getItem('bytetechltd_last_order');
+        if (last) {
+          const parsed = JSON.parse(last);
+          if (parsed && (parsed.id === order.id || parsed.flw_tx_ref === order.id)) {
+            localStorage.removeItem('bytetechltd_last_order');
+            setLastLocalOrder(null);
+          }
+        }
+      } catch (_) {}
+
+      const deletedId = order.id;
+      setDeleteConfirmOpen(false);
+      setOrder(null);
+      setErrorMsg(null);
+      setSearchQuery('');
+      navigate('/receipt');
+      alert(`Receipt #${deletedId} was permanently deleted.`);
+    } catch (err) {
+      console.error('Failed to delete receipt:', err);
+      alert('Unable to delete receipt. Please check your connection.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleClearLocalOrder = (e) => {
+    if (e) e.stopPropagation();
+    try {
+      localStorage.removeItem('bytetechltd_last_order');
+      if (lastLocalOrder?.id) {
+        localStorage.removeItem(`tn_order_${lastLocalOrder.id}`);
+        localStorage.removeItem(`bt_order_${lastLocalOrder.id}`);
+      }
+      setLastLocalOrder(null);
+    } catch (_) {}
   };
 
   return (
@@ -332,6 +395,29 @@ export default function ReceiptPage() {
                 <Printer size={16} />
                 <span>Save as PDF / Print</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmOpen(true)}
+                disabled={isDeleting}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '9px 18px',
+                  borderRadius: '999px',
+                  background: 'rgba(239, 68, 68, 0.16)',
+                  color: '#FCA5A5',
+                  fontWeight: '700',
+                  fontSize: '0.86rem',
+                  cursor: isDeleting ? 'wait' : 'pointer',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Trash2 size={16} />
+                <span>Delete Receipt</span>
+              </button>
             </div>
           )}
         </div>
@@ -385,10 +471,10 @@ export default function ReceiptPage() {
                 <FileText size={26} />
               </div>
               <h1 style={{ fontSize: '1.6rem', fontWeight: '800', color: '#FFFFFF', marginBottom: '8px' }}>
-                Order Fiscal Receipt Verification
+                Official Tax Receipt & Order Lookup
               </h1>
               <p style={{ fontSize: '0.92rem', color: '#94A3B8', lineHeight: 1.5 }}>
-                Enter your Order Reference Number to verify payment clearance, view KRA eTIMS fiscal compliance details, and download your official PDF purchase receipt.
+                Enter your <strong>Receipt Reference (BT01-...)</strong> or your <strong>Customer Phone Number</strong> to verify payment clearance, view KRA eTIMS fiscal compliance details, and download your official PDF receipt.
               </p>
             </div>
 
@@ -413,20 +499,20 @@ export default function ReceiptPage() {
             )}
 
             {/* Search Input Form */}
-            <form onSubmit={handleSearchSubmit} style={{ maxWidth: '560px', margin: '0 auto' }}>
+            <form onSubmit={handleSearchSubmit} style={{ maxWidth: '560px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 background: '#0A1526',
                 border: '1.5px solid rgba(0, 209, 255, 0.3)',
                 borderRadius: '12px',
-                padding: '6px 6px 6px 16px',
+                padding: '6px 16px',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
               }}>
                 <Search size={18} color="#64748B" style={{ flexShrink: 0, marginRight: '8px' }} />
                 <input
                   type="text"
-                  placeholder="e.g. BT-TEST-20260907-39AD or TN-..."
+                  placeholder="e.g. BT01-0712345678-XXXX or 0712345678"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{
@@ -436,27 +522,30 @@ export default function ReceiptPage() {
                     outline: 'none',
                     color: '#FFFFFF',
                     fontSize: '0.95rem',
-                    fontFamily: 'monospace'
+                    fontFamily: 'monospace',
+                    padding: '10px 0'
                   }}
                   required
                 />
-                <button
-                  type="submit"
-                  style={{
-                    background: 'linear-gradient(135deg, #00D1FF, #0058BC)',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '10px 20px',
-                    fontWeight: '700',
-                    fontSize: '0.88rem',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  Lookup Receipt
-                </button>
               </div>
+              <button
+                type="submit"
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, #00D1FF, #0058BC)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '14px 20px',
+                  fontWeight: '700',
+                  fontSize: '0.95rem',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  letterSpacing: '0.02em'
+                }}
+              >
+                Lookup Receipt
+              </button>
             </form>
 
             {/* Quick Access to Last Local Order if Available */}
@@ -486,22 +575,45 @@ export default function ReceiptPage() {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => navigate(`/receipt?orderId=${encodeURIComponent(lastLocalOrder.id)}`)}
-                  style={{
-                    background: 'rgba(0, 209, 255, 0.15)',
-                    border: '1px solid rgba(0, 209, 255, 0.4)',
-                    color: '#00D1FF',
-                    padding: '8px 14px',
-                    borderRadius: '8px',
-                    fontSize: '0.82rem',
-                    fontWeight: '700',
-                    cursor: 'pointer'
-                  }}
-                >
-                  View Receipt
-                </button>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/receipt?orderId=${encodeURIComponent(lastLocalOrder.id)}`)}
+                    style={{
+                      background: 'rgba(0, 209, 255, 0.15)',
+                      border: '1px solid rgba(0, 209, 255, 0.4)',
+                      color: '#00D1FF',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: '700',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    View Receipt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearLocalOrder}
+                    title="Dismiss cached order"
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      border: '1px solid rgba(239, 68, 68, 0.25)',
+                      color: '#FCA5A5',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Trash2 size={13} />
+                    <span>Clear</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -557,8 +669,11 @@ export default function ReceiptPage() {
                   <div style={{ fontSize: '0.95rem', fontWeight: '700', color: '#00D1FF', letterSpacing: '1px', textTransform: 'uppercase' }}>
                     Official Tax Receipt
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginTop: '4px', fontFamily: 'monospace' }}>
-                    Order #{order.id}
+                  <div style={{ fontSize: '0.95rem', color: '#ffffff', marginTop: '4px', fontFamily: 'monospace', fontWeight: '800', letterSpacing: '0.5px' }}>
+                    Receipt #{order.id}
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: '#94A3B8', marginTop: '3px' }}>
+                    Branch / Terminal: <strong style={{ color: '#00D1FF' }}>BT01</strong>
                   </div>
                 </div>
               </div>
@@ -575,18 +690,18 @@ export default function ReceiptPage() {
                   <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#94A3B8', marginBottom: '8px' }}>
                     Billed Customer
                   </h4>
-                  <p style={{ fontWeight: '700', color: '#1E293B', fontSize: '1rem' }}>
+                  <p style={{ fontWeight: '800', color: '#1E293B', fontSize: '1.05rem' }}>
                     {order.customer_name || order.customerName || 'Authorized Buyer'}
                   </p>
-                  <p style={{ color: '#475569', fontSize: '0.88rem', marginTop: '2px' }}>
-                    {order.customer_phone || order.phone || 'Phone on File'}
+                  <p style={{ color: '#0058BC', fontSize: '0.9rem', marginTop: '4px', fontWeight: '700', fontFamily: 'monospace' }}>
+                    Customer No: {order.customer_phone || order.phone || 'Phone on File'}
                   </p>
                   {(order.customer_email || order.email) && (
-                    <p style={{ color: '#475569', fontSize: '0.88rem' }}>
+                    <p style={{ color: '#475569', fontSize: '0.85rem', marginTop: '2px' }}>
                       {order.customer_email || order.email}
                     </p>
                   )}
-                  <p style={{ color: '#475569', fontSize: '0.88rem', marginTop: '2px' }}>
+                  <p style={{ color: '#475569', fontSize: '0.85rem', marginTop: '2px' }}>
                     {order.shipping_address || order.address || 'Standard Delivery Hub'}
                   </p>
                 </div>
@@ -705,7 +820,7 @@ export default function ReceiptPage() {
                 const vat = Number(order.vat || (order.vat_breakdown?.vat_amount) || Math.round(total * (0.16 / 1.16)));
                 const subtotal = Number(order.subtotal || (order.vat_breakdown?.subtotal) || (total - vat));
                 const cuSerial = order.kra_cu_number || order.cuSerial || 'KRA-VSCU-001';
-                const cuInvoice = order.kra_invoice_number || order.cuInvoice || `KRA-ETIMS-${order.id}`;
+                const cuInvoice = order.kra_invoice_number || order.cuInvoice || `KRA-BT01-${order.id}`;
                 const qrUrl = order.kra_qr_url || order.etimsQr || `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://itax.kra.go.ke/KRA-Portal/invoiceConfirmation.htm?cuNumber=${cuSerial}&invoiceNumber=${cuInvoice}&pin=P051234567Z`)}`;
 
                 return (
@@ -750,6 +865,7 @@ export default function ReceiptPage() {
                         </div>
                         <div style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.6, fontFamily: 'monospace' }}>
                           <div><strong>KRA PIN:</strong> P051234567Z</div>
+                          <div><strong>BRANCH CODE:</strong> BT01 (Store HQ)</div>
                           <div><strong>CU SERIAL:</strong> {cuSerial}</div>
                           <div><strong>CU INVOICE NO:</strong> {cuInvoice}</div>
                           <div><strong>TAX CLASSIFICATION:</strong> Rate A (16% VAT Inclusive)</div>
@@ -896,6 +1012,100 @@ export default function ReceiptPage() {
               </div>
             </div>
           </>
+        )}
+
+        {/* Delete Receipt Confirmation Modal */}
+        {deleteConfirmOpen && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(10, 25, 47, 0.8)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}>
+            <div style={{
+              background: '#0D213D',
+              border: '1.5px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '16px',
+              maxWidth: '460px',
+              width: '100%',
+              padding: '28px',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.6)',
+              color: '#FFFFFF'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+                <div style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: 'rgba(239, 68, 68, 0.18)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#EF4444',
+                  flexShrink: 0
+                }}>
+                  <Trash2 size={22} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>Delete Receipt?</h3>
+                  <div style={{ fontSize: '0.8rem', color: '#F87171' }}>Permanent Deletion</div>
+                </div>
+              </div>
+
+              <p style={{ fontSize: '0.9rem', color: '#CBD5E1', lineHeight: 1.5, marginBottom: '22px' }}>
+                Are you sure you want to permanently delete receipt <strong style={{ color: '#F87171', fontFamily: 'monospace' }}>#{order?.id}</strong>? This action purges the order and itemized line records from both the database and local storage.
+              </p>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmOpen(false)}
+                  disabled={isDeleting}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '10px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.16)',
+                    color: '#E2E8F0',
+                    fontWeight: 600,
+                    fontSize: '0.86rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteReceipt}
+                  disabled={isDeleting}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '10px',
+                    background: '#DC2626',
+                    border: 'none',
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: '0.86rem',
+                    cursor: isDeleting ? 'wait' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Trash2 size={15} />
+                  <span>{isDeleting ? 'Deleting…' : 'Yes, Delete Receipt'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
       </div>

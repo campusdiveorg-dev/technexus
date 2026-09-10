@@ -77,15 +77,62 @@ class OrderRepository
         return Database::selectOne($sql, [$id]);
     }
 
-    public function findWithItems(string $id): ?array
+    /**
+     * Resolves an order by exact Receipt ID, payment reference, or customer phone number
+     */
+    public function findByIdOrCustomer(string $query): ?array
     {
-        $order = $this->findById($id);
+        $clean = trim($query);
+        if (empty($clean)) {
+            return null;
+        }
+
+        // 1. Direct match by Order/Receipt ID, flw_tx_ref, or flw_transaction_id
+        $sql = 'SELECT * FROM orders WHERE id = ? OR flw_tx_ref = ? OR flw_transaction_id = ? LIMIT 1';
+        $order = Database::selectOne($sql, [$clean, $clean, $clean]);
+        if ($order) {
+            return $order;
+        }
+
+        // 2. Lookup by Customer Phone Number (supports local 07... and intl 254... variations)
+        $digits = preg_replace('/\D/', '', $clean);
+        if (strlen($digits) >= 9) {
+            $variants = [$digits];
+            if (str_starts_with($digits, '0') && strlen($digits) === 10) {
+                $variants[] = '254' . substr($digits, 1);
+                $variants[] = '+254' . substr($digits, 1);
+            } elseif (str_starts_with($digits, '254') && strlen($digits) === 12) {
+                $variants[] = '0' . substr($digits, 3);
+                $variants[] = '+' . $digits;
+            } elseif (strlen($digits) === 9) {
+                $variants[] = '0' . $digits;
+                $variants[] = '254' . $digits;
+                $variants[] = '+254' . $digits;
+            }
+
+            $uniqueVariants = array_values(array_unique($variants));
+            $placeholders = implode(',', array_fill(0, count($uniqueVariants), '?'));
+            $phoneSql = "SELECT * FROM orders WHERE customer_phone IN ({$placeholders}) ORDER BY created_at DESC LIMIT 1";
+            $order = Database::selectOne($phoneSql, $uniqueVariants);
+            if ($order) {
+                return $order;
+            }
+        }
+
+        // 3. Partial substring match on order id (e.g. searching without BT01- prefix)
+        $likeSql = 'SELECT * FROM orders WHERE id LIKE ? ORDER BY created_at DESC LIMIT 1';
+        return Database::selectOne($likeSql, ['%' . $clean . '%']);
+    }
+
+    public function findWithItems(string $idOrCustomer): ?array
+    {
+        $order = $this->findByIdOrCustomer($idOrCustomer);
         if (!$order) {
             return null;
         }
 
         $itemsSql = 'SELECT * FROM order_items WHERE order_id = ?';
-        $order['items'] = Database::select($itemsSql, [$id]);
+        $order['items'] = Database::select($itemsSql, [$order['id']]);
 
         return $order;
     }
@@ -115,6 +162,14 @@ class OrderRepository
 
         $sql = 'UPDATE orders SET status = ? WHERE id = ?';
         return Database::execute($sql, [$status, $orderId]) > 0;
+    }
+
+    public function delete(string $orderId): bool
+    {
+        return Database::transaction(function () use ($orderId) {
+            Database::execute('DELETE FROM order_items WHERE order_id = ?', [$orderId]);
+            return Database::execute('DELETE FROM orders WHERE id = ?', [$orderId]) > 0;
+        });
     }
 
     public function getRecentOrders(int $limit = 20): array

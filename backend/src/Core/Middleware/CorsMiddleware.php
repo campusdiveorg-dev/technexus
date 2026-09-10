@@ -20,16 +20,18 @@ class CorsMiddleware
 
     public function handle(Request $request): void
     {
+        header('Vary: Origin');
         $origin = $request->header('origin');
 
         if ($origin) {
-            $allow = empty($this->allowedOrigins) || in_array($origin, $this->allowedOrigins, true);
-            if ($allow) {
+            $isAllowed = !empty($this->allowedOrigins) && in_array($origin, $this->allowedOrigins, true);
+            if ($isAllowed) {
                 header("Access-Control-Allow-Origin: {$origin}");
                 header('Access-Control-Allow-Credentials: true');
+            } elseif (empty($this->allowedOrigins)) {
+                // If no origins configured, allow wildcard without credentials
+                header('Access-Control-Allow-Origin: *');
             }
-        } else {
-            header('Access-Control-Allow-Origin: *');
         }
 
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');

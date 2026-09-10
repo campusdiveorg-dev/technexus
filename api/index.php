@@ -56,13 +56,14 @@ $router->use(new CorsMiddleware($appConfig['security']['cors_origins'] ?? []));
 // ─────────────────────────────────────────────────────────────
 
 // ── Diagnostics & Telemetry ──
+$adminMiddleware = new AdminMiddleware();
 $router->get('/api/health', [HealthController::class, 'check']);
-$router->get('/api/health/logs', [HealthController::class, 'logs']);
+$router->get('/api/health/logs', [HealthController::class, 'logs'], [$adminMiddleware]);
 
 // ── Merchant Authentication (Rate Limited) ──
-$rateLimiter = new RateLimitMiddleware(30, 60);
-$router->post('/api/sellers/register', [AuthController::class, 'register'], [$rateLimiter]);
-$router->post('/api/sellers/login', [AuthController::class, 'login'], [$rateLimiter]);
+$authRateLimiter = new RateLimitMiddleware(20, 60);
+$router->post('/api/sellers/register', [AuthController::class, 'register'], [$authRateLimiter]);
+$router->post('/api/sellers/login', [AuthController::class, 'login'], [$authRateLimiter]);
 
 // ── Merchant Portal (JWT Protected) ──
 $authMiddleware = new AuthMiddleware();
@@ -74,30 +75,35 @@ $router->delete('/api/sellers/products', [SellerController::class, 'deleteProduc
 $router->post('/api/sellers/products/delete', [SellerController::class, 'deleteProduct'], [$authMiddleware]);
 $router->post('/api/sellers/payout', [SellerController::class, 'requestPayout'], [$authMiddleware]);
 
-// ── Storefront Orders & Checkout ──
-$router->post('/api/orders/create', [OrderController::class, 'create']);
+// ── Storefront Orders & Checkout (Rate Limited) ──
+$orderRateLimiter = new RateLimitMiddleware(30, 60);
+$router->post('/api/orders/create', [OrderController::class, 'create'], [$orderRateLimiter]);
 $router->get('/api/orders/get', [OrderController::class, 'get']);
-$router->post('/api/orders/fiscalize', [FiscalController::class, 'fiscalize']);
+$router->post('/api/orders/fiscalize', [FiscalController::class, 'fiscalize'], [$orderRateLimiter]);
+$router->post('/api/orders/delete', [OrderController::class, 'delete'], [$orderRateLimiter]);
+$router->delete('/api/orders', [OrderController::class, 'delete'], [$orderRateLimiter]);
 
 // ── Public Storefront Catalog ──
 $router->get('/api/products', [ProductController::class, 'listProducts']);
 $router->get('/api/products/detail', [ProductController::class, 'getProduct']);
 
 // ── Payment Verification & Gateway Webhooks ──
-$router->post('/api/payments/verify', [PaymentController::class, 'verify']);
+$router->post('/api/payments/verify', [PaymentController::class, 'verify'], [$orderRateLimiter]);
 $router->post('/api/payments/webhook', [PaymentController::class, 'webhook']);
 
-// ── Admin Control Center (PIN Protected) ──
-$adminMiddleware = new AdminMiddleware();
-$router->get('/api/admin/summary', [AdminController::class, 'summary'], [$adminMiddleware]);
-$router->get('/api/admin/orders', [AdminController::class, 'orders'], [$adminMiddleware]);
-$router->get('/api/admin/commissions', [AdminController::class, 'commissions'], [$adminMiddleware]);
-$router->post('/api/admin/commissions', [AdminController::class, 'updateCommission'], [$adminMiddleware]);
-$router->post('/api/admin/sellers/status', [AdminController::class, 'toggleSellerStatus'], [$adminMiddleware]);
-$router->post('/api/admin/sellers/rate', [AdminController::class, 'updateSellerRate'], [$adminMiddleware]);
-$router->post('/api/admin/sellers/delete', [AdminController::class, 'deleteSeller'], [$adminMiddleware]);
-$router->delete('/api/admin/sellers', [AdminController::class, 'deleteSeller'], [$adminMiddleware]);
-$router->delete('/api/admin/products', [AdminController::class, 'deleteProduct'], [$adminMiddleware]);
+// ── Admin Control Center (PIN Protected & Rate Limited) ──
+$adminRateLimiter = new RateLimitMiddleware(60, 60);
+$router->get('/api/admin/summary', [AdminController::class, 'summary'], [$adminMiddleware, $adminRateLimiter]);
+$router->get('/api/admin/orders', [AdminController::class, 'orders'], [$adminMiddleware, $adminRateLimiter]);
+$router->get('/api/admin/commissions', [AdminController::class, 'commissions'], [$adminMiddleware, $adminRateLimiter]);
+$router->post('/api/admin/commissions', [AdminController::class, 'updateCommission'], [$adminMiddleware, $adminRateLimiter]);
+$router->post('/api/admin/sellers/status', [AdminController::class, 'toggleSellerStatus'], [$adminMiddleware, $adminRateLimiter]);
+$router->post('/api/admin/sellers/rate', [AdminController::class, 'updateSellerRate'], [$adminMiddleware, $adminRateLimiter]);
+$router->post('/api/admin/sellers/delete', [AdminController::class, 'deleteSeller'], [$adminMiddleware, $adminRateLimiter]);
+$router->delete('/api/admin/sellers', [AdminController::class, 'deleteSeller'], [$adminMiddleware, $adminRateLimiter]);
+$router->delete('/api/admin/products', [AdminController::class, 'deleteProduct'], [$adminMiddleware, $adminRateLimiter]);
+$router->post('/api/admin/orders/delete', [AdminController::class, 'deleteOrder'], [$adminMiddleware, $adminRateLimiter]);
+$router->delete('/api/admin/orders', [AdminController::class, 'deleteOrder'], [$adminMiddleware, $adminRateLimiter]);
 
 // 6. Dispatch the request
 $router->dispatch($request);
