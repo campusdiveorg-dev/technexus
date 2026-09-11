@@ -1,6 +1,6 @@
 {
   "name": "bytetech-marketplace",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Byte Tech Ltd Electronics E-Commerce Marketplace",
   "scripts": {
     "dev": "vite",

@@ -10,7 +10,7 @@
  * if the PHP backend is served on the same domain.
  */
 
-export const API_URL = import.meta.env.VITE_API_URL || '';
+export const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://bytetech-production.up.railway.app' : '');
 
 /**
  * Convenience wrapper — prepends API_URL to a path.
