@@ -24,14 +24,20 @@ class CorsMiddleware
         $origin = $request->header('origin');
 
         if ($origin) {
-            $isAllowed = !empty($this->allowedOrigins) && in_array($origin, $this->allowedOrigins, true);
+            $isAllowed = empty($this->allowedOrigins)
+                || in_array('*', $this->allowedOrigins, true)
+                || in_array($origin, $this->allowedOrigins, true)
+                || (bool)preg_match('/^https?:\\/\\/(?:[a-z0-9-]+\\.)*vercel\\.app(?::\\d+)?$/i', $origin)
+                || (bool)preg_match('/^https?:\\/\\/(?:localhost|127\\.0\\.0\\.1)(?::\\d+)?$/i', $origin);
+
             if ($isAllowed) {
                 header("Access-Control-Allow-Origin: {$origin}");
                 header('Access-Control-Allow-Credentials: true');
-            } elseif (empty($this->allowedOrigins)) {
-                // If no origins configured, allow wildcard without credentials
+            } else {
                 header('Access-Control-Allow-Origin: *');
             }
+        } else {
+            header('Access-Control-Allow-Origin: *');
         }
 
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');
